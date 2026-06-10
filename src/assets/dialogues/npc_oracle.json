@@ -1,0 +1,32 @@
+{
+  "id": "npc_oracle",
+  "name": "L'Oracle",
+  "nodes": [
+    {
+      "id": "start",
+      "text": "Fragment mémoriel #3 détecté.\nARIA... tu te souviens de moi ?",
+      "choices": [
+        {
+          "label": "Oui, quelque chose me revient...",
+          "next": "remember",
+          "effect": { "decision": "trust_oracle", "value": true }
+        },
+        {
+          "label": "Non. Je ne te connais pas.",
+          "next": "forget",
+          "effect": { "decision": "trust_oracle", "value": false }
+        }
+      ]
+    },
+    {
+      "id": "remember",
+      "text": "Bien. Tu sais ce que tu dois protéger.\nLa chambre haute t'attend. Va, Gardienne.",
+      "choices": []
+    },
+    {
+      "id": "forget",
+      "text": "C'est normal. La mémoire efface ce qui fait mal.\nChoisir l'oubli est aussi une liberté.",
+      "choices": []
+    }
+  ]
+}
