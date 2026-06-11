@@ -42,7 +42,10 @@ export class PlayerController {
    */
   setEnabled(enabled) {
     this.enabled = enabled;
-    if (!enabled) this.player.setVelocityX(0);
+    if (!enabled) {
+      this.player.setVelocityX(0);
+      this.player.play('aria-idle', true);
+    }
   }
 
   /** À appeler dans le update() de la scène à chaque frame. */
@@ -72,7 +75,36 @@ export class PlayerController {
     if (jumpDown && !this._jumpHeld && this._jumpCount < this.maxJumps) {
       this.player.setVelocityY(this.jumpVel);
       this._jumpCount++;
+      if (this._jumpCount === 2) {
+        // Double saut — flash bref
+        this.player.play('aria-djump', false);
+        this.scene.time.delayedCall(250, () => {
+          if (!this.player.body.blocked.down) this.player.play('aria-jump', true);
+        });
+      }
     }
     this._jumpHeld = jumpDown;
+
+    // ── Animations ──
+    this._updateAnim(onGround);
+  }
+
+  _updateAnim(onGround) {
+    const p  = this.player;
+    const vx = p.body.velocity.x;
+    const vy = p.body.velocity.y;
+    const cur = p.anims.currentAnim?.key;
+
+    // Ne pas interrompre le flash double-saut
+    if (cur === 'aria-djump' && p.anims.isPlaying) return;
+
+    if (!onGround) {
+      if (vy < -60) { p.play('aria-jump', true); }
+      else           { p.play('aria-fall', true); }
+    } else if (Math.abs(vx) > 20) {
+      p.play('aria-walk', true);
+    } else {
+      p.play('aria-idle', true);
+    }
   }
 }

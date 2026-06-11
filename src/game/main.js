@@ -13,12 +13,18 @@ const config = {
   type: Phaser.AUTO,
   width:  800,
   height: 500,
-  backgroundColor: '#000000',
+  backgroundColor: '#04060d',
+  scale: {
+    mode:        Phaser.Scale.FIT,
+    autoCenter:  Phaser.Scale.CENTER_BOTH,
+    width:       800,
+    height:      500,
+  },
   physics: {
     default: 'arcade',
     arcade: {
       gravity: { y: 520 },
-      debug: false,         // Passer à true pour visualiser les hitboxes
+      debug: false,
     },
   },
   // Boot → Menu → Game (+ HUD en parallèle) → Ending

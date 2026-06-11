@@ -49,6 +49,7 @@ export class GameScene extends Phaser.Scene {
     this._buildLevel();
     this._buildPlayer();
     this._buildObjects();
+    this._buildAmbientParticles(W, H);
     this._setupCollisions();
 
     // Systèmes
@@ -76,58 +77,154 @@ export class GameScene extends Phaser.Scene {
   // ─── Construction du niveau ────────────────────────────────────────────────
 
   _buildBackground(W, H) {
-    this.add.rectangle(W / 2, H / 2, W, H, 0x07070f).setDepth(-10);
-    // Colonnes de ruines en arrière-plan
-    [[180, 490, 50, 90], [500, 500, 35, 70], [830, 480, 65, 110],
-     [1100, 495, 45, 75], [1380, 500, 55, 80]].forEach(([x, y, w, h]) => {
-      this.add.rectangle(x, y, w, h, 0x0d1a26).setDepth(-5);
+    // ── Couche 0 : fond absolu ────────────────────────────────────────────
+    this.add.rectangle(400, 250, 800, 500, 0x04060d)
+      .setScrollFactor(0).setDepth(-20);
+
+    // ── Couche 1 : mur de briques en tuile (parallax doux) ─────────────────
+    this._bgFar = this.add.tileSprite(400, 250, 800, 500, 'bg-brick')
+      .setScrollFactor(0).setDepth(-18).setAlpha(0.9);
+
+    // ── Couche 2 : lavis sombre (dégradé haut→bas) ────────────────────────
+    this.add.rectangle(400, 60, 800, 140, 0x03050b, 0.75)
+      .setScrollFactor(0).setDepth(-16);
+    this.add.rectangle(400, 460, 800, 100, 0x030509, 0.55)
+      .setScrollFactor(0).setDepth(-16);
+
+    // ── Couche 3 : silhouettes architecturales (espace monde) ─────────────
+    this._buildRuins();
+  }
+
+  _buildRuins() {
+    // Colonnes de pierre tout au long du niveau
+    [
+      [110, 500, 18, 110], [265, 508, 14, 88],  [435, 496, 22, 132],
+      [625, 504, 16, 96],  [805, 498, 20, 118], [995, 502, 18, 104],
+      [1175, 495, 22, 130],[1355, 500, 16, 96], [1535, 498, 20, 114],
+    ].forEach(([x, y, w, h]) => {
+      this.add.rectangle(x, y,     w,     h,  0x0c1726, 0.9).setDepth(-13);
+      this.add.rectangle(x, y-h/2+5, w+10, 10, 0x0c1726, 0.9).setDepth(-13);
+      this.add.rectangle(x, y+h/2-3, w+14,  6, 0x0c1726, 0.9).setDepth(-13);
+    });
+
+    // Poutres horizontales
+    [[380, 422, 200, 7], [775, 395, 160, 7], [1225, 412, 220, 7]].forEach(
+      ([x, y, w, h]) => this.add.rectangle(x, y, w, h, 0x0e1e2e, 0.8).setDepth(-13)
+    );
+
+    // Décombres au sol
+    [[165,525,28,12],[362,528,18,8],[685,526,32,10],
+     [918,524,22,14],[1172,527,16,8],[1462,525,26,10]]
+      .forEach(([x, y, w, h]) =>
+        this.add.rectangle(x, y, w, h, 0x0e1e30, 0.7).setDepth(-11)
+      );
+
+    // Torches murales avec halo chaud
+    [130, 325, 535, 735, 955, 1145, 1365, 1545].forEach(tx => {
+      // Halo orange (blend additif)
+      const pool = this.add.ellipse(tx, 490, 72, 48, 0xff8f00, 0.09)
+        .setBlendMode(Phaser.BlendModes.ADD).setDepth(-12);
+      this.tweens.add({
+        targets: pool,
+        alpha: { from: 0.04, to: 0.15 },
+        duration: Phaser.Math.Between(700, 1600),
+        yoyo: true, repeat: -1,
+        delay: Phaser.Math.Between(0, 1200),
+      });
+      // Corps de la torche
+      this.add.rectangle(tx, 482, 4, 14, 0x6d4c41).setDepth(-11);
+      this.add.rectangle(tx, 473, 8, 10, 0xef6c00).setDepth(-11);
+      this.add.rectangle(tx, 471, 5,  7, 0xffc107).setDepth(-11);
+      this.add.rectangle(tx, 470, 3,  4, 0xfff8e1).setDepth(-11);
     });
   }
 
   _buildLevel() {
     this._platforms = this.physics.add.staticGroup();
 
-    // Sol complet
-    this._platforms.create(800, 540, 'ground').setScale(16, 1).refreshBody();
+    // Sol (texture pleine largeur 1600×40 — pas de setScale)
+    this._platforms.create(800, 540, 'ground').refreshBody();
 
-    // Plateformes flottantes
+    // Plateformes avec sous-lueur teal
     PLATFORM_DATA.forEach(([x, y, sx]) => {
       this._platforms.create(x, y, 'platform').setScale(sx, 1).refreshBody();
+      // Underlight (blend additif)
+      this.add.rectangle(x, y + 11, 100 * sx + 8, 5, 0x00e5ff, 0.14)
+        .setBlendMode(Phaser.BlendModes.ADD).setDepth(0);
+      this.add.rectangle(x, y + 16, 100 * sx - 12, 3, 0x00b8d4, 0.06)
+        .setBlendMode(Phaser.BlendModes.ADD).setDepth(0);
     });
   }
 
   _buildPlayer() {
-    this._player = this.physics.add.sprite(80, 470, 'player');
+    this._player = this.physics.add.sprite(80, 470, 'aria-sheet', 0);
     this._player.setCollideWorldBounds(true);
-    this._player.body.setSize(26, 44);  // hitbox légèrement réduite
+    this._player.body.setSize(24, 42);
+    this._player.body.setOffset(4, 4);
+    this._player.play('aria-idle');
+    if (this._player.postFX) this._player.postFX.addGlow(0x00b8d4, 2, 0);
   }
 
   _buildObjects() {
-    // Cristal — positionné au-dessus de P2 (center y=370, top=362, cristal h=20 → y=352)
-    this._crystal = this.physics.add.staticImage(380, 352, 'crystal');
-    // Animé en oscillation verticale
+    // ── Cristal (P2, y=370→top=362, cristal h=28→center=348) ─────────────
+    this._crystal = this.physics.add.staticImage(380, 348, 'crystal');
     this.tweens.add({ targets: this._crystal, y: '+=8', duration: 800, yoyo: true, repeat: -1 });
+    if (this._crystal.postFX) {
+      const cg = this._crystal.postFX.addGlow(0x00e5ff, 3, 0);
+      this.tweens.add({
+        targets: cg, outerStrength: { from: 2, to: 8 },
+        duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
+      });
+    }
 
-    // NPC Oracle — P4 (y=370, top=362, npc h=44 → y=340)
-    this._npc = this.physics.add.staticImage(760, 340, 'npc');
-    this.add.text(760, 300, "L'Oracle", {
+    // ── NPC Oracle (P4, y=370→top=362, npc h=48→center=338) ───────────────
+    this._npc = this.physics.add.staticImage(760, 338, 'npc');
+    this.add.text(760, 298, "L'Oracle", {
       fontFamily: 'monospace', fontSize: '12px',
-      color: '#ce93d8', stroke: '#000', strokeThickness: 3,
+      color: '#ce93d8', stroke: '#06020e', strokeThickness: 4,
     }).setOrigin(0.5).setDepth(5);
+    if (this._npc.postFX) this._npc.postFX.addGlow(0xce93d8, 3, 0);
 
-    // Porte A — P7 (y=290, top=282, exit h=60 → y=252)
-    this._exitA = this.physics.add.staticImage(1320, 252, 'exit-a');
-    this.add.text(1320, 212, 'FIN A\n[Gardienne]', {
+    // ── Porte A (P7, y=290→top=282, exit h=70→center=247) ─────────────────
+    this._exitA = this.physics.add.staticImage(1320, 247, 'exit-a');
+    this.add.text(1320, 204, 'FIN A\n[Gardienne]', {
       fontFamily: 'monospace', fontSize: '10px', color: '#81c784',
-      align: 'center', stroke: '#000', strokeThickness: 2,
+      align: 'center', stroke: '#030a04', strokeThickness: 3,
     }).setOrigin(0.5).setDepth(5);
+    if (this._exitA.postFX) {
+      const gA = this._exitA.postFX.addGlow(0x4caf50, 4, 0);
+      this.tweens.add({ targets: gA, outerStrength: { from: 2, to: 7 },
+        duration: 1400, yoyo: true, repeat: -1 });
+    }
 
-    // Porte B — sol (top=520, exit h=60 → y=490)
-    this._exitB = this.physics.add.staticImage(1540, 490, 'exit-b');
-    this.add.text(1540, 450, 'FIN B\n[Reset]', {
+    // ── Porte B (sol, top=520, exit h=70→center=485) ─────────────────────
+    this._exitB = this.physics.add.staticImage(1540, 485, 'exit-b');
+    this.add.text(1540, 442, 'FIN B\n[Reset]', {
       fontFamily: 'monospace', fontSize: '10px', color: '#ef9a9a',
-      align: 'center', stroke: '#000', strokeThickness: 2,
+      align: 'center', stroke: '#0a0202', strokeThickness: 3,
     }).setOrigin(0.5).setDepth(5);
+    if (this._exitB.postFX) {
+      const gB = this._exitB.postFX.addGlow(0xf44336, 4, 0);
+      this.tweens.add({ targets: gB, outerStrength: { from: 2, to: 7 },
+        duration: 1600, yoyo: true, repeat: -1 });
+    }
+  }
+
+  _buildAmbientParticles(W, H) {
+    // Particules de poussière flottante (blend additif)
+    this.add.particles(W / 2, H / 2, 'particle', {
+      emitZone: { type: 'random', source: new Phaser.Geom.Rectangle(-W/2, -H/2+60, W, H-120) },
+      quantity:  1,
+      frequency: 380,
+      lifespan:  { min: 5000, max: 9000 },
+      alpha:     { start: 0.7, end: 0 },
+      scale:     { min: 0.3,  max: 0.9 },
+      speedX:    { min: -6,   max: 6   },
+      speedY:    { min: -18,  max: -3  },
+      gravityY:  0,
+      tint:      [0x80deea, 0xb39ddb, 0x4fc3f7, 0x80cbc4],
+      blendMode: Phaser.BlendModes.ADD,
+    }).setDepth(-5);
   }
 
   _setupCollisions() {
@@ -170,6 +267,11 @@ export class GameScene extends Phaser.Scene {
 
   update() {
     if (this._gameOver) return;
+
+    // Parallax fond (défilement lent)
+    if (this._bgFar) {
+      this._bgFar.tilePositionX = this.cameras.main.scrollX * 0.15;
+    }
 
     // Désactiver le mouvement pendant un dialogue
     this._ctrl.setEnabled(!this._dlgMgr.isActive);
