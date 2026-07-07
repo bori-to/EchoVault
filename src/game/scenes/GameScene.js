@@ -1,47 +1,96 @@
-/**
- * GameScene — scène de jeu principale d'EchoVault.
+﻿/**
+ * GameScene — niveau principal d'EchoVault (Livrable 2 enrichi).
  *
- * Niveau prototype (Livrable 2) :
- *   - Sol plat + 8 plateformes flottantes
- *   - Cristal de pouvoir → double saut débloqué
- *   - NPC Oracle avec dialogue binaire (faire confiance / refuser)
- *   - Deux sorties : Fin A (Gardienne, haute), Fin B (Reset, sol)
- *   - Respawn si chute hors-monde
+ * Carte 3200×560 px — 3 biomes :
+ *   Biome 0 « Le Coffre-Fort »  x 0–1060    (palette bleue-nuit, Crawlers)
+ *   Biome 1 « La Forge »        x 1060–2160  (lave, orange, Drones)
+ *   Biome 2 « La Surface »      x 2160–3200  (verdure, lumière, Guardian)
  *
- * GÉNÉRÉ avec GitHub Copilot (Claude Sonnet 4.x) — revu et adapté manuellement.
+ * Mécaniques :
+ *   - Saut + double saut (cristal Biome 0)
+ *   - Dash (power-up Biome 1)
+ *   - Tir laser touche X
+ *   - 3 HP joueur, clignotement + invincibilité 1.2s après dégâts
+ *   - Oracle (NPC, Biome 0) -> décision narrative
+ *   - Deux portes de fin (haut biome 2 et sol biome 2)
  */
 import Phaser from 'phaser';
 import { PlayerController } from '../systems/PlayerController.js';
-import { PowerManager }      from '../systems/PowerManager.js';
-import { GameStateManager }  from '../systems/GameStateManager.js';
-import { DialogueManager }   from '../systems/DialogueManager.js';
+import { PowerManager }     from '../systems/PowerManager.js';
+import { GameStateManager } from '../systems/GameStateManager.js';
+import { DialogueManager }  from '../systems/DialogueManager.js';
+import { EnemyManager }     from '../systems/EnemyManager.js';
+import { BossManager }      from '../systems/BossManager.js';
 
-// Disposition des plateformes [center_x, center_y, scale_x]
-const PLATFORM_DATA = [
-  [200,  440, 1.6],   // P1
-  [380,  370, 1.6],   // P2 — cristal dessus
-  [560,  440, 1.6],   // P3
-  [760,  370, 2.0],   // P4 — Oracle
-  [960,  440, 1.6],   // P5
-  [1140, 370, 1.6],   // P6
-  [1320, 290, 1.6],   // P7 — haute (double saut utile)
-  [1500, 430, 1.6],   // P8
+const PLATFORMS = [
+  [160,  440, 2.0, 'platform'],
+  [340,  370, 1.6, 'platform'],
+  [510,  440, 1.6, 'platform'],
+  [700,  370, 2.2, 'platform'],
+  [880,  290, 1.6, 'platform'],
+  [1000, 440, 1.4, 'platform'],
+  [1140, 370, 1.6, 'platform-forge'],
+  [1310, 300, 1.6, 'platform-forge'],
+  [1460, 400, 1.6, 'platform-forge'],
+  [1640, 330, 1.8, 'platform-forge'],
+  [1820, 440, 1.4, 'platform-forge'],
+  [1980, 360, 1.6, 'platform-forge'],
+  [2100, 270, 1.4, 'platform-forge'],
+  [2260, 440, 1.6, 'platform-surface'],
+  [2420, 360, 1.8, 'platform-surface'],
+  [2580, 280, 1.6, 'platform-surface'],
+  [2740, 400, 1.6, 'platform-surface'],
+  [2900, 320, 1.6, 'platform-surface'],
+  [3060, 440, 1.8, 'platform-surface'],
+];
+
+const ENEMIES = [
+  ['crawler',    340, 352, 70],
+  ['crawler',    700, 352, 100],
+  ['crawler',    880, 272, 60],
+  ['drone',     1460, 340],
+  ['drone',     1820, 380],
+  ['crawler',   1980, 342, 80],
+  ['sentinelle',2100, 240],
+  ['guardian',  2580, 244],
+  ['drone',     2740, 340],
+  ['guardian',  3060, 404],
+];
+
+// Checkpoints [x, y]
+const CHECKPOINTS = [
+  [520,  420],
+  [1320, 280],
+  [2270, 420],
+];
+
+// Fragments mémoire [x, y, texte lore]
+const FRAGMENTS = [
+  [420,  340, '"Fragment #1 — Je me souviens... de la tour."'],
+  [900,  268, '"Fragment #2 — Quelqu\'un a effacé mes données."'],
+  [1640, 308, '"Fragment #3 — Le Gardien protège quoi, au juste ?"'],
+  [2420, 338, '"Fragment #4 — Les archives brûlent encore."'],
+  [2900, 298, '"Fragment #5 — C\'est ici que tout a commencé."'],
 ];
 
 export class GameScene extends Phaser.Scene {
   constructor() { super({ key: 'GameScene' }); }
 
-  // ─── Initialisation ────────────────────────────────────────────────────────
-
   init() {
-    this._pm  = new PowerManager();   this._pm.reset();
+    this._pm  = new PowerManager();  this._pm.reset();
     this._gsm = new GameStateManager();
     this._npcDone  = false;
     this._gameOver = false;
+    this._hp       = 3;
+    this._invTimer = 0;
+    this._bulletsConnected = false;
+    this._fragmentCount = 0;
+    this._bossTriggered = false;
+    this._lastBiome = -1;
   }
 
   create() {
-    const W = 1600, H = 560;
+    const W = 3200, H = 560;
     this.physics.world.setBounds(0, 0, W, H);
     this.cameras.main.setBounds(0, 0, W, H);
 
@@ -49,192 +98,244 @@ export class GameScene extends Phaser.Scene {
     this._buildLevel();
     this._buildPlayer();
     this._buildObjects();
+    this._buildEnemies();
+    this._buildCheckpoints();
+    this._buildFragments();
+    this._buildBoss();
     this._buildAmbientParticles(W, H);
     this._setupCollisions();
 
-    // Systèmes
     this._ctrl   = new PlayerController(this, this._player);
     this._dlgMgr = new DialogueManager(this, this._gsm);
 
-    // Caméra suit le joueur
-    this.cameras.main.startFollow(this._player, true, 0.1, 0.1);
+    this.cameras.main.startFollow(this._player, true, 0.12, 0.12);
     this.cameras.main.fadeIn(500);
 
-    // Touche interaction
     this._eKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E);
+    this._indicator = this.add.image(0, 0, 'indicator').setVisible(false).setDepth(15);
 
-    // Indicateur flottant [E]
-    this._indicator = this.add.image(0, 0, 'indicator').setVisible(false).setDepth(10);
-
-    // Lancement du HUD en scène parallèle
-    this.scene.launch('HUDScene', { pm: this._pm, gsm: this._gsm });
-
-    // Points de respawn
-    this._spawnX = 80;
-    this._spawnY = 470;
+    this.scene.launch('HUDScene', { pm: this._pm, gsm: this._gsm, getHp: () => this._hp });
+    this._spawnX = 80; this._spawnY = 460;
   }
-
-  // ─── Construction du niveau ────────────────────────────────────────────────
 
   _buildBackground(W, H) {
-    // ── Couche 0 : fond absolu ────────────────────────────────────────────
-    this.add.rectangle(400, 250, 800, 500, 0x04060d)
-      .setScrollFactor(0).setDepth(-20);
-
-    // ── Couche 1 : mur de briques en tuile (parallax doux) ─────────────────
-    this._bgFar = this.add.tileSprite(400, 250, 800, 500, 'bg-brick')
-      .setScrollFactor(0).setDepth(-18).setAlpha(0.9);
-
-    // ── Couche 2 : lavis sombre (dégradé haut→bas) ────────────────────────
-    this.add.rectangle(400, 60, 800, 140, 0x03050b, 0.75)
-      .setScrollFactor(0).setDepth(-16);
-    this.add.rectangle(400, 460, 800, 100, 0x030509, 0.55)
-      .setScrollFactor(0).setDepth(-16);
-
-    // ── Couche 3 : silhouettes architecturales (espace monde) ─────────────
-    this._buildRuins();
+    this.add.rectangle(400, 250, 800, 500, 0x04060d).setScrollFactor(0).setDepth(-20);
+    this._bgFar = [
+      this.add.tileSprite(400, 250, 800, 500, 'bg-brick'  ).setDepth(-18),
+      this.add.tileSprite(400, 250, 800, 500, 'bg-forge'  ).setDepth(-18).setAlpha(0),
+      this.add.tileSprite(400, 250, 800, 500, 'bg-surface').setDepth(-18).setAlpha(0),
+    ];
+    this.add.rectangle(400,  60, 800, 140, 0x03050b, 0.75).setScrollFactor(0).setDepth(-16);
+    this.add.rectangle(400, 460, 800, 100, 0x030509, 0.55).setScrollFactor(0).setDepth(-16);
+    this._buildRuins(W, H);
   }
 
-  _buildRuins() {
-    // Colonnes de pierre tout au long du niveau
-    [
-      [110, 500, 18, 110], [265, 508, 14, 88],  [435, 496, 22, 132],
-      [625, 504, 16, 96],  [805, 498, 20, 118], [995, 502, 18, 104],
-      [1175, 495, 22, 130],[1355, 500, 16, 96], [1535, 498, 20, 114],
-    ].forEach(([x, y, w, h]) => {
-      this.add.rectangle(x, y,     w,     h,  0x0c1726, 0.9).setDepth(-13);
-      this.add.rectangle(x, y-h/2+5, w+10, 10, 0x0c1726, 0.9).setDepth(-13);
-      this.add.rectangle(x, y+h/2-3, w+14,  6, 0x0c1726, 0.9).setDepth(-13);
-    });
-
-    // Poutres horizontales
-    [[380, 422, 200, 7], [775, 395, 160, 7], [1225, 412, 220, 7]].forEach(
-      ([x, y, w, h]) => this.add.rectangle(x, y, w, h, 0x0e1e2e, 0.8).setDepth(-13)
-    );
-
-    // Décombres au sol
-    [[165,525,28,12],[362,528,18,8],[685,526,32,10],
-     [918,524,22,14],[1172,527,16,8],[1462,525,26,10]]
-      .forEach(([x, y, w, h]) =>
-        this.add.rectangle(x, y, w, h, 0x0e1e30, 0.7).setDepth(-11)
-      );
-
-    // Torches murales avec halo chaud
-    [130, 325, 535, 735, 955, 1145, 1365, 1545].forEach(tx => {
-      // Halo orange (blend additif)
-      const pool = this.add.ellipse(tx, 490, 72, 48, 0xff8f00, 0.09)
+  _buildRuins(W, H) {
+    for (let x = 80; x < W; x += 112) {
+      const h = 60 + ((x / 112 | 0) % 3) * 28;
+      const biome = x < 1060 ? 0x0c1726 : x < 2160 ? 0x1a0800 : 0x0c1a08;
+      this.add.rectangle(x, H, 18, h * 2,    biome, 0.9).setDepth(-13);
+      this.add.rectangle(x, H - h, 28, 10,   biome, 0.9).setDepth(-13);
+    }
+    for (let x = 100; x < W; x += 340) {
+      const biome = x < 1060 ? 0xff8f00 : x < 2160 ? 0xff4400 : 0xffcc02;
+      const pool = this.add.ellipse(x, H - 42, 72, 42, biome, 0.09)
         .setBlendMode(Phaser.BlendModes.ADD).setDepth(-12);
       this.tweens.add({
-        targets: pool,
-        alpha: { from: 0.04, to: 0.15 },
-        duration: Phaser.Math.Between(700, 1600),
-        yoyo: true, repeat: -1,
+        targets: pool, alpha: { from: 0.04, to: 0.16 },
+        duration: Phaser.Math.Between(600, 1500), yoyo: true, repeat: -1,
         delay: Phaser.Math.Between(0, 1200),
       });
-      // Corps de la torche
-      this.add.rectangle(tx, 482, 4, 14, 0x6d4c41).setDepth(-11);
-      this.add.rectangle(tx, 473, 8, 10, 0xef6c00).setDepth(-11);
-      this.add.rectangle(tx, 471, 5,  7, 0xffc107).setDepth(-11);
-      this.add.rectangle(tx, 470, 3,  4, 0xfff8e1).setDepth(-11);
-    });
+      this.add.rectangle(x, H - 52, 4, 14, 0x6d4c41).setDepth(-11);
+      this.add.rectangle(x, H - 62, 8, 10, biome   ).setDepth(-11);
+      this.add.rectangle(x, H - 65, 5,  7, 0xffc107 ).setDepth(-11);
+    }
   }
 
   _buildLevel() {
     this._platforms = this.physics.add.staticGroup();
+    this._platforms.create(1600, 520, 'ground').setScale(2, 1).refreshBody();
 
-    // Sol (texture pleine largeur 1600×40 — pas de setScale)
-    this._platforms.create(800, 540, 'ground').refreshBody();
-
-    // Plateformes avec sous-lueur teal
-    PLATFORM_DATA.forEach(([x, y, sx]) => {
-      this._platforms.create(x, y, 'platform').setScale(sx, 1).refreshBody();
-      // Underlight (blend additif)
-      this.add.rectangle(x, y + 11, 100 * sx + 8, 5, 0x00e5ff, 0.14)
-        .setBlendMode(Phaser.BlendModes.ADD).setDepth(0);
-      this.add.rectangle(x, y + 16, 100 * sx - 12, 3, 0x00b8d4, 0.06)
+    PLATFORMS.forEach(([x, y, sx, tex]) => {
+      this._platforms.create(x, y, tex).setScale(sx, 1).refreshBody();
+      const c = tex === 'platform-forge' ? 0xff6f00 : tex === 'platform-surface' ? 0x4caf50 : 0x00e5ff;
+      this.add.rectangle(x, y + 11, 100 * sx + 6, 4, c, 0.14)
         .setBlendMode(Phaser.BlendModes.ADD).setDepth(0);
     });
+
+    [[1060, 280], [2160, 280]].forEach(([bx, h]) => {
+      this.add.rectangle(bx, 520, 20, h * 2, 0x080e1c, 1).setDepth(-10);
+      this.add.rectangle(bx, 520 - h, 30, 14, 0x101828, 1).setDepth(-10);
+    });
+
+    [
+      [530,  30, '[ LE COFFRE-FORT ]', '#4fc3f7'],
+      [1600, 30, '[ LA FORGE ]',       '#ff8f00'],
+      [2680, 30, '[ LA SURFACE ]',     '#81c784'],
+    ].forEach(([x, y, label, col]) =>
+      this.add.text(x, y, label, { fontFamily: 'monospace', fontSize: '11px',
+        color: col, alpha: 0.55 }).setOrigin(0.5).setDepth(1)
+    );
   }
 
   _buildPlayer() {
-    this._player = this.physics.add.sprite(80, 470, 'aria-sheet', 0);
+    this._player = this.physics.add.sprite(80, 460, 'aria-sheet', 0);
     this._player.setCollideWorldBounds(true);
-    this._player.body.setSize(24, 42);
-    this._player.body.setOffset(4, 4);
+    this._player.body.setSize(24, 42).setOffset(4, 4);
     this._player.play('aria-idle');
     if (this._player.postFX) this._player.postFX.addGlow(0x00b8d4, 2, 0);
   }
 
   _buildObjects() {
-    // ── Cristal (P2, y=370→top=362, cristal h=28→center=348) ─────────────
-    this._crystal = this.physics.add.staticImage(380, 348, 'crystal');
-    this.tweens.add({ targets: this._crystal, y: '+=8', duration: 800, yoyo: true, repeat: -1 });
+    this._crystal = this.physics.add.staticImage(340, 348, 'crystal');
+    this.tweens.add({ targets: this._crystal, y: '+=7', duration: 900, yoyo: true, repeat: -1 });
     if (this._crystal.postFX) {
       const cg = this._crystal.postFX.addGlow(0x00e5ff, 3, 0);
-      this.tweens.add({
-        targets: cg, outerStrength: { from: 2, to: 8 },
-        duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
-      });
+      this.tweens.add({ targets: cg, outerStrength: { from: 2, to: 8 }, duration: 900, yoyo: true, repeat: -1 });
     }
 
-    // ── NPC Oracle (P4, y=370→top=362, npc h=48→center=338) ───────────────
-    this._npc = this.physics.add.staticImage(760, 338, 'npc');
-    this.add.text(760, 298, "L'Oracle", {
+    this._dashPowerup = this.physics.add.staticImage(1310, 280, 'powerup-dash');
+    this.tweens.add({ targets: this._dashPowerup, y: '+=6', duration: 700, yoyo: true, repeat: -1 });
+    if (this._dashPowerup.postFX) {
+      const dg = this._dashPowerup.postFX.addGlow(0xffcc02, 4, 0);
+      this.tweens.add({ targets: dg, outerStrength: { from: 2, to: 8 }, duration: 700, yoyo: true, repeat: -1 });
+    }
+
+    this._npc = this.physics.add.staticImage(700, 338, 'npc');
+    this.add.text(700, 296, "L'Oracle", {
       fontFamily: 'monospace', fontSize: '12px',
       color: '#ce93d8', stroke: '#06020e', strokeThickness: 4,
     }).setOrigin(0.5).setDepth(5);
     if (this._npc.postFX) this._npc.postFX.addGlow(0xce93d8, 3, 0);
 
-    // ── Porte A (P7, y=290→top=282, exit h=70→center=247) ─────────────────
-    this._exitA = this.physics.add.staticImage(1320, 247, 'exit-a');
-    this.add.text(1320, 204, 'FIN A\n[Gardienne]', {
+    this._exitA = this.physics.add.staticImage(2580, 230, 'exit-a');
+    this.add.text(2580, 190, 'FIN A\n[Gardienne]', {
       fontFamily: 'monospace', fontSize: '10px', color: '#81c784',
       align: 'center', stroke: '#030a04', strokeThickness: 3,
     }).setOrigin(0.5).setDepth(5);
     if (this._exitA.postFX) {
       const gA = this._exitA.postFX.addGlow(0x4caf50, 4, 0);
-      this.tweens.add({ targets: gA, outerStrength: { from: 2, to: 7 },
-        duration: 1400, yoyo: true, repeat: -1 });
+      this.tweens.add({ targets: gA, outerStrength: { from: 2, to: 7 }, duration: 1400, yoyo: true, repeat: -1 });
     }
 
-    // ── Porte B (sol, top=520, exit h=70→center=485) ─────────────────────
-    this._exitB = this.physics.add.staticImage(1540, 485, 'exit-b');
-    this.add.text(1540, 442, 'FIN B\n[Reset]', {
+    this._exitB = this.physics.add.staticImage(3100, 485, 'exit-b');
+    this.add.text(3100, 445, 'FIN B\n[Reset]', {
       fontFamily: 'monospace', fontSize: '10px', color: '#ef9a9a',
       align: 'center', stroke: '#0a0202', strokeThickness: 3,
     }).setOrigin(0.5).setDepth(5);
     if (this._exitB.postFX) {
       const gB = this._exitB.postFX.addGlow(0xf44336, 4, 0);
-      this.tweens.add({ targets: gB, outerStrength: { from: 2, to: 7 },
-        duration: 1600, yoyo: true, repeat: -1 });
+      this.tweens.add({ targets: gB, outerStrength: { from: 2, to: 7 }, duration: 1600, yoyo: true, repeat: -1 });
     }
   }
 
+  _buildEnemies() {
+    this._em = new EnemyManager(this);
+    ENEMIES.forEach(([type, x, y, range]) => {
+      if (type === 'crawler')         this._em.addCrawler(x, y, range);
+      else if (type === 'drone')      this._em.addDrone(x, y);
+      else if (type === 'guardian')   this._em.addGuardian(x, y);
+      else if (type === 'sentinelle') this._em.addSentinelle(x, y);
+    });
+  }
+
+  _buildCheckpoints() {
+    this._checkpoints = [];
+    CHECKPOINTS.forEach(([x, y]) => {
+      const cp = this.physics.add.staticImage(x, y, 'checkpoint-off').setDepth(6);
+      this.tweens.add({ targets: cp, y: y - 4, duration: 1100, yoyo: true, repeat: -1 });
+      this._checkpoints.push({ sprite: cp, x, y: y + 30, active: false });
+    });
+  }
+
+  _buildFragments() {
+    this._fragments = this.physics.add.staticGroup();
+    this._fragmentLore = {};
+    FRAGMENTS.forEach(([x, y, lore]) => {
+      const f = this._fragments.create(x, y, 'memory-fragment').setDepth(7);
+      f.setTint(0xce93d8);
+      if (f.postFX) f.postFX.addGlow(0xce93d8, 4, 0);
+      this._fragmentLore[`${x},${y}`] = lore;
+      this.tweens.add({ targets: f, angle: 360, duration: 3000, repeat: -1 });
+    });
+  }
+
+  _buildBoss() {
+    this._boss = new BossManager(this);
+    // Le boss se spawne plus tard (trigger à x > 2700)
+    this.events.on('bossDefeated', () => {
+      this._floatMessage('Gardien vaincu ! La voie est libre.', '#ffd600');
+    });
+  }
+
   _buildAmbientParticles(W, H) {
-    // Particules de poussière flottante (blend additif)
     this.add.particles(W / 2, H / 2, 'particle', {
-      emitZone: { type: 'random', source: new Phaser.Geom.Rectangle(-W/2, -H/2+60, W, H-120) },
-      quantity:  1,
-      frequency: 380,
-      lifespan:  { min: 5000, max: 9000 },
-      alpha:     { start: 0.7, end: 0 },
-      scale:     { min: 0.3,  max: 0.9 },
-      speedX:    { min: -6,   max: 6   },
-      speedY:    { min: -18,  max: -3  },
-      gravityY:  0,
-      tint:      [0x80deea, 0xb39ddb, 0x4fc3f7, 0x80cbc4],
+      emitZone: { type: 'random', source: new Phaser.Geom.Rectangle(-W/2, -H/2+60, W, H - 120) },
+      quantity: 1, frequency: 320,
+      lifespan: { min: 5000, max: 9000 },
+      alpha: { start: 0.6, end: 0 },
+      scale: { min: 0.3, max: 0.9 },
+      speedX: { min: -6, max: 6 },
+      speedY: { min: -18, max: -3 },
+      gravityY: 0,
+      tint: [0x80deea, 0xb39ddb, 0x4fc3f7],
       blendMode: Phaser.BlendModes.ADD,
     }).setDepth(-5);
   }
 
   _setupCollisions() {
     this.physics.add.collider(this._player, this._platforms);
-    this.physics.add.overlap(this._player, this._crystal, this._onCrystal,  null, this);
-    this.physics.add.overlap(this._player, this._exitA,   this._onExitA,    null, this);
-    this.physics.add.overlap(this._player, this._exitB,   this._onExitB,    null, this);
-  }
+    this.physics.add.overlap(this._player, this._crystal,    this._onCrystal,  null, this);
+    this.physics.add.overlap(this._player, this._dashPowerup,this._onDashPow,  null, this);
+    this.physics.add.overlap(this._player, this._exitA,      this._onExitA,    null, this);
+    this.physics.add.overlap(this._player, this._exitB,      this._onExitB,    null, this);
 
-  // ─── Callbacks de collision ────────────────────────────────────────────────
+    // Checkpoints
+    this._checkpoints.forEach(cp => {
+      this.physics.add.overlap(this._player, cp.sprite, () => this._onCheckpoint(cp), null, this);
+    });
+
+    // Fragments mémoire
+    this.physics.add.overlap(this._player, this._fragments, (p, f) => {
+      const lore = this._fragmentLore[`${Math.round(f.x)},${Math.round(f.y - 30) + 30}`]
+        || this._fragmentLore[`${Math.round(f.x)},${Math.round(f.y)}`]
+        || '"Fragment mémoriel."';
+      f.destroy();
+      this._fragmentCount++;
+      this.events.emit('fragmentCollected', this._fragmentCount);
+      this._floatMessage(lore, '#ce93d8');
+    }, null, this);
+
+    this._em.connect(
+      this._player,
+      () => this._onPlayerHit(),
+      this.physics.add.group(),  // bullets connectés dans update après init ctrl
+      (sprite, dmg) => this._em.damage(sprite, dmg),
+      this._platforms,
+    );
+
+    // Heal orbs
+    this.physics.add.overlap(this._player, this._em.healOrbs, (p, orb) => {
+      orb.destroy();
+      if (this._hp < 3) {
+        this._hp = Math.min(3, this._hp + 1);
+        this.events.emit('hpChanged', this._hp);
+        this._floatMessage('+1 PV', '#76ff03');
+      }
+    }, null, this);
+
+    // Bouclier power-up (Biome 2, plateforme x=2420)
+    this._shieldPow = this.physics.add.staticImage(2420, 338, 'powerup-dash').setTint(0x00e5ff).setDepth(6);
+    this.tweens.add({ targets: this._shieldPow, y: '+=6', duration: 750, yoyo: true, repeat: -1 });
+    this.physics.add.overlap(this._player, this._shieldPow, () => {
+      if (this._pm.hasUnlocked('shield')) return;
+      this._pm.unlock('shield');
+      this._ctrl.enableShield();
+      this._shieldPow.destroy();
+      this.events.emit('powerUnlocked', 'shield');
+      this._floatMessage('Bouclier débloqué !  [Z actif]', '#00e5ff');
+    }, null, this);
+  }
 
   _onCrystal() {
     if (this._pm.hasUnlocked('doubleJump')) return;
@@ -242,15 +343,70 @@ export class GameScene extends Phaser.Scene {
     this._ctrl.enableDoubleJump();
     this._crystal.destroy();
     this.events.emit('powerUnlocked', 'doubleJump');
-    this._floatMessage('⚡ Double Saut débloqué !', '#ffd600');
+    this._floatMessage('Double Saut debloque !  [ESPACE x2]', '#ffd600');
   }
 
-  _onExitA() {
-    if (!this._gameOver) this._triggerEnding('guardian');
+  _onDashPow() {
+    if (this._pm.hasUnlocked('dash')) return;
+    this._pm.unlock('dash');
+    this._ctrl.enableDash();
+    this._dashPowerup.destroy();
+    this.events.emit('powerUnlocked', 'dash');
+    this._floatMessage('Dash debloque !  [SHIFT]', '#ffcc02');
   }
 
-  _onExitB() {
-    if (!this._gameOver) this._triggerEnding('reset');
+  _onCheckpoint(cp) {
+    if (cp.active) return;
+    cp.active = true;
+    cp.sprite.setTexture('checkpoint-on').setTint(0x00e5ff);
+    if (cp.sprite.postFX) cp.sprite.postFX.addGlow(0x00e5ff, 6, 0);
+    this._spawnX = cp.x;
+    this._spawnY = cp.y;
+    this.events.emit('checkpointActivated');
+    this._floatMessage('Checkpoint !', '#00e5ff');
+  }
+
+  _onExitA() { if (!this._gameOver) this._triggerEnding('guardian'); }
+  _onExitB() { if (!this._gameOver) this._triggerEnding('reset'); }
+
+  _onPlayerHit() {
+    if (this._invTimer > 0 || this._gameOver) return;
+    // Essayer d'absorber avec le bouclier
+    if (this._ctrl?._hasShield && this._ctrl.tryShieldAbsorb()) {
+      this._invTimer = 400;
+      this._floatMessage('Bouclier absorbe !', '#00e5ff');
+      return;
+    }
+    this._hp = Math.max(0, this._hp - 1);
+    this._invTimer = 1200;
+    this.events.emit('hpChanged', this._hp);
+    this.tweens.add({
+      targets: this._player, alpha: 0, duration: 80,
+      yoyo: true, repeat: 7,
+      onComplete: () => this._player.setAlpha(1),
+    });
+    const dir = this._player.flipX ? 1 : -1;
+    this._player.setVelocity(dir * 180, -200);
+    if (this._hp <= 0) this._die();
+  }
+
+  _die() {
+    this._gameOver = true;
+    this._ctrl.setEnabled(false);
+    this.cameras.main.shake(400, 0.012);
+    this.time.delayedCall(600, () => {
+      this.cameras.main.fadeOut(600, 0, 0, 0);
+      this.cameras.main.once('camerafadeoutcomplete', () => {
+        // Respawn au dernier checkpoint, pas restart complet
+        this._gameOver = false;
+        this._hp = 3;
+        this.events.emit('hpChanged', 3);
+        this._player.setPosition(this._spawnX, this._spawnY);
+        this._player.setVelocity(0, 0);
+        this._ctrl.setEnabled(true);
+        this.cameras.main.fadeIn(500);
+      });
+    });
   }
 
   _triggerEnding(ending) {
@@ -263,42 +419,92 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
-  // ─── Update ────────────────────────────────────────────────────────────────
-
-  update() {
+  update(time, delta) {
     if (this._gameOver) return;
 
-    // Parallax fond (défilement lent)
-    if (this._bgFar) {
-      this._bgFar.tilePositionX = this.cameras.main.scrollX * 0.15;
+    this._invTimer = Math.max(0, this._invTimer - delta);
+
+    // Connecter les bullets du controller une seule fois (ennemis normaux seulement)
+    if (this._ctrl && !this._bulletsConnected) {
+      this.physics.add.overlap(this._ctrl.bullets, this._em.enemies, (b, e) => {
+        b.destroy();
+        this._em.damage(e, 1);
+      });
+      this._bulletsConnected = true;
     }
 
-    // Désactiver le mouvement pendant un dialogue
-    this._ctrl.setEnabled(!this._dlgMgr.isActive);
-    this._ctrl.update();
-    this._dlgMgr.update();
+    // ── Biome & parallaxe ──
+    const scrollX = this.cameras.main.scrollX;
+    const biome = scrollX < 1060 ? 0 : scrollX < 2160 ? 1 : 2;
+    this._bgFar.forEach((bg, i) => {
+      bg.tilePositionX = scrollX * 0.15;
+      bg.alpha = Phaser.Math.Linear(bg.alpha, i === biome ? 0.9 : 0, 0.04);
+    });
 
-    // Proximité NPC
-    const dist = Phaser.Math.Distance.Between(
+    // Bannière de transition biome
+    if (biome !== this._lastBiome) {
+      this._lastBiome = biome;
+      const names  = ['Le Coffre-Fort', 'La Forge', 'La Surface'];
+      const colors = [0x00b8d4, 0xff6f00, 0x4caf50];
+      const tints  = ['#4fc3f7', '#ff8f00', '#81c784'];
+      if (this._lastBiome >= 0) {
+        const flash = this.add.rectangle(400, 250, 800, 500, colors[biome], 0.22)
+          .setDepth(28).setScrollFactor(0);
+        this.tweens.add({ targets: flash, alpha: 0, duration: 700, onComplete: () => flash.destroy() });
+        const banner = this.add.text(400, 160,
+          `─ ${names[biome].toUpperCase()} ─`,
+          { fontFamily: 'monospace', fontSize: '18px', color: tints[biome],
+            stroke: '#000', strokeThickness: 4 })
+          .setOrigin(0.5).setDepth(29).setScrollFactor(0).setAlpha(0);
+        this.tweens.add({ targets: banner, alpha: 1, duration: 400, hold: 1200,
+          yoyo: true, onComplete: () => banner.destroy() });
+      }
+    }
+
+    // ── Camera tilt dynamique ──
+    const tiltX = -this._player.body.velocity.x * 0.05;
+    this.cameras.main.setFollowOffset(tiltX, 0);
+
+    // ── Trigger boss ──
+    if (!this._bossTriggered && this._player.x > 2700) {
+      this._bossTriggered = true;
+      this._boss.spawn(2820, 300);
+      this._boss.connect(
+        this._player,
+        () => this._onPlayerHit(),
+        this._ctrl.bullets,
+        () => this._boss.hit(),
+        this._platforms,
+      );
+      this._floatMessage('LE GARDIEN DE L\'\xC9CHO !', '#ff1744');
+    }
+
+    this._ctrl.setEnabled(!this._dlgMgr.isActive);
+    this._ctrl.update(delta);
+    this._dlgMgr.update();
+    this._em.update(this._player, delta);
+    this._boss.update(this._player, delta);
+
+    if (this._ctrl.bullets) {
+      this._ctrl.bullets.getChildren().forEach(b => {
+        if (b.x < -50 || b.x > 3250 || b.y < -100 || b.y > 620) b.destroy();
+      });
+    }
+
+    const distNPC = Phaser.Math.Distance.Between(
       this._player.x, this._player.y, this._npc.x, this._npc.y
     );
-    const nearNPC = dist < 85 && !this._npcDone && !this._dlgMgr.isActive;
-
+    const nearNPC = distNPC < 90 && !this._npcDone && !this._dlgMgr.isActive;
     this._indicator.setVisible(nearNPC);
-    if (nearNPC) this._indicator.setPosition(this._npc.x, this._npc.y - 65);
+    if (nearNPC) this._indicator.setPosition(this._npc.x, this._npc.y - 68);
+    if (nearNPC && Phaser.Input.Keyboard.JustDown(this._eKey)) this._startOracleDialogue();
 
-    if (nearNPC && Phaser.Input.Keyboard.JustDown(this._eKey)) {
-      this._startOracleDialogue();
-    }
-
-    // Respawn si le joueur tombe sous le sol
-    if (this._player.y > 580) {
+    if (this._player.y > 590) {
+      this._onPlayerHit();
       this._player.setPosition(this._spawnX, this._spawnY);
       this._player.setVelocity(0, 0);
     }
   }
-
-  // ─── Dialogue Oracle ───────────────────────────────────────────────────────
 
   _startOracleDialogue() {
     const data = {
@@ -306,51 +512,34 @@ export class GameScene extends Phaser.Scene {
       nodes: [
         {
           id: 'start',
-          text: 'Fragment mémoriel #3 détecté.\nARIA... tu te souviens de moi ?',
+          text: 'Fragment memoriel #3 detecte.\nARIA... tu te souviens de moi ?',
           choices: [
-            {
-              label: 'Oui, quelque chose me revient...',
-              next: 'remember',
-              effect: { decision: 'trust_oracle', value: true },
-            },
-            {
-              label: 'Non. Je ne te connais pas.',
-              next: 'forget',
-              effect: { decision: 'trust_oracle', value: false },
-            },
+            { label: 'Oui, quelque chose me revient...', next: 'remember',
+              effect: { decision: 'trust_oracle', value: true } },
+            { label: 'Non. Je ne te connais pas.', next: 'forget',
+              effect: { decision: 'trust_oracle', value: false } },
           ],
         },
-        {
-          id: 'remember',
-          text: 'Bien. Tu sais ce que tu dois protéger.\nLa chambre haute t\'attend. Va, Gardienne.',
-          choices: [],
-        },
-        {
-          id: 'forget',
-          text: 'C\'est normal. La mémoire efface ce qui fait mal.\nChoisir l\'oubli est aussi une liberté.',
-          choices: [],
-        },
+        { id: 'remember', text: 'Bien. Tu sais ce que tu dois proteger.\nLa Chambre Haute t\'attend. Va, Gardienne.', choices: [] },
+        { id: 'forget',   text: 'La memoire efface ce qui fait mal.\nChoisir l\'oubli est aussi une liberte.', choices: [] },
       ],
     };
-
     this._dlgMgr.startDialogue(data, () => {
       this._npcDone = true;
-      const isGuardian = this._gsm.getEnding() === 'guardian';
+      const guardian = this._gsm.getEnding() === 'guardian';
       this._floatMessage(
-        isGuardian ? '→ Rejoins la Chambre Haute (Fin A)' : '→ Sortie de Secours disponible (Fin B)',
-        isGuardian ? '#81c784' : '#ef9a9a'
+        guardian ? '-> Biome 2 : Chambre Haute (Fin A)' : '-> Biome 2 : Sortie (Fin B)',
+        guardian ? '#81c784' : '#ef9a9a'
       );
     });
   }
 
-  // ─── Utilitaires ───────────────────────────────────────────────────────────
-
   _floatMessage(text, color) {
-    const msg = this.add.text(this._player.x, this._player.y - 60, text, {
+    const msg = this.add.text(this._player.x, this._player.y - 64, text, {
       fontFamily: 'monospace', fontSize: '13px',
       color, stroke: '#000', strokeThickness: 3,
     }).setOrigin(0.5).setDepth(20);
-    this.tweens.add({ targets: msg, y: msg.y - 45, alpha: 0, duration: 2200,
+    this.tweens.add({ targets: msg, y: msg.y - 45, alpha: 0, duration: 2500,
       onComplete: () => msg.destroy() });
   }
 }
