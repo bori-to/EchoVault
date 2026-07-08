@@ -42,8 +42,6 @@ export class BossManager {
     // Aura postFX
     if (this.sprite.postFX) this.sprite.postFX.addGlow(0xff1744, 10, 0);
 
-    // Barre de vie dans la scène
-    this._buildHPBar();
     this.scene.events.emit('bossSpawned', { max: MAX_HP });
     this.scene.cameras.main.shake(300, 0.012);
   }
@@ -53,8 +51,18 @@ export class BossManager {
     const s = this.scene;
     s.physics.add.collider(this.sprite, platforms);
     s.physics.add.overlap(player, this.sprite, () => onPlayerHit(), null, s);
-    s.physics.add.overlap(player, this.bullets, (p, b) => { b.destroy(); onPlayerHit(); }, null, s);
-    s.physics.add.overlap(playerBullets, this.sprite, (b) => { b.destroy(); onHit(); }, null, s);
+    s.physics.add.overlap(player, this.bullets, (p, b) => {
+      // 'b' peut être inversé selon la version de Phaser — identifier la balle
+      const bullet = this.bullets.contains(b) ? b : p;
+      bullet.destroy();
+      onPlayerHit();
+    }, null, s);
+    s.physics.add.overlap(playerBullets, this.sprite, (a, b) => {
+      // Phaser peut passer (sprite, bullet) ou (bullet, sprite) selon le contexte
+      const bullet = playerBullets.contains(a) ? a : b;
+      if (bullet && bullet.active) bullet.destroy();
+      onHit();
+    }, null, s);
   }
 
   registerDeathCallback(cb) { this._onDeath = cb; }
@@ -71,7 +79,7 @@ export class BossManager {
       });
     }
     this._updatePhase();
-    this._updateHPBar();
+    this.scene.events.emit('bossHit', this._hp);
     if (this._hp <= 0) this._die();
   }
 
@@ -174,21 +182,6 @@ export class BossManager {
     }
   }
 
-  _buildHPBar() {
-    this._hpBg  = this.scene.add.rectangle(400, 18, 260, 10, 0x263238).setDepth(25).setScrollFactor(0);
-    this._hpBar = this.scene.add.rectangle(270, 18, 260, 10, 0xff1744).setDepth(26).setScrollFactor(0);
-    this._hpBar.setOrigin(0, 0.5);
-    this._hpLabel = this.scene.add.text(400, 32, 'LE GARDIEN DE L\'ÉCHO', {
-      fontSize: '10px', color: '#ff5252', fontFamily: 'monospace',
-    }).setOrigin(0.5).setDepth(26).setScrollFactor(0);
-  }
-
-  _updateHPBar() {
-    if (!this._hpBar) return;
-    const pct = Math.max(0, this._hp / MAX_HP);
-    this._hpBar.setScale(pct, 1);
-  }
-
   _die() {
     this.active = false;
     const ex = this.sprite.x;
@@ -208,9 +201,6 @@ export class BossManager {
     }
     this.scene.time.delayedCall(800, () => {
       if (this.sprite?.active) this.sprite.destroy();
-      if (this._hpBar)  this._hpBar.destroy();
-      if (this._hpBg)   this._hpBg.destroy();
-      if (this._hpLabel) this._hpLabel.destroy();
       this.scene.cameras.main.shake(400, 0.022);
       this.scene.events.emit('bossDefeated');
       if (this._onDeath) this._onDeath();

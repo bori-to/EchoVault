@@ -95,6 +95,7 @@ export class GameScene extends Phaser.Scene {
     this.cameras.main.setBounds(0, 0, W, H);
 
     this._buildBackground(W, H);
+    this._buildDecoration(W, H);
     this._buildLevel();
     this._buildPlayer();
     this._buildObjects();
@@ -128,6 +129,83 @@ export class GameScene extends Phaser.Scene {
     this.add.rectangle(400,  60, 800, 140, 0x03050b, 0.75).setScrollFactor(0).setDepth(-16);
     this.add.rectangle(400, 460, 800, 100, 0x030509, 0.55).setScrollFactor(0).setDepth(-16);
     this._buildRuins(W, H);
+  }
+
+  _buildDecoration(W, H) {
+    const depth = -5;
+
+    // ─── BIOME 0 — Le Coffre-Fort (x 0–1060) ────────────────────────────
+    // Stalactites au plafond
+    [[120,0],[280,0],[450,0],[600,0],[760,0],[900,0],[1020,0]].forEach(([x, _]) => {
+      const h = 20 + ((x/10)|0) % 30;
+      const s = this.add.image(x, h/2, 'deco-stalactite').setDepth(depth).setOrigin(0.5, 0);
+      s.setScale(1 + (x%3)*0.3, 0.6 + (x%5)*0.15);
+      s.setAlpha(0.7 + (x%4)*0.06);
+      if (s.postFX) s.postFX.addGlow(0x00e5ff, 2, 0);
+    });
+    // Chaînes pendantes
+    [[190,0],[520,0],[840,0]].forEach(([x]) => {
+      for (let seg = 0; seg < 3; seg++) {
+        this.add.image(x + seg*8, 30 + seg*36, 'deco-chain').setDepth(depth).setAlpha(0.65);
+      }
+    });
+    // Lueurs de runes au sol
+    [[150,504],[400,504],[680,504],[950,504]].forEach(([x, y]) => {
+      const rune = this.add.ellipse(x, y, 18, 8, 0x00e5ff, 0.12).setDepth(depth)
+        .setBlendMode(Phaser.BlendModes.ADD);
+      this.tweens.add({ targets: rune, alpha: { from: 0.06, to: 0.22 },
+        duration: Phaser.Math.Between(800,1600), yoyo: true, repeat: -1 });
+    });
+
+    // ─── BIOME 1 — La Forge (x 1060–2160) ─────────────────────────────
+    // Tuyaux de vapeur
+    [[1100,480],[1340,470],[1580,475],[1760,480],[2000,472],[2130,478]].forEach(([x, y]) => {
+      this.add.image(x, y, 'deco-pipe').setDepth(depth).setOrigin(0.5, 1).setAlpha(0.80);
+    });
+    // Flaques de lave lumineuses au sol
+    [[1200,510],[1450,510],[1700,510],[1920,510]].forEach(([x, y]) => {
+      const lava = this.add.ellipse(x, y, 60, 16, 0xff4400, 0.14).setDepth(depth)
+        .setBlendMode(Phaser.BlendModes.ADD);
+      this.tweens.add({ targets: lava, alpha: { from: 0.08, to: 0.22 },
+        duration: Phaser.Math.Between(400,900), yoyo: true, repeat: -1,
+        delay: Phaser.Math.Between(0, 600) });
+      // Colonne de lumière au-dessus
+      this.add.rectangle(x, y - 60, 4, 120, 0xff6600, 0.06)
+        .setDepth(depth).setBlendMode(Phaser.BlendModes.ADD);
+    });
+    // Particules étincelles
+    this.add.particles(1600, 450, 'particle', {
+      emitZone: { type: 'random', source: new Phaser.Geom.Rectangle(-500, -30, 1000, 30) },
+      quantity: 1, frequency: 180, lifespan: { min: 800, max: 2000 },
+      alpha: { start: 0.8, end: 0 }, scale: { min: 0.2, max: 0.7 },
+      speedY: { min: -80, max: -20 }, speedX: { min: -15, max: 15 },
+      tint: [0xff6600, 0xff9900, 0xffcc00], blendMode: Phaser.BlendModes.ADD,
+    }).setDepth(depth);
+
+    // ─── BIOME 2 — La Surface (x 2160–3200) ───────────────────────────
+    // Colonnes brisées
+    [[2210,480],[2480,475],[2650,480],[2870,478],[3080,480],[3160,478]].forEach(([x, y]) => {
+      this.add.image(x, y, 'deco-column').setDepth(depth).setOrigin(0.5, 1)
+        .setAlpha(0.75).setScale(0.9 + (x%3)*0.1, 0.8 + (x%4)*0.08);
+    });
+    // Touffes d’herbe sur le sol
+    for (let x = 2180; x < 3200; x += Phaser.Math.Between(28, 55)) {
+      const g = this.add.image(x, 502, 'deco-grass').setDepth(depth).setOrigin(0.5, 1);
+      g.setAlpha(0.6 + Math.random()*0.3).setScale(0.8 + Math.random()*0.5, 1 + Math.random()*0.4);
+    }
+    // Halos de luneâ (lumiere verte froide douce)
+    [[2300,80],[2600,120],[2900,80],[3150,100]].forEach(([x, y]) => {
+      this.add.ellipse(x, y, 120, 40, 0x1a4020, 0.08)
+        .setDepth(depth).setBlendMode(Phaser.BlendModes.ADD);
+    });
+    // Particules pollen / lucioles
+    this.add.particles(2700, 300, 'particle', {
+      emitZone: { type: 'random', source: new Phaser.Geom.Rectangle(-500, -200, 1000, 400) },
+      quantity: 1, frequency: 250, lifespan: { min: 3000, max: 6000 },
+      alpha: { start: 0.5, end: 0 }, scale: { min: 0.2, max: 0.6 },
+      speedX: { min: -8, max: 8 }, speedY: { min: -12, max: -4 },
+      tint: [0x88ff88, 0xccffcc, 0x44ff88], blendMode: Phaser.BlendModes.ADD,
+    }).setDepth(depth);
   }
 
   _buildRuins(W, H) {

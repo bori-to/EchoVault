@@ -95,82 +95,153 @@ export class BootScene extends Phaser.Scene {
       g.destroy();
     }
 
-    // ─── bg-forge 64×64 — mur de forge volcanique ────────────────────────
+    // ─── bg-forge 64×64 — plaques métal industriel / lave (Biome 1) ───────
     {
       const g = mk();
-      g.fillStyle(0x1a0800); g.fillRect(0, 0, 64, 64);
-      g.fillStyle(0x2a1000); g.fillRect(1, 1, 30, 18);
-      g.fillStyle(0x3a1800); g.fillRect(2, 2, 28, 8);
-      g.fillStyle(0x200a00); g.fillRect(33, 1, 30, 18);
-      g.fillStyle(0x2e1200); g.fillRect(34, 2, 28, 8);
-      g.fillStyle(0x180600); g.fillRect(1, 21, 14, 18);
-      g.fillStyle(0x220c00); g.fillRect(2, 22, 12, 7);
-      g.fillStyle(0x200a00); g.fillRect(17, 21, 30, 18);
-      g.fillStyle(0x2a1000); g.fillRect(18, 22, 28, 7);
-      g.fillStyle(0x1c0800); g.fillRect(1, 41, 30, 22);
-      g.fillStyle(0x281000); g.fillRect(2, 42, 28, 8);
-      g.fillStyle(0x1c0800); g.fillRect(33, 41, 30, 22);
-      g.fillStyle(0x281000); g.fillRect(34, 42, 28, 8);
-      // Fissures lumineuses (lave)
-      g.fillStyle(0xff6f00, 0.6); g.fillRect(14, 5,  1, 14);
-      g.fillStyle(0xff8f00, 0.4); g.fillRect(44, 28, 8, 1);
-      g.fillStyle(0x04080f);
-      g.fillRect(0, 19, 64, 2);  g.fillRect(0, 39, 64, 2);
-      g.fillRect(31, 0, 2, 19);  g.fillRect(15, 19, 2, 20);
+      g.fillStyle(0x090400); g.fillRect(0, 0, 64, 64);
+      // 4 plaques métalliques (grid 2×2, joints 3px)
+      g.fillStyle(0x1e0e06); g.fillRect(0,  0, 29, 29);
+      g.fillStyle(0x261408); g.fillRect(1,  1, 27, 27);
+      g.fillStyle(0x2e1a0a); g.fillRect(1,  1, 27,  7);
+      g.fillStyle(0x180c04); g.fillRect(1, 21, 27,  7);
+      g.fillStyle(0x1c0c04); g.fillRect(32, 0, 32, 29);
+      g.fillStyle(0x241206); g.fillRect(33, 1, 30, 27);
+      g.fillStyle(0x2c1808); g.fillRect(33, 1, 30,  7);
+      g.fillStyle(0x160a02); g.fillRect(33,21, 30,  7);
+      g.fillStyle(0x1e0e06); g.fillRect(0, 32, 29, 32);
+      g.fillStyle(0x261408); g.fillRect(1, 33, 27, 30);
+      g.fillStyle(0x2c180a); g.fillRect(1, 33, 27,  7);
+      g.fillStyle(0x1a0b04); g.fillRect(32,32, 32, 32);
+      g.fillStyle(0x221006); g.fillRect(33,33, 30, 30);
+      g.fillStyle(0x2a1608); g.fillRect(33,33, 30,  7);
+      // Joints
+      g.fillStyle(0x050200); g.fillRect(29, 0, 3, 64);
+      g.fillStyle(0x050200); g.fillRect(0, 29, 64,  3);
+      // Rivets
+      const rivetF = (rx, ry) => {
+        g.fillStyle(0x120800); g.fillRect(rx-2, ry-2, 5, 5);
+        g.fillStyle(0x3c2010); g.fillRect(rx-1, ry-1, 3, 3);
+        g.fillStyle(0x503018); g.fillRect(rx, ry, 1, 1);
+      };
+      [[5,5],[23,5],[5,23],[23,23],[37,5],[58,5],[37,23],[58,23],
+       [5,37],[23,37],[5,58],[23,58],[37,37],[58,37],[37,58],[58,58]].forEach(([rx,ry])=>rivetF(rx,ry));
+      // Fissures de lave
+      g.fillStyle(0xff4400, 0.45); g.fillRect(30, 12, 1, 40);
+      g.fillStyle(0xff6600, 0.22); g.fillRect(29, 12, 3, 40);
+      g.fillStyle(0xff8800, 0.10); g.fillRect(28, 12, 5, 40);
+      g.fillStyle(0xff3300, 0.35); g.fillRect(5, 50, 20, 1);
+      g.fillStyle(0xff5500, 0.18); g.fillRect(5, 49, 20, 3);
+      g.fillStyle(0xff6600, 0.35); g.fillRect(29,29, 5, 5);
+      g.fillStyle(0xffaa00, 0.55); g.fillRect(30,30, 3, 3);
+      g.fillStyle(0xffee00, 0.80); g.fillRect(31,31, 1, 1);
+      g.fillStyle(0xff3300, 0.25); g.fillRect(44, 14, 10, 1);
+      g.fillStyle(0xff5500, 0.12); g.fillRect(44, 13, 10, 3);
       g.generateTexture('bg-forge', 64, 64);
       g.destroy();
     }
 
-    // ─── bg-surface 64×64 — ruines extérieures (ton chaud) ───────────────
+    // ─── bg-surface 64×64 — ciel étoilé + ruines envahies (Biome 2) ───────
     {
       const g = mk();
-      g.fillStyle(0x0e150a); g.fillRect(0, 0, 64, 64);
-      g.fillStyle(0x1a2410); g.fillRect(1, 1, 30, 18);
-      g.fillStyle(0x21301a); g.fillRect(2, 2, 28, 8);
-      g.fillStyle(0x17200e); g.fillRect(33, 1, 30, 18);
-      g.fillStyle(0x1e2c18); g.fillRect(34, 2, 28, 8);
-      g.fillStyle(0x141c0c); g.fillRect(1, 21, 14, 18);
-      g.fillStyle(0x1a2414); g.fillRect(17, 21, 30, 18);
-      g.fillStyle(0x182010); g.fillRect(1, 41, 30, 22);
-      g.fillStyle(0x1e2c18); g.fillRect(33, 41, 30, 22);
+      g.fillStyle(0x040a06); g.fillRect(0, 0, 64, 40);
+      g.fillStyle(0x091508, 0.4); g.fillRect(0, 32, 64, 8);
+      // Étoiles
+      [[5,3],[13,8],[21,4],[29,2],[38,6],[47,3],[56,5],[3,13],[10,18],[19,11],
+       [27,16],[36,10],[45,19],[54,12],[61,8],[7,23],[16,27],[24,20],[32,24],
+       [41,21],[50,28],[8,32],[20,35],[33,30],[44,34],[55,26],[60,32]].forEach(([sx,sy]) => {
+        if (sy < 36) {
+          g.fillStyle(0xffffff, 0.45 + (sx % 4) * 0.14); g.fillRect(sx, sy, 1, 1);
+          if ((sx * sy) % 11 === 0) {
+            g.fillStyle(0xffffff, 0.18); g.fillRect(sx-1, sy, 3, 1);
+            g.fillStyle(0xffffff, 0.18); g.fillRect(sx, sy-1, 1, 3);
+          }
+        }
+      });
+      // Silhouette ruine distante
+      g.fillStyle(0x030603);
+      g.fillRect(0,32,10,8); g.fillRect(0,28,4,4);
+      g.fillRect(14,30,12,10); g.fillRect(18,26,4,4);
+      g.fillRect(36,32,8,8); g.fillRect(50,29,14,11); g.fillRect(54,25,6,4);
+      // Sol pierre (y:40-63)
+      g.fillStyle(0x0c1a08); g.fillRect(0, 40, 64, 24);
+      g.fillStyle(0x102010); g.fillRect(0,  40, 30, 11);
+      g.fillStyle(0x142414); g.fillRect(1,  41, 28,  9);
+      g.fillStyle(0x192c18); g.fillRect(1,  41, 28,  3);
+      g.fillStyle(0x0e1e0c); g.fillRect(32, 40, 32, 11);
+      g.fillStyle(0x12221a); g.fillRect(33, 41, 30,  9);
+      g.fillStyle(0x172a14); g.fillRect(33, 41, 30,  3);
+      g.fillStyle(0x0a1608); g.fillRect(0,  53, 14, 11);
+      g.fillStyle(0x0e1c0c); g.fillRect(1,  54, 12,  9);
+      g.fillStyle(0x0c1a0a); g.fillRect(16, 53, 30, 11);
+      g.fillStyle(0x102010); g.fillRect(17, 54, 28,  9);
+      g.fillStyle(0x162816); g.fillRect(17, 54, 28,  3);
+      g.fillStyle(0x0e1e0c); g.fillRect(48, 53, 16, 11);
+      g.fillStyle(0x040804); g.fillRect(0, 51, 64, 2);
+      g.fillStyle(0x040804); g.fillRect(30,40, 2, 11);
+      g.fillStyle(0x040804); g.fillRect(14,53, 2, 11);
+      g.fillStyle(0x040804); g.fillRect(46,53, 2, 11);
       // Mousse
-      g.fillStyle(0x1b3a10, 0.5); g.fillRect(0, 0, 4, 4);
-      g.fillStyle(0x1b3a10, 0.3); g.fillRect(32, 20, 6, 3);
-      g.fillStyle(0x050a04);
-      g.fillRect(0, 19, 64, 2);  g.fillRect(0, 39, 64, 2);
-      g.fillRect(31, 0, 2, 19);  g.fillRect(15, 19, 2, 20);
+      g.fillStyle(0x1a3a0c, 0.45); g.fillRect(2, 41, 8, 4);
+      g.fillStyle(0x1a3a0c, 0.40); g.fillRect(34,41, 10, 4);
+      g.fillStyle(0x163008, 0.38); g.fillRect(18,54, 5, 3);
+      g.fillStyle(0x224a10, 0.30); g.fillRect(50,54, 8, 3);
+      g.fillStyle(0x2a5010, 0.60); g.fillRect(30,49, 2, 3);
+      g.fillStyle(0x2a5010, 0.55); g.fillRect(14,51, 1, 2);
       g.generateTexture('bg-surface', 64, 64);
       g.destroy();
     }
 
-    // ─── Platform forge 100×16 ────────────────────────────────────────────
+    // ─── Platform forge 100×16 — plaque métal incandescente ───────────────
     {
       const g = mk();
-      g.fillStyle(0x3a1800); g.fillRect(0, 0, 100, 16);
-      g.fillStyle(0xff6f00); g.fillRect(0, 0, 100, 2);
-      g.fillStyle(0xd45200); g.fillRect(0, 2, 100, 2);
-      g.fillStyle(0x4a2000); g.fillRect(1, 4, 48, 11);
-      g.fillStyle(0x5a2a00); g.fillRect(2, 5, 46, 5);
-      g.fillStyle(0x3e1a00); g.fillRect(51, 4, 48, 11);
-      g.fillStyle(0x4e2400); g.fillRect(52, 5, 46, 5);
-      g.fillStyle(0xff6f00, 0.4); g.fillRect(20, 8, 1, 6);
-      g.fillStyle(0xff8f00, 0.3); g.fillRect(72, 10, 7, 1);
-      g.fillStyle(0x1a0800); g.fillRect(49, 3, 2, 13);
+      g.fillStyle(0x1a0e06); g.fillRect(0, 0, 100, 16);
+      g.fillStyle(0xff5500); g.fillRect(0, 0, 100, 1);
+      g.fillStyle(0xe03c00); g.fillRect(0, 1, 100, 1);
+      g.fillStyle(0x602008); g.fillRect(0, 2, 100, 1);
+      g.fillStyle(0x3a1606); g.fillRect(0, 3, 100, 1);
+      g.fillStyle(0x281808); g.fillRect(1,  4, 47, 11);
+      g.fillStyle(0x342010); g.fillRect(2,  5, 45,  5);
+      g.fillStyle(0x1e120a); g.fillRect(2, 11, 45,  3);
+      g.fillStyle(0x241606); g.fillRect(52, 4, 47, 11);
+      g.fillStyle(0x301e0e); g.fillRect(53, 5, 45,  5);
+      g.fillStyle(0x1c100a); g.fillRect(53,11, 45,  3);
+      g.fillStyle(0x0e0602); g.fillRect(49, 3, 2, 13);
+      const rF = (rx,ry) => { g.fillStyle(0x120800); g.fillRect(rx-1,ry-1,3,3); g.fillStyle(0x3e2010); g.fillRect(rx,ry,1,1); };
+      [8,24,40,60,76,92].forEach(rx => rF(rx, 8));
+      g.fillStyle(0xff3300, 0.35); g.fillRect(18, 6, 1, 8);
+      g.fillStyle(0xff5500, 0.18); g.fillRect(17, 6, 3, 8);
+      g.fillStyle(0xff3300, 0.28); g.fillRect(72,10,10, 1);
+      g.fillStyle(0xff5500, 0.14); g.fillRect(72, 9,10, 3);
       g.generateTexture('platform-forge', 100, 16);
       g.destroy();
     }
 
-    // ─── Platform surface 100×16 ──────────────────────────────────────────
+    // ─── Platform surface 100×16 — pierre mousseuse + herbe ─────────────
     {
       const g = mk();
-      g.fillStyle(0x1e2c12); g.fillRect(0, 0, 100, 16);
-      g.fillStyle(0x4caf50); g.fillRect(0, 0, 100, 2);
-      g.fillStyle(0x2e7d32); g.fillRect(0, 2, 100, 2);
-      g.fillStyle(0x263a18); g.fillRect(1, 4, 48, 11);
-      g.fillStyle(0x2e4620); g.fillRect(2, 5, 46, 5);
-      g.fillStyle(0x1e3010); g.fillRect(51, 4, 48, 11);
-      g.fillStyle(0x28401a); g.fillRect(52, 5, 46, 5);
-      g.fillStyle(0x0e1a08); g.fillRect(49, 3, 2, 13);
+      g.fillStyle(0x111c09); g.fillRect(0, 0, 100, 16);
+      g.fillStyle(0x4caf50); g.fillRect(0, 0, 100, 1);
+      g.fillStyle(0x3a9940); g.fillRect(0, 1, 100, 1);
+      // Brins d'herbe
+      [[6,2],[14,2],[26,1],[38,2],[52,1],[64,2],[80,2],[92,1]].forEach(([bx,h])=>{
+        g.fillStyle(0x66bb6a); g.fillRect(bx, 0, 1, 1);
+        if (h>1) { g.fillStyle(0x56a858); g.fillRect(bx+1, -1, 1, 1); }
+      });
+      g.fillStyle(0x1e3010); g.fillRect(0, 2, 100, 3);
+      g.fillStyle(0x162412); g.fillRect(1,  5, 32, 10);
+      g.fillStyle(0x1c2c18); g.fillRect(2,  6, 30,  5);
+      g.fillStyle(0x102010); g.fillRect(2, 12, 30,  2);
+      g.fillStyle(0x162412); g.fillRect(35, 5, 30, 10);
+      g.fillStyle(0x1c2c18); g.fillRect(36, 6, 28,  5);
+      g.fillStyle(0x102010); g.fillRect(36,12, 28,  2);
+      g.fillStyle(0x162412); g.fillRect(67, 5, 32, 10);
+      g.fillStyle(0x1c2c18); g.fillRect(68, 6, 30,  5);
+      g.fillStyle(0x102010); g.fillRect(68,12, 30,  2);
+      g.fillStyle(0x0a1008); g.fillRect(33, 4, 2, 12);
+      g.fillStyle(0x0a1008); g.fillRect(65, 4, 2, 12);
+      g.fillStyle(0x1a3a0c, 0.40); g.fillRect(4,  6, 6, 4);
+      g.fillStyle(0x1a3a0c, 0.35); g.fillRect(42, 6, 8, 3);
+      g.fillStyle(0x1a3a0c, 0.30); g.fillRect(72, 7,10, 3);
       g.generateTexture('platform-surface', 100, 16);
       g.destroy();
     }
@@ -282,22 +353,126 @@ export class BootScene extends Phaser.Scene {
       g.generateTexture('boss', 64, 80);
       g.destroy();
     }
+
+    // ═══ TEXTURES DÉCORATIVES ════════════════════════════════════════════
+
+    // ─── deco-stalactite 12×28 — stalactite pierre bleue ──────────────────
     {
       const g = mk();
-      g.fillStyle(0x243040); g.fillRect(0, 0, 100, 16);
-      // Arête lumineuse (teal)
-      g.fillStyle(0x00e5ff); g.fillRect(0, 0, 100, 2);
-      g.fillStyle(0x00b8d4); g.fillRect(0, 2, 100, 2);
-      // Deux briques de pierre (50px chacune)
-      g.fillStyle(0x2e3f52); g.fillRect(1, 4, 48, 11);
-      g.fillStyle(0x374c62); g.fillRect(2, 5, 46, 5);
-      g.fillStyle(0x2b3c4e); g.fillRect(51, 4, 48, 11);
-      g.fillStyle(0x344959); g.fillRect(52, 5, 46, 5);
-      // Joint de mortier
-      g.fillStyle(0x151e2a); g.fillRect(49, 3, 2, 13);
-      // Fissures
-      g.fillStyle(0x151e2a); g.fillRect(16, 8, 1, 6);
-      g.fillStyle(0x151e2a); g.fillRect(70, 10, 7, 1);
+      g.fillStyle(0x0e1c2e); g.fillRect(2, 0, 8, 4);
+      g.fillStyle(0x0c1828); g.fillRect(2, 4, 8, 6);
+      g.fillStyle(0x101e30); g.fillRect(3, 0, 6, 22);
+      g.fillStyle(0x142438); g.fillRect(3, 0, 3, 18);   // reflet gauche
+      g.fillStyle(0x0a1624); g.fillRect(7, 0, 2, 18);   // ombre droite
+      g.fillStyle(0x0e1a2a); g.fillRect(4, 22, 4, 4);
+      g.fillStyle(0x0c1626); g.fillRect(5, 26, 2, 2);
+      g.fillStyle(0x00b8d4, 0.20); g.fillRect(6, 2, 1, 20);
+      g.fillStyle(0x00e5ff, 0.12); g.fillRect(5, 6, 1, 10);
+      g.generateTexture('deco-stalactite', 12, 28);
+      g.destroy();
+    }
+
+    // ─── deco-chain 8×36 — chaîne métallique ──────────────────────────────
+    {
+      const g = mk();
+      for (let i = 0; i < 5; i++) {
+        const y = i * 7;
+        if (i % 2 === 0) {
+          g.fillStyle(0x1c1410); g.fillRect(1, y+1, 6, 5);
+          g.fillStyle(0x2c2018); g.fillRect(2, y+2, 4, 3);
+          g.fillStyle(0x3a2a1c); g.fillRect(2, y+2, 2, 1);
+          g.fillStyle(0x0e0c0a); g.fillRect(2, y+4, 4, 1);
+        } else {
+          g.fillStyle(0x1c1410); g.fillRect(3, y,  2, 7);
+          g.fillStyle(0x2c2018); g.fillRect(3, y+1, 2, 5);
+          g.fillStyle(0x3a2a1c); g.fillRect(3, y+1, 1, 2);
+        }
+      }
+      g.generateTexture('deco-chain', 8, 36);
+      g.destroy();
+    }
+
+    // ─── deco-pipe 14×52 — tuyau vapeur industriel ────────────────────────
+    {
+      const g = mk();
+      g.fillStyle(0x1c1008); g.fillRect(2, 0, 10, 52);
+      g.fillStyle(0x2c1c10); g.fillRect(3, 0,  8, 52);
+      g.fillStyle(0x381e10); g.fillRect(3, 0,  4, 52);
+      g.fillStyle(0x140c06); g.fillRect(9, 0,  3, 52);
+      [8, 24, 40].forEach(by => {
+        g.fillStyle(0x100a04); g.fillRect(0, by,   14, 6);
+        g.fillStyle(0x2a1a0c); g.fillRect(1, by+1, 12, 4);
+        g.fillStyle(0x3c2414); g.fillRect(2, by+1,  6, 2);
+        g.fillStyle(0x0c0804); g.fillRect(2, by+3, 10, 1);
+      });
+      g.fillStyle(0xff6600, 0.18); g.fillRect(3, 18, 8, 1);
+      g.fillStyle(0xff8800, 0.10); g.fillRect(3, 17, 8, 3);
+      g.generateTexture('deco-pipe', 14, 52);
+      g.destroy();
+    }
+
+    // ─── deco-column 22×70 — colonne brisée envahie de mousse ─────────────
+    {
+      const g = mk();
+      g.fillStyle(0x18280e); g.fillRect(3, 0, 16, 56);
+      g.fillStyle(0x1e3014); g.fillRect(4, 0, 14, 56);
+      g.fillStyle(0x263818); g.fillRect(4, 0,  5, 56);
+      g.fillStyle(0x141e0c); g.fillRect(13, 0,  5, 56);
+      for (let i = 0; i < 3; i++) { g.fillStyle(0x1a2c10, 0.45); g.fillRect(5+i*4, 0, 1, 56); }
+      g.fillStyle(0x162210); g.fillRect(0, 0, 22, 5);
+      g.fillStyle(0x1c2c14); g.fillRect(1, 1, 20, 4);
+      g.fillStyle(0x243618); g.fillRect(1, 1,  8, 2);
+      g.fillStyle(0x14200c); g.fillRect(0, 52, 22, 8);
+      g.fillStyle(0x1a2a12); g.fillRect(1, 53, 20, 6);
+      g.fillStyle(0x223214); g.fillRect(1, 53,  7, 2);
+      g.fillStyle(0x1a4008, 0.50); g.fillRect(3, 10, 5, 8);
+      g.fillStyle(0x224a0c, 0.40); g.fillRect(14,18, 4, 6);
+      g.fillStyle(0x1a4008, 0.35); g.fillRect(4, 34, 7, 4);
+      g.fillStyle(0x2a5a10, 0.60); g.fillRect(3,  8, 2, 4);
+      g.fillStyle(0x2a5a10, 0.50); g.fillRect(14,16, 2, 3);
+      g.fillStyle(0x0c1a08); g.fillRect(11, 5, 1, 42);
+      g.generateTexture('deco-column', 22, 70);
+      g.destroy();
+    }
+
+    // ─── deco-grass 32×14 — touffe d'herbe ────────────────────────────────
+    {
+      const g = mk();
+      [[2,6],[5,4],[7,5],[9,3],[11,6],[14,4],[16,3],[18,5],
+       [20,6],[22,4],[24,3],[26,5],[28,6],[30,4]].forEach(([bx, h]) => {
+        const dark = (bx%2===0) ? 0x2a5010 : 0x224010;
+        const mid  = (bx%2===0) ? 0x3a7018 : 0x30601a;
+        const tip  = (bx%2===0) ? 0x4a9020 : 0x408018;
+        g.fillStyle(dark); g.fillRect(bx, 14-h, 1, h);
+        g.fillStyle(mid);  g.fillRect(bx, 14-h, 1, Math.floor(h*0.65));
+        g.fillStyle(tip);  g.fillRect(bx, 14-h, 1, 2);
+      });
+      g.generateTexture('deco-grass', 32, 14);
+      g.destroy();
+    }
+
+    // ─── Platform 100×16 — pierre cristalline (Biome 0) ──────────────────
+    {
+      const g = mk();
+      // Pierre cristalline (Biome 0) — 3 blocs avec shading
+      g.fillStyle(0x182230); g.fillRect(0, 0, 100, 16);
+      g.fillStyle(0x00e5ff); g.fillRect(0, 0, 100, 1);
+      g.fillStyle(0x00c8dc); g.fillRect(0, 1, 100, 1);
+      g.fillStyle(0x2a4056); g.fillRect(0, 2, 100, 2);
+      g.fillStyle(0x243650); g.fillRect(1,  4, 32, 11);
+      g.fillStyle(0x2e4460); g.fillRect(2,  5, 30,  5);
+      g.fillStyle(0x1c2e46); g.fillRect(2, 11, 30,  3);
+      g.fillStyle(0x243650); g.fillRect(35, 4, 30, 11);
+      g.fillStyle(0x2e4460); g.fillRect(36, 5, 28,  5);
+      g.fillStyle(0x1c2e46); g.fillRect(36,11, 28,  3);
+      g.fillStyle(0x243650); g.fillRect(67, 4, 32, 11);
+      g.fillStyle(0x2e4460); g.fillRect(68, 5, 30,  5);
+      g.fillStyle(0x1c2e46); g.fillRect(68,11, 30,  3);
+      g.fillStyle(0x10182a); g.fillRect(33, 3, 2, 13);
+      g.fillStyle(0x10182a); g.fillRect(65, 3, 2, 13);
+      g.fillStyle(0x00b8d4, 0.18); g.fillRect(14,  6, 1, 8);
+      g.fillStyle(0x00b8d4, 0.14); g.fillRect(82, 10, 8, 1);
+      g.fillStyle(0x0c1422); g.fillRect(0, 14, 100, 2);
       g.generateTexture('platform', 100, 16);
       g.destroy();
     }
@@ -341,32 +516,62 @@ export class BootScene extends Phaser.Scene {
       g.destroy();
     }
 
-    // ─── bg-brick 64×64 — carreau mur de pierre (TileSprite fond) ─────────
+    // ─── bg-brick 64×64 — pierres gothiques avec runes (Biome 0) ──────────
     {
       const g = mk();
-      g.fillStyle(0x070b12); g.fillRect(0, 0, 64, 64);
+      g.fillStyle(0x030810); g.fillRect(0, 0, 64, 64);
       // Rangée 1
-      g.fillStyle(0x0b1220); g.fillRect(1, 1, 30, 18);
-      g.fillStyle(0x0d1525); g.fillRect(2, 2, 28, 8);
-      g.fillStyle(0x0b1220); g.fillRect(33, 1, 30, 18);
-      g.fillStyle(0x0d1525); g.fillRect(34, 2, 28, 8);
-      // Rangée 2 (décalée)
-      g.fillStyle(0x091018); g.fillRect(1, 21, 14, 18);
-      g.fillStyle(0x0b131e); g.fillRect(2, 22, 12, 7);
-      g.fillStyle(0x091018); g.fillRect(17, 21, 30, 18);
-      g.fillStyle(0x0b131e); g.fillRect(18, 22, 28, 7);
-      g.fillStyle(0x091018); g.fillRect(49, 21, 14, 18);
-      g.fillStyle(0x0b131e); g.fillRect(50, 22, 12, 7);
+      g.fillStyle(0x0c1828); g.fillRect(0, 0, 30, 18);
+      g.fillStyle(0x0e1c30); g.fillRect(1, 1, 28, 16);
+      g.fillStyle(0x162a42); g.fillRect(1, 1, 28, 3);
+      g.fillStyle(0x0a1622); g.fillRect(1, 14, 28, 3);
+      g.fillStyle(0x14243c); g.fillRect(1, 1, 2, 16);
+      g.fillStyle(0x0e1c2e); g.fillRect(32, 0, 32, 18);
+      g.fillStyle(0x101e32); g.fillRect(33, 1, 30, 16);
+      g.fillStyle(0x182e44); g.fillRect(33, 1, 30, 3);
+      g.fillStyle(0x0c1826); g.fillRect(33, 14, 30, 3);
+      g.fillStyle(0x020507); g.fillRect(0, 18, 64, 2);
+      g.fillStyle(0x020507); g.fillRect(30, 0, 2, 18);
+      // Rangée 2 décalée
+      g.fillStyle(0x0a1624); g.fillRect(0, 20, 14, 18);
+      g.fillStyle(0x0e1c2c); g.fillRect(1, 21, 12, 16);
+      g.fillStyle(0x14243c); g.fillRect(1, 21, 12, 3);
+      g.fillStyle(0x0c1a2a); g.fillRect(16, 20, 30, 18);
+      g.fillStyle(0x10202e); g.fillRect(17, 21, 28, 16);
+      g.fillStyle(0x162e44); g.fillRect(17, 21, 28, 3);
+      g.fillStyle(0x0a1a26); g.fillRect(17, 34, 28, 3);
+      g.fillStyle(0x0e1c2e); g.fillRect(48, 20, 16, 18);
+      g.fillStyle(0x121e32); g.fillRect(49, 21, 14, 16);
+      g.fillStyle(0x182e44); g.fillRect(49, 21, 14, 3);
+      g.fillStyle(0x020507); g.fillRect(0, 38, 64, 2);
+      g.fillStyle(0x020507); g.fillRect(14, 20, 2, 18);
+      g.fillStyle(0x020507); g.fillRect(46, 20, 2, 18);
       // Rangée 3
-      g.fillStyle(0x0b1220); g.fillRect(1, 41, 30, 22);
-      g.fillStyle(0x0d1525); g.fillRect(2, 42, 28, 8);
-      g.fillStyle(0x0b1220); g.fillRect(33, 41, 30, 22);
-      g.fillStyle(0x0d1525); g.fillRect(34, 42, 28, 8);
-      // Joints
-      g.fillStyle(0x04080f);
-      g.fillRect(0, 19, 64, 2);   g.fillRect(0, 39, 64, 2);
-      g.fillRect(31, 0, 2, 19);   g.fillRect(31, 39, 2, 25);
-      g.fillRect(15, 19, 2, 20);  g.fillRect(47, 19, 2, 20);
+      g.fillStyle(0x0c1828); g.fillRect(0, 40, 30, 18);
+      g.fillStyle(0x0e1c30); g.fillRect(1, 41, 28, 16);
+      g.fillStyle(0x162a42); g.fillRect(1, 41, 28, 3);
+      g.fillStyle(0x0a1622); g.fillRect(1, 54, 28, 3);
+      g.fillStyle(0x0e1c2e); g.fillRect(32, 40, 32, 18);
+      g.fillStyle(0x101e32); g.fillRect(33, 41, 30, 16);
+      g.fillStyle(0x182e44); g.fillRect(33, 41, 30, 3);
+      g.fillStyle(0x020507); g.fillRect(0, 58, 64, 2);
+      g.fillStyle(0x020507); g.fillRect(30, 40, 2, 18);
+      // Rangée 4 partielle
+      g.fillStyle(0x0a1624); g.fillRect(0, 60, 14, 4);
+      g.fillStyle(0x0c1a2a); g.fillRect(16, 60, 30, 4);
+      g.fillStyle(0x0e1c2e); g.fillRect(48, 60, 16, 4);
+      g.fillStyle(0x020507); g.fillRect(14, 60, 2, 4);
+      g.fillStyle(0x020507); g.fillRect(46, 60, 2, 4);
+      // Lézarde cyan (pierre droite rangée 1)
+      g.fillStyle(0x010305); g.fillRect(44, 2, 1, 13);
+      g.fillStyle(0x003a5a, 0.22); g.fillRect(43, 2, 3, 13);
+      // Rune gravée (pierre centrale rangée 2)
+      g.fillStyle(0x020a1c); g.fillRect(23, 26, 8, 7);
+      g.fillStyle(0x004466, 0.55); g.fillRect(26, 27, 2, 5);
+      g.fillStyle(0x004466, 0.55); g.fillRect(24, 29, 6, 2);
+      g.fillStyle(0x0090b8, 0.18); g.fillRect(23, 26, 8, 7);
+      // Humidité (tache rangée 3)
+      g.fillStyle(0x060c18, 0.35); g.fillRect(5, 43, 7, 11);
       g.generateTexture('bg-brick', 64, 64);
       g.destroy();
     }
