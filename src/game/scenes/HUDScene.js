@@ -14,7 +14,7 @@ export class HUDScene extends Phaser.Scene {
   }
 
   create() {
-    const { width: W } = this.scale;
+    const { width: W, height: H } = this.scale;
 
     // ── Barre de vie (3 cœurs) ────────────────────────────────────────────
     this.add.text(10, 10, 'HP', { fontFamily: 'monospace', fontSize: '11px', color: '#546e7a' });
@@ -56,7 +56,7 @@ export class HUDScene extends Phaser.Scene {
     }).setOrigin(0.5).setVisible(false).setDepth(26);
 
     // ── Contrôles (bas) ───────────────────────────────────────────────────
-    this.add.text(W / 2, 490, '←→ Bouger  ESPACE Sauter  SHIFT Dash  X Tirer(chargé)  Z Bouclier  E Parler', {
+    this.add.text(W / 2, H - 10, '←→ Bouger  ESPACE Sauter  SHIFT Dash  X Tirer  E Parler  P Paramètres', {
       fontFamily: 'monospace', fontSize: '9px', color: '#1e2d3a',
     }).setOrigin(0.5, 1);
 
@@ -68,6 +68,11 @@ export class HUDScene extends Phaser.Scene {
     game.events.on('objectiveChanged',  this._onObjective,     this);
     game.events.on('bossSpawned',       this._onBossSpawn,     this);
     game.events.on('shieldReady',       this._onShieldReady,   this);
+    this.input.keyboard.on('keydown-P', () => {
+      if (this.scene.isActive('SettingsScene')) return;
+      // SettingsScene suspendra le jeu seulement après sa propre création.
+      this.scene.launch('SettingsScene', { from: 'game' });
+    });
     game.events.on('checkpointActivated', () => {
       const txt = this.add.text(W / 2, 80, '✓ Checkpoint', {
         fontFamily: 'monospace', fontSize: '13px', color: '#00e5ff',

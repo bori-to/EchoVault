@@ -34,6 +34,7 @@ npm run test       # Tests unitaires (Vitest)
 | Double saut *(à débloquer)* | `Espace` × 2 |
 | Dash *(à débloquer)* | `Shift` |
 | Interaction / Dialogue | `E` |
+| Paramètres / Pause | `P` |
 
 ## Structure du projet
 

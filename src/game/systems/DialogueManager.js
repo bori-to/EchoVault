@@ -7,6 +7,8 @@
  * GÉNÉRÉ avec GitHub Copilot (Claude Sonnet 4.x) — revu et adapté manuellement.
  * Voir prompts_logs/03_code_prompts.md — Entrée #004
  */
+import { audio } from './AudioManager.js';
+
 export class DialogueManager {
   /**
    * @param {Phaser.Scene}      scene            - La scène Phaser active
@@ -75,7 +77,8 @@ export class DialogueManager {
   // ─── UI ────────────────────────────────────────────────────────────────────
 
   _buildUI() {
-    const W = 800, H = 500;
+    const W = this.scene.scale.width;
+    const H = this.scene.scale.height;
     const panelH = 155;
     const panelY = H - panelH / 2 - 8; // centré en bas
 
@@ -136,6 +139,7 @@ export class DialogueManager {
     if (!node) { this._endDialogue(); return; }
 
     this._nodeId = nodeId;
+    audio.play('dialogue');
     this._nameTxt.setText(this._data.name || 'Inconnu');
     this._bodyTxt.setText(node.text);
 
@@ -158,6 +162,7 @@ export class DialogueManager {
     if (!node?.choices || index >= node.choices.length) return;
 
     const choice = node.choices[index];
+    audio.play('ui');
 
     // Applique l'effet sur le GameStateManager
     if (choice.effect && this.gsm) {

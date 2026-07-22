@@ -1,105 +1,76 @@
-/**
- * MenuScene — écran titre atmosphérique d'EchoVault (style Hollow Knight).
- * Fond en briques de pierre avec particules flottantes et titre lumineux.
- */
 import Phaser from 'phaser';
+import { audio } from '../systems/AudioManager.js';
 
 export class MenuScene extends Phaser.Scene {
   constructor() { super({ key: 'MenuScene' }); }
 
   create() {
+    // Les instances de scènes Phaser sont réutilisées après une fin.
+    // Réinitialiser ce verrou permet de lancer une nouvelle partie.
+    this._starting = false;
     const { width: W, height: H } = this.scale;
-    const cx = W / 2, cy = H / 2;
+    this.add.rectangle(W / 2, H / 2, W, H, 0x02050b);
+    const wall = this.add.tileSprite(W / 2, H / 2, W, H, 'bg-brick').setAlpha(0.48);
+    this.tweens.add({ targets: wall, tilePositionX: 40, duration: 28000, repeat: -1 });
 
-    // ── Fond : mur de briques + couche sombre ─────────────────────────────
-    this.add.rectangle(cx, cy, W, H, 0x040609);
-    this.add.tileSprite(cx, cy, W, H, 'bg-brick').setAlpha(0.9);
-    // Voile de profondeur (haut plus sombre)
-    this.add.rectangle(cx, cy * 0.45, W, cy * 0.9, 0x04060c, 0.7);
-
-    // ── Silhouettes architecturales ───────────────────────────────────────
-    for (let i = 0; i < 8; i++) {
-      const rx = 40 + i * 105, rh = 55 + (i % 3) * 28;
-      this.add.rectangle(rx, H, 22, rh * 2, 0x080e1c, 0.9);
-      this.add.rectangle(rx, H - rh, 32, 12, 0x080e1c, 0.9);
+    // Puits central et anneaux de l'Écho.
+    for (let i = 0; i < 5; i++) {
+      const ring = this.add.circle(560, 245, 48 + i * 34, 0x000000, 0)
+        .setStrokeStyle(1, i % 2 ? 0x7e57c2 : 0x00b8d4, 0.16).setScale(0.8);
+      this.tweens.add({ targets: ring, scale: 1.15, alpha: { from: 0.15, to: 0.55 },
+        duration: 2600 + i * 400, delay: i * 210, yoyo: true, repeat: -1 });
     }
+    const aria = this.add.image(560, 248, 'aria-sheet', 16).setScale(2.25).setTint(0x80deea).setAlpha(0.88);
+    if (aria.postFX) aria.postFX.addGlow(0x00e5ff, 7, 0);
+    this.tweens.add({ targets: aria, y: 240, duration: 1800, ease: 'Sine.inOut', yoyo: true, repeat: -1 });
 
-    // ── Torches décoratives ───────────────────────────────────────────────
-    [90, 310, 530, 700].forEach(tx => {
-      const fl = this.add.rectangle(tx, H - 75, 36, 28, 0xff8f00, 0.08)
-        .setBlendMode(Phaser.BlendModes.ADD);
-      this.tweens.add({
-        targets: fl, alpha: { from: 0.04, to: 0.14 },
-        duration: Phaser.Math.Between(600, 1400), yoyo: true, repeat: -1,
-        delay: Phaser.Math.Between(0, 800),
-      });
-      this.add.rectangle(tx, H - 70, 3, 10, 0x5d4037);
-      this.add.rectangle(tx, H - 76, 6, 8, 0xef6c00);
-      this.add.rectangle(tx, H - 78, 4, 5, 0xffc107);
+    this.add.rectangle(0, H / 2, 320, H, 0x030711, 0.94).setOrigin(0, 0.5);
+    this.add.rectangle(320, H / 2, 2, H - 60, 0x00b8d4, 0.32);
+    this.add.text(42, 58, 'ECHO', { fontFamily: 'monospace', fontSize: '50px', color: '#eefcff', fontStyle: 'bold', letterSpacing: 5 }).setAlpha(0);
+    const vault = this.add.text(42, 105, 'VAULT', { fontFamily: 'monospace', fontSize: '50px', color: '#00e5ff', fontStyle: 'bold', letterSpacing: 5 }).setAlpha(0);
+    if (vault.postFX) vault.postFX.addGlow(0x00b8d4, 4, 0);
+    this.children.list.filter(o => o.type === 'Text' && (o.text === 'ECHO' || o.text === 'VAULT')).forEach((t, i) =>
+      this.tweens.add({ targets: t, alpha: 1, x: { from: 25, to: 42 }, duration: 650, delay: 150 + i * 120 }));
+
+    this.add.text(44, 166, 'LES MÉMOIRES NE MEURENT PAS.\nELLES ATTENDENT.', {
+      fontFamily: 'monospace', fontSize: '11px', color: '#607d8b', lineSpacing: 5,
+    });
+    this._menuButton(46, 238, 'NOUVELLE PARTIE', 'RECONSTRUIRE ARIA', () => this._start());
+    this._menuButton(46, 310, 'PARAMÈTRES', 'SON · AFFICHAGE', () => {
+      audio.play('ui'); this.scene.start('SettingsScene', { from: 'menu' });
     });
 
-    // ── Particules flottantes ─────────────────────────────────────────────
-    this.add.particles(cx, cy, 'particle', {
-      emitZone: { type: 'random', source: new Phaser.Geom.Rectangle(-cx, -cy + 20, W, H - 40) },
-      quantity:  1, frequency: 500,
-      lifespan:  { min: 4000, max: 8000 },
-      alpha:     { start: 0.55, end: 0 },
-      scale:     { min: 0.3, max: 0.8 },
-      speedX:    { min: -5, max: 5 },
-      speedY:    { min: -14, max: -3 },
-      gravityY:  0,
-      tint:      [0x80deea, 0xb39ddb, 0x4fc3f7],
-      blendMode: Phaser.BlendModes.ADD,
+    this.add.text(44, 407, 'CAMPAGNE NARRATIVE · ≈ 15 MIN', { fontFamily: 'monospace', fontSize: '10px', color: '#455a64' });
+    this.add.text(44, 428, 'ESPACE / ENTRÉE POUR COMMENCER', { fontFamily: 'monospace', fontSize: '10px', color: '#00b8d4' });
+    this.add.text(W - 18, H - 18, 'ARCHIVE 09.847', { fontFamily: 'monospace', fontSize: '9px', color: '#263238' }).setOrigin(1);
+
+    this.add.particles(560, 250, 'particle', {
+      emitZone: { type: 'random', source: new Phaser.Geom.Rectangle(-210, -210, 420, 420) },
+      quantity: 1, frequency: 170, lifespan: { min: 1800, max: 4200 },
+      alpha: { start: 0.65, end: 0 }, scale: { min: 0.25, max: 0.75 },
+      speedY: { min: -22, max: -5 }, speedX: { min: -8, max: 8 },
+      tint: [0x00e5ff, 0x7e57c2, 0xce93d8], blendMode: Phaser.BlendModes.ADD,
     });
-
-    // ── Titre ─────────────────────────────────────────────────────────────
-    // Ombre portée
-    this.add.text(cx + 3, cy - 107, 'ECHO VAULT', {
-      fontFamily: 'monospace', fontSize: '52px',
-      color: '#002535', stroke: '#001018', strokeThickness: 8,
-    }).setOrigin(0.5);
-    // Titre principal
-    const title = this.add.text(cx, cy - 110, 'ECHO VAULT', {
-      fontFamily: 'monospace', fontSize: '52px',
-      color: '#00e5ff', stroke: '#00455e', strokeThickness: 4,
-    }).setOrigin(0.5);
-    if (title.postFX) title.postFX.addGlow(0x00e5ff, 5, 0);
-
-    // ── Sous-titre clignotant ─────────────────────────────────────────────
-    const sub = this.add.text(cx, cy - 55, '◈  MetroidvanIA  ◈', {
-      fontFamily: 'monospace', fontSize: '14px', color: '#7e57c2',
-    }).setOrigin(0.5);
-    this.tweens.add({ targets: sub, alpha: { from: 0.2, to: 1 }, duration: 1400, yoyo: true, repeat: -1 });
-
-    // ── Pitch ─────────────────────────────────────────────────────────────
-    this.add.text(cx, cy - 20, 'Cinq actes pour reconstruire une mémoire interdite.', {
-      fontFamily: 'monospace', fontSize: '13px', color: '#4a6070',
-    }).setOrigin(0.5);
-    this.add.text(cx, cy - 3, 'Huit souvenirs. Trois témoins. Deux destins.', {
-      fontFamily: 'monospace', fontSize: '13px', color: '#4a6070',
-    }).setOrigin(0.5);
-
-    // ── Bouton Jouer ──────────────────────────────────────────────────────
-    const btn = this.add.text(cx, cy + 55, '▶   NOUVELLE PARTIE', {
-      fontFamily: 'monospace', fontSize: '22px', color: '#ffffff',
-      backgroundColor: '#004d5c', padding: { x: 24, y: 12 },
-    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
-    btn.on('pointerover', () => btn.setStyle({ color: '#00e5ff', backgroundColor: '#006878' }));
-    btn.on('pointerout',  () => btn.setStyle({ color: '#ffffff', backgroundColor: '#004d5c' }));
-    btn.on('pointerdown', () => this._start());
-
-    // ── Contrôles ─────────────────────────────────────────────────────────
-    this.add.text(cx, cy + 115, '← → / A D : Déplacer    ESPACE : Sauter    E : Interagir    1/2 : Choisir', {
-      fontFamily: 'monospace', fontSize: '11px', color: '#263040',
-    }).setOrigin(0.5);
-
-    this.cameras.main.fadeIn(600, 0, 0, 0);
+    this.cameras.main.fadeIn(650);
     this.input.keyboard.once('keydown-SPACE', () => this._start());
     this.input.keyboard.once('keydown-ENTER', () => this._start());
   }
 
+  _menuButton(x, y, title, subtitle, action) {
+    const bg = this.add.rectangle(x, y, 232, 54, 0x0b1621, 0.92).setOrigin(0, 0.5)
+      .setStrokeStyle(1, 0x29434e).setInteractive({ useHandCursor: true });
+    const marker = this.add.rectangle(x, y, 3, 54, 0x00b8d4).setOrigin(0, 0.5).setAlpha(0.5);
+    this.add.text(x + 18, y - 12, title, { fontFamily: 'monospace', fontSize: '15px', color: '#eceff1' });
+    this.add.text(x + 18, y + 10, subtitle, { fontFamily: 'monospace', fontSize: '9px', color: '#546e7a' });
+    bg.on('pointerover', () => { bg.setFillStyle(0x10303a); marker.setAlpha(1).setScale(2, 1); })
+      .on('pointerout', () => { bg.setFillStyle(0x0b1621, 0.92); marker.setAlpha(0.5).setScale(1); })
+      .on('pointerdown', action);
+  }
+
   _start() {
-    this.cameras.main.fadeOut(400, 0, 0, 0);
+    if (this._starting) return;
+    this._starting = true; audio.play('power');
+    this.cameras.main.fadeOut(450);
     this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('GameScene'));
   }
 }

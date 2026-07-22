@@ -20,6 +20,8 @@ import { GameStateManager } from '../systems/GameStateManager.js';
 import { DialogueManager }  from '../systems/DialogueManager.js';
 import { EnemyManager }     from '../systems/EnemyManager.js';
 import { BossManager }      from '../systems/BossManager.js';
+import { audio }            from '../systems/AudioManager.js';
+import { settings }         from '../systems/SettingsManager.js';
 
 const PLATFORMS = [
   [160,  440, 2.0, 'platform'],
@@ -124,10 +126,12 @@ export class GameScene extends Phaser.Scene {
     this._bossDefeated  = false;
     this._storyStage    = 0;
     this._activeEncounter = null;
+    this._enemyKills = 0;
     this._lastBiome = -1;
   }
 
   create() {
+    this._runStartedAt = Date.now();
     const W = WORLD_W, H = 560;
     this.physics.world.setBounds(0, 0, W, H);
     this.cameras.main.setBounds(0, 0, W, H);
@@ -159,19 +163,22 @@ export class GameScene extends Phaser.Scene {
       fragmentTotal: REQUIRED_FRAGMENTS,
     });
     this._spawnX = 80; this._spawnY = 460;
+    this.events.on('enemyDefeated', () => { this._enemyKills++; });
 
     this.time.delayedCall(700, () => this._startPrologue());
   }
 
   _buildBackground(W, H) {
-    this.add.rectangle(400, 250, 800, 500, 0x04060d).setScrollFactor(0).setDepth(-20);
+    const viewW = this.scale.width;
+    const viewH = this.scale.height;
+    this.add.rectangle(viewW / 2, viewH / 2, viewW, viewH, 0x04060d).setScrollFactor(0).setDepth(-20);
     this._bgFar = [
-      this.add.tileSprite(400, 250, 800, 500, 'bg-brick'  ).setDepth(-18),
-      this.add.tileSprite(400, 250, 800, 500, 'bg-forge'  ).setDepth(-18).setAlpha(0),
-      this.add.tileSprite(400, 250, 800, 500, 'bg-surface').setDepth(-18).setAlpha(0),
+      this.add.tileSprite(viewW / 2, viewH / 2, viewW, viewH, 'bg-brick'  ).setScrollFactor(0).setDepth(-18),
+      this.add.tileSprite(viewW / 2, viewH / 2, viewW, viewH, 'bg-forge'  ).setScrollFactor(0).setDepth(-18).setAlpha(0),
+      this.add.tileSprite(viewW / 2, viewH / 2, viewW, viewH, 'bg-surface').setScrollFactor(0).setDepth(-18).setAlpha(0),
     ];
-    this.add.rectangle(400,  60, 800, 140, 0x03050b, 0.75).setScrollFactor(0).setDepth(-16);
-    this.add.rectangle(400, 460, 800, 100, 0x030509, 0.55).setScrollFactor(0).setDepth(-16);
+    this.add.rectangle(viewW / 2,  60, viewW, 140, 0x03050b, 0.75).setScrollFactor(0).setDepth(-16);
+    this.add.rectangle(viewW / 2, viewH - 40, viewW, 100, 0x030509, 0.55).setScrollFactor(0).setDepth(-16);
     this._buildRuins(W, H);
   }
 
@@ -242,12 +249,17 @@ export class GameScene extends Phaser.Scene {
         .setAlpha(0.75).setScale(0.9 + (x%3)*0.1, 0.8 + (x%4)*0.08);
     });
     // Touffes d’herbe sur le sol
-    for (let x = 2180; x < W; x += Phaser.Math.Between(28, 55)) {
+    let grassIndex = 0;
+    for (let x = 2180; x < W; x += Phaser.Math.Between(36, 62)) {
       const g = this.add.image(x, 502, 'deco-grass').setDepth(depth).setOrigin(0.5, 1);
       g.setAlpha(0.6 + Math.random()*0.3).setScale(0.8 + Math.random()*0.5, 1 + Math.random()*0.4);
-      this.tweens.add({ targets: g, angle: { from: -2, to: 3 },
-        duration: Phaser.Math.Between(1200, 2200), delay: Phaser.Math.Between(0, 900),
-        ease: 'Sine.inOut', yoyo: true, repeat: -1 });
+      // Une touffe sur quatre est animée : même impression de vent, beaucoup
+      // moins de tweens permanents lorsque la surface entière est construite.
+      if (grassIndex++ % 4 === 0) {
+        this.tweens.add({ targets: g, angle: { from: -2, to: 3 },
+          duration: Phaser.Math.Between(1500, 2400), delay: Phaser.Math.Between(0, 900),
+          ease: 'Sine.inOut', yoyo: true, repeat: -1 });
+      }
     }
     // Halos de luneâ (lumiere verte froide douce)
     [[2300,80],[2600,120],[2900,80],[3150,100]].forEach(([x, y]) => {
@@ -403,6 +415,7 @@ export class GameScene extends Phaser.Scene {
     this._boss = new BossManager(this);
     // Le boss se spawne plus tard (trigger à x > 2700)
     this.events.on('bossDefeated', () => {
+      audio.play('victory');
       this._bossDefeated = true;
       this._storyStage = 4;
       this._floatMessage('Le Gardien est libre. Les deux protocoles répondent.', '#ffd600');
@@ -526,6 +539,7 @@ export class GameScene extends Phaser.Scene {
       f.destroy();
       this._fragmentCount++;
       this.events.emit('fragmentCollected', this._fragmentCount);
+      audio.play('collect');
       this._floatMessage(lore, '#ce93d8');
       const nextNpc = this._storyNpcs?.find(n => !n.done);
       if (nextNpc) {
@@ -576,6 +590,7 @@ export class GameScene extends Phaser.Scene {
     this._crystal.destroy();
     this.events.emit('powerUnlocked', 'doubleJump');
     this._floatMessage('Double Saut debloque !  [ESPACE x2]', '#ffd600');
+    audio.play('power');
   }
 
   _onDashPow() {
@@ -585,6 +600,7 @@ export class GameScene extends Phaser.Scene {
     this._dashPowerup.destroy();
     this.events.emit('powerUnlocked', 'dash');
     this._floatMessage('Dash debloque !  [SHIFT]', '#ffcc02');
+    audio.play('power');
   }
 
   _onCheckpoint(cp) {
@@ -596,6 +612,7 @@ export class GameScene extends Phaser.Scene {
     this._spawnY = cp.y;
     this.events.emit('checkpointActivated');
     this._floatMessage('Checkpoint !', '#00e5ff');
+    audio.play('checkpoint');
   }
 
   _canFinish() {
@@ -636,6 +653,7 @@ export class GameScene extends Phaser.Scene {
       return;
     }
     this._hp = Math.max(0, this._hp - 1);
+    audio.play('hit');
     this._invTimer = 1200;
     this.events.emit('hpChanged', this._hp);
     this.tweens.add({
@@ -651,7 +669,7 @@ export class GameScene extends Phaser.Scene {
   _die() {
     this._gameOver = true;
     this._ctrl.setEnabled(false);
-    this.cameras.main.shake(400, 0.012);
+    if (settings.get('screenShake')) this.cameras.main.shake(400, 0.012);
     this.time.delayedCall(600, () => {
       this.cameras.main.fadeOut(600, 0, 0, 0);
       this.cameras.main.once('camerafadeoutcomplete', () => {
@@ -673,7 +691,14 @@ export class GameScene extends Phaser.Scene {
     this.cameras.main.fadeOut(800, 0, 0, 0);
     this.cameras.main.once('camerafadeoutcomplete', () => {
       this.scene.stop('HUDScene');
-      this.scene.start('EndingScene', { ending });
+      this.scene.start('EndingScene', {
+        ending,
+        stats: {
+          fragments: this._fragmentCount,
+          kills: this._enemyKills,
+          seconds: Math.max(0, (Date.now() - this._runStartedAt) / 1000),
+        },
+      });
     });
   }
 
@@ -699,6 +724,8 @@ export class GameScene extends Phaser.Scene {
       bg.tilePositionX = scrollX * 0.15;
       bg.tilePositionY = Math.sin(time * 0.00022 + i) * (i === 1 ? 2 : 1);
       bg.alpha = Phaser.Math.Linear(bg.alpha, i === biome ? 0.9 : 0, 0.04);
+      if (i !== biome && bg.alpha < 0.01) bg.setAlpha(0).setVisible(false);
+      else bg.setVisible(true);
     });
 
     // Bannière de transition biome
@@ -708,10 +735,11 @@ export class GameScene extends Phaser.Scene {
       const colors = [0x00b8d4, 0xff6f00, 0x4caf50];
       const tints  = ['#4fc3f7', '#ff8f00', '#81c784'];
       if (this._lastBiome >= 0) {
-        const flash = this.add.rectangle(400, 250, 800, 500, colors[biome], 0.22)
+        const flash = this.add.rectangle(this.scale.width / 2, this.scale.height / 2,
+          this.scale.width, this.scale.height, colors[biome], 0.22)
           .setDepth(28).setScrollFactor(0);
         this.tweens.add({ targets: flash, alpha: 0, duration: 700, onComplete: () => flash.destroy() });
-        const banner = this.add.text(400, 160,
+        const banner = this.add.text(this.scale.width / 2, 160,
           `─ ${names[biome].toUpperCase()} ─`,
           { fontFamily: 'monospace', fontSize: '18px', color: tints[biome],
             stroke: '#000', strokeThickness: 4 })
@@ -729,6 +757,7 @@ export class GameScene extends Phaser.Scene {
     if (!this._bossTriggered && this._player.x > 5350 &&
         this._fragmentCount >= REQUIRED_FRAGMENTS && this._storyNpcs.every(n => n.done)) {
       this._bossTriggered = true;
+      audio.play('boss');
       this._boss.spawn(5660, 350);
       this._boss.connect(
         this._player,

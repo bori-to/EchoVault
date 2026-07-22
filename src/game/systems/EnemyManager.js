@@ -3,6 +3,7 @@
  * Nouvelles features: stomp-kill, drop heal-orb, Sentinelle (rayon vertical).
  */
 import Phaser from 'phaser';
+import { audio } from './AudioManager.js';
 
 export class EnemyManager {
   constructor(scene) {
@@ -11,6 +12,15 @@ export class EnemyManager {
     this.bullets   = scene.physics.add.group();
     this._data     = [];
     this._healOrbs = scene.physics.add.staticGroup();
+    // Un seul émetteur réutilisé pour toutes les morts. Créer/détruire un
+    // système complet à chaque ennemi provoquait des pics de garbage collector.
+    this._deathParticles = scene.add.particles(0, 0, 'particle', {
+      speed: { min: 60, max: 140 }, angle: { min: 0, max: 360 },
+      scale: { start: 1, end: 0 }, lifespan: 500,
+      blendMode: Phaser.BlendModes.ADD,
+      tint: [0xff6f00, 0xffd600, 0xffffff],
+      emitting: false,
+    }).setDepth(12);
   }
 
   // ─── Getters utiles ──────────────────────────────────────────────────────
@@ -117,6 +127,23 @@ export class EnemyManager {
   update(player, delta) {
     for (const d of this._data) {
       if (!d.sprite.active) continue;
+
+      // Les corps et l'IA situés à plus d'un écran du joueur sont suspendus.
+      // Ils sont restaurés avant d'entrer dans le champ de la caméra.
+      const shouldSleep = Math.abs(d.sprite.x - player.x) > 1050;
+      if (shouldSleep) {
+        if (!d.sleeping) {
+          d.sleeping = true;
+          d.sprite.body.enable = false;
+          d.sprite.setVisible(false);
+        }
+        continue;
+      }
+      if (d.sleeping) {
+        d.sleeping = false;
+        d.sprite.setVisible(true);
+        d.sprite.body.enable = true;
+      }
       switch (d.type) {
         case 'crawler':    this._updateCrawler(d, delta);          break;
         case 'drone':      this._updateDrone(d, player, delta);    break;
@@ -224,6 +251,7 @@ export class EnemyManager {
     const ex = d.sprite.x;
     const ey = d.sprite.y;
     this._spawnDeathParticles(ex, ey);
+    audio.play('enemy');
     d.sprite.destroy();
     this._data = this._data.filter(x => x !== d);
     this.scene.events.emit('enemyDefeated', { type: d.type, x: ex, y: ey });
@@ -242,15 +270,7 @@ export class EnemyManager {
   }
 
   _spawnDeathParticles(x, y) {
-    const p = this.scene.add.particles(x, y, 'particle', {
-      speed: { min: 60, max: 140 },
-      angle: { min: 0, max: 360 },
-      scale: { start: 1, end: 0 },
-      lifespan: 500,
-      quantity: 8,
-      blendMode: Phaser.BlendModes.ADD,
-      tint: [0xff6f00, 0xffd600, 0xffffff],
-    });
-    this.scene.time.delayedCall(600, () => p.destroy());
+    this._deathParticles.setPosition(x, y);
+    this._deathParticles.explode(8);
   }
 }

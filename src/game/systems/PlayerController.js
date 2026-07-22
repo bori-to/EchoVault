@@ -1,6 +1,9 @@
 ﻿/**
  * PlayerController — mouvement, saut, wall-jump, dash, tir chargé, bouclier.
  */
+import { audio } from './AudioManager.js';
+import { settings } from './SettingsManager.js';
+
 export class PlayerController {
   constructor(scene, player) {
     this.scene   = scene;
@@ -202,9 +205,11 @@ export class PlayerController {
         this._facing = this._wallJumpDir;
         this._wallJumpTimer = 300;
         this._jumpCount = 1;
+        audio.play('jump');
       } else if (this._jumpCount < this.maxJumps) {
         this.player.setVelocityY(this.jumpVel);
         this._jumpCount++;
+        audio.play('jump');
         if (this._jumpCount === 1) this._spawnJumpImpulse();
         if (this._jumpCount === 2) {
           this.player.play('aria-djump', false);
@@ -224,6 +229,7 @@ export class PlayerController {
       this._dashCd    = 1400;
       this.player.play('aria-dash', true);
       this._spawnDashTrail();
+      audio.play('dash');
     }
 
     // ── Tir laser / chargé (X) ──
@@ -251,7 +257,7 @@ export class PlayerController {
     if (this._xHeld && this._chargeT > 500 && this.player.postFX) {
       const g = this.player.postFX.list?.[0];
       if (g) g.outerStrength = Math.min(12, 2 + (this._chargeT - 500) / 80);
-    } else if (this.player.postFX?.list?.[0]) {
+    } else if (this.player.postFX?.list?.[0] && this.player.postFX.list[0].outerStrength !== 2) {
       this.player.postFX.list[0].outerStrength = 2;
     }
 
@@ -260,6 +266,7 @@ export class PlayerController {
 
   // ─── Tir normal ──────────────────────────────────────────────────────────
   _fireBullet() {
+    audio.play('shoot');
     const p = this.player;
     const bx = p.x + this._facing * 18;
     const by = p.y - 6;
@@ -278,6 +285,7 @@ export class PlayerController {
 
   // ─── Tir chargé (traverse ennemis, plus large) ───────────────────────────
   _fireCharged() {
+    audio.play('charged');
     const p = this.player;
     const bx = p.x + this._facing * 18;
     const by = p.y - 8;
@@ -298,7 +306,7 @@ export class PlayerController {
     // Flash puissant
     const fl = this.scene.add.rectangle(bx + this._facing * 14, by, 22, 18, 0xffffff, 0.95).setDepth(16);
     this.scene.tweens.add({ targets: fl, alpha: 0, duration: 120, onComplete: () => fl.destroy() });
-    this.scene.cameras.main.shake(80, 0.004);
+    if (settings.get('screenShake')) this.scene.cameras.main.shake(80, 0.004);
     this._spawnActionRing(0xffffff, 10, 220);
   }
 

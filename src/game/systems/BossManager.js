@@ -6,6 +6,8 @@
  *   Phase 3 (hp 1-4)  : multishot rapide + ondes de choc au sol
  */
 import Phaser from 'phaser';
+import { settings } from './SettingsManager.js';
+import { audio } from './AudioManager.js';
 
 const MAX_HP = 12;
 
@@ -43,7 +45,7 @@ export class BossManager {
     if (this.sprite.postFX) this.sprite.postFX.addGlow(0xff1744, 10, 0);
 
     this.scene.events.emit('bossSpawned', { max: MAX_HP });
-    this.scene.cameras.main.shake(300, 0.012);
+    if (settings.get('screenShake')) this.scene.cameras.main.shake(300, 0.012);
   }
 
   // ─── Connexion physique (appelée depuis GameScene) ────────────────────────
@@ -72,6 +74,7 @@ export class BossManager {
     if (!this.active || this._hitCd > 0) return;
     this._hitCd = 350;   // ~350ms d'iframes
     this._hp--;
+    audio.play('hit');
     if (this.sprite.active) {
       this.sprite.setTintFill(0xffffff);
       this.scene.time.delayedCall(80, () => {
@@ -175,8 +178,9 @@ export class BossManager {
     if (this._phase !== prev) {
       this.scene.events.emit('bossPhaseChange', this._phase);
       // Flash + secousse
-      this.scene.cameras.main.shake(200, 0.016);
-      const flash = this.scene.add.rectangle(400, 250, 800, 500,
+      if (settings.get('screenShake')) this.scene.cameras.main.shake(200, 0.016);
+      const flash = this.scene.add.rectangle(this.scene.scale.width / 2, this.scene.scale.height / 2,
+        this.scene.scale.width, this.scene.scale.height,
         this._phase === 2 ? 0xff6f00 : 0xff1744, 0.35).setDepth(30);
       this.scene.tweens.add({ targets: flash, alpha: 0, duration: 400, onComplete: () => flash.destroy() });
     }
@@ -201,7 +205,7 @@ export class BossManager {
     }
     this.scene.time.delayedCall(800, () => {
       if (this.sprite?.active) this.sprite.destroy();
-      this.scene.cameras.main.shake(400, 0.022);
+      if (settings.get('screenShake')) this.scene.cameras.main.shake(400, 0.022);
       this.scene.events.emit('bossDefeated');
       if (this._onDeath) this._onDeath();
     });
