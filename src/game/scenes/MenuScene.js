@@ -72,10 +72,10 @@ export class MenuScene extends Phaser.Scene {
     this.tweens.add({ targets: sub, alpha: { from: 0.2, to: 1 }, duration: 1400, yoyo: true, repeat: -1 });
 
     // ── Pitch ─────────────────────────────────────────────────────────────
-    this.add.text(cx, cy - 20, 'Un robot archéologue retrouve sa mémoire perdue.', {
+    this.add.text(cx, cy - 20, 'Cinq actes pour reconstruire une mémoire interdite.', {
       fontFamily: 'monospace', fontSize: '13px', color: '#4a6070',
     }).setOrigin(0.5);
-    this.add.text(cx, cy - 3, 'Deux chemins. Deux fins. Un seul choix compte.', {
+    this.add.text(cx, cy - 3, 'Huit souvenirs. Trois témoins. Deux destins.', {
       fontFamily: 'monospace', fontSize: '13px', color: '#4a6070',
     }).setOrigin(0.5);
 

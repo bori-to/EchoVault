@@ -10,6 +10,7 @@ export class HUDScene extends Phaser.Scene {
     this._pm    = data.pm;
     this._gsm   = data.gsm;
     this._getHp = data.getHp || (() => 3);
+    this._fragmentTotal = data.fragmentTotal || 5;
   }
 
   create() {
@@ -36,9 +37,15 @@ export class HUDScene extends Phaser.Scene {
     }).setOrigin(1, 0).setVisible(false);
 
     // ── Fragments ─────────────────────────────────────────────────────────
-    this._fragText = this.add.text(W - 10, 28, '◈ 0/5 fragments', {
+    this._fragText = this.add.text(W - 10, 28, `◈ 0/${this._fragmentTotal} souvenirs`, {
       fontFamily: 'monospace', fontSize: '10px', color: '#ce93d8',
     }).setOrigin(1, 0);
+
+    this._objectiveText = this.add.text(W / 2, 58, 'INITIALISATION...', {
+      fontFamily: 'monospace', fontSize: '11px', color: '#b0bec5',
+      backgroundColor: '#050810cc', padding: { x: 10, y: 5 },
+      align: 'center', wordWrap: { width: 560 },
+    }).setOrigin(0.5, 0).setDepth(24);
 
     // ── Boss HP bar (cachée jusqu'au spawn) ───────────────────────────────
     this._bossBarBg  = this.add.rectangle(W / 2, 18, 260, 10, 0x1a1a1a).setVisible(false).setDepth(25);
@@ -58,6 +65,7 @@ export class HUDScene extends Phaser.Scene {
     game.events.on('powerUnlocked',     this._onPowerUnlocked, this);
     game.events.on('hpChanged',         this._onHpChanged,     this);
     game.events.on('fragmentCollected', this._onFragment,      this);
+    game.events.on('objectiveChanged',  this._onObjective,     this);
     game.events.on('bossSpawned',       this._onBossSpawn,     this);
     game.events.on('shieldReady',       this._onShieldReady,   this);
     game.events.on('checkpointActivated', () => {
@@ -82,8 +90,14 @@ export class HUDScene extends Phaser.Scene {
   }
 
   _onFragment(count) {
-    this._fragText.setText(`◈ ${count}/5 fragments`).setStyle({ color: '#e040fb' });
-    if (count >= 5) this._fragText.setStyle({ color: '#ffd600' });
+    this._fragText.setText(`◈ ${count}/${this._fragmentTotal} souvenirs`).setStyle({ color: '#e040fb' });
+    if (count >= this._fragmentTotal) this._fragText.setStyle({ color: '#ffd600' });
+  }
+
+  _onObjective(text) {
+    this._objectiveText.setText(text).setAlpha(1);
+    this.tweens.add({ targets: this._objectiveText, scaleX: 1.03, scaleY: 1.03,
+      duration: 150, yoyo: true });
   }
 
   _onBossSpawn({ max }) {

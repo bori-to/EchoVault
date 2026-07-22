@@ -59,14 +59,22 @@ export class EnemyManager {
 
     // Contact ennemi → joueur (vérifie stomp d'abord)
     scene.physics.add.overlap(player, this.enemies, (p, e) => {
-      const playerIsAbove = p.y < e.y - 6;
+      const playerFeet = p.body.bottom;
+      const enemyHead = e.body.top;
+      const playerIsAbove = p.y < e.y && playerFeet <= enemyHead + 14;
       const fallingDown   = p.body.velocity.y > 80;
       if (playerIsAbove && fallingDown) {
-        // Stomp
-        const d = this._data.find(x => x.sprite === e);
-        if (d) this._killEnemy(d);
+        // Un même impact élimine tout le petit groupe situé sous les pieds d'ARIA.
+        // Cela évite que deux crawlers superposés ne laissent survivre arbitrairement le second.
+        const stomped = this._data.filter(d =>
+          d.sprite.active &&
+          Math.abs(d.sprite.x - p.x) <= 34 &&
+          d.sprite.body.top >= playerFeet - 16 &&
+          d.sprite.body.top <= playerFeet + 24
+        );
+        stomped.forEach(d => this._killEnemy(d));
         p.body.velocity.y = -300;   // rebond
-        scene.events.emit('enemyStomped');
+        scene.events.emit('enemyStomped', stomped.length);
       } else {
         onPlayerHit();
       }
@@ -93,8 +101,12 @@ export class EnemyManager {
     const d = this._data.find(x => x.sprite === enemySprite);
     if (!d) return false;
     d.hp -= dmg;
-    enemySprite.setTintFill(0xffffff);
-    this.scene.time.delayedCall(80, () => { if (enemySprite.active) enemySprite.clearTint(); });
+    // Retour d'impact sans flash blanc : légère compression du sprite.
+    enemySprite.setScale(1.12, 0.88);
+    this.scene.tweens.add({
+      targets: enemySprite, scaleX: 1, scaleY: 1,
+      duration: 100, ease: 'Quad.out',
+    });
     if (d.hp <= 0) {
       this._killEnemy(d);
       return true;
@@ -113,7 +125,7 @@ export class EnemyManager {
       }
     }
     this.bullets.getChildren().forEach(b => {
-      if (b.x < -100 || b.x > 3300 || b.y < -200 || b.y > 800) b.destroy();
+      if (b.x < -100 || b.x > this.scene.physics.world.bounds.width + 100 || b.y < -200 || b.y > 800) b.destroy();
     });
   }
 
@@ -123,9 +135,20 @@ export class EnemyManager {
     const s = d.sprite;
     s.setVelocityX(d.dir * d.speed);
     s.setFlipX(d.dir < 0);
-    if (Math.abs(s.x - d.originX) > d.range) {
-      d.dir *= -1;
-      s.x = d.originX + d.dir * d.range;
+    const minX = d.originX - d.range;
+    const maxX = d.originX + d.range;
+
+    // Rester sur la limite atteinte puis repartir dans l'autre sens.
+    // L'ancien calcul utilisait la nouvelle direction pour repositionner le
+    // crawler, ce qui le téléportait à l'extrémité opposée de sa patrouille.
+    if (s.x >= maxX && d.dir > 0) {
+      s.setX(maxX);
+      d.dir = -1;
+      s.setVelocityX(-d.speed);
+    } else if (s.x <= minX && d.dir < 0) {
+      s.setX(minX);
+      d.dir = 1;
+      s.setVelocityX(d.speed);
     }
   }
 
@@ -203,6 +226,7 @@ export class EnemyManager {
     this._spawnDeathParticles(ex, ey);
     d.sprite.destroy();
     this._data = this._data.filter(x => x !== d);
+    this.scene.events.emit('enemyDefeated', { type: d.type, x: ex, y: ey });
     // Drop heal-orb 15%
     if (Math.random() < 0.15) this._dropHealOrb(ex, ey);
   }

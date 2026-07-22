@@ -1,5 +1,5 @@
 /**
- * BossManager — Boss final "Le Gardien de l'Écho" (x≈2800).
+ * BossManager — Boss final "Le Gardien de l'Écho" (Chambre Haute, x≈5660).
  * 3 phases selon les PV restants.
  *   Phase 1 (hp 9-12) : patrouille lente + slam occasionnel
  *   Phase 2 (hp 5-8)  : charge + rafale de 3 projectiles

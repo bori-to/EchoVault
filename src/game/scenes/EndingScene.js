@@ -9,15 +9,15 @@ const CONTENT = {
   guardian: {
     bgColor:  0x071a07,
     accent:   '#4caf50',
-    title:    '◈  FIN GARDIENNE  ◈',
-    body:     'ARIA s\'intègre aux archives vivantes.\nLes ruines restent. La mémoire demeure.\nUne gardienne pour l\'éternité.',
+    title:    '◈  FIN — TRANSMISSION  ◈',
+    body:     'ARIA ouvre les archives au monde extérieur.\nLes Échos parlent enfin avec leurs propres voix.\nLa cité devient un phare, non un tombeau.\n\nARIA reste leur gardienne — par choix, cette fois.',
     particle: 0x81c784,
   },
   reset: {
     bgColor:  0x1a0707,
     accent:   '#f44336',
-    title:    '◈  FIN RÉINITIALISATION  ◈',
-    body:     'ARIA efface les données corrompues.\nLes ruines s\'éteignent une par une.\nUn nouveau départ dans le silence.',
+    title:    '◈  FIN — LIBÉRATION  ◈',
+    body:     'ARIA brise le Coffre et rend chaque mémoire à l’Écho.\nLes voix choisissent de partir, de dormir ou de rester.\nÀ l’aube, les ruines sont silencieuses — mais libres.\n\nARIA marche vers la surface avec ses propres souvenirs.',
     particle: 0xf44336,
   },
 };

@@ -1,10 +1,9 @@
 ﻿/**
  * GameScene — niveau principal d'EchoVault (Livrable 2 enrichi).
  *
- * Carte 3200×560 px — 3 biomes :
- *   Biome 0 « Le Coffre-Fort »  x 0–1060    (palette bleue-nuit, Crawlers)
- *   Biome 1 « La Forge »        x 1060–2160  (lave, orange, Drones)
- *   Biome 2 « La Surface »      x 2160–3200  (verdure, lumière, Guardian)
+ * Carte 6400×560 px — campagne narrative en 5 actes (≈ 15 minutes).
+ * Le chemin critique est verrouillé par les souvenirs et les dialogues :
+ * il n'est plus possible de courir directement jusqu'à la fin.
  *
  * Mécaniques :
  *   - Saut + double saut (cristal Biome 0)
@@ -42,6 +41,21 @@ const PLATFORMS = [
   [2740, 400, 1.6, 'platform-surface'],
   [2900, 320, 1.6, 'platform-surface'],
   [3060, 440, 1.8, 'platform-surface'],
+  [3260, 350, 1.8, 'platform-forge'],
+  [3460, 270, 1.5, 'platform-forge'],
+  [3650, 410, 1.8, 'platform-forge'],
+  [3860, 325, 1.6, 'platform-forge'],
+  [4050, 245, 1.5, 'platform-forge'],
+  [4240, 410, 1.8, 'platform-surface'],
+  [4440, 320, 1.5, 'platform-surface'],
+  [4620, 235, 1.4, 'platform-surface'],
+  [4820, 400, 1.8, 'platform-surface'],
+  [5020, 310, 1.7, 'platform-surface'],
+  [5220, 420, 1.8, 'platform-surface'],
+  [5440, 330, 1.6, 'platform-surface'],
+  [5660, 430, 2.2, 'platform-surface'],
+  [5920, 340, 1.8, 'platform-surface'],
+  [6160, 440, 2.0, 'platform-surface'],
 ];
 
 const ENEMIES = [
@@ -55,6 +69,17 @@ const ENEMIES = [
   ['guardian',  2580, 244],
   ['drone',     2740, 340],
   ['guardian',  3060, 404],
+  ['crawler',   3260, 332, 90],
+  ['drone',     3460, 220],
+  ['sentinelle',3650, 380],
+  ['drone',     3860, 275],
+  ['guardian',  4050, 208],
+  ['crawler',   4240, 392, 100],
+  ['drone',     4440, 270],
+  ['guardian',  4820, 364],
+  ['sentinelle',5020, 280],
+  ['drone',     5220, 370],
+  ['guardian',  5440, 294],
 ];
 
 // Checkpoints [x, y]
@@ -62,16 +87,25 @@ const CHECKPOINTS = [
   [520,  420],
   [1320, 280],
   [2270, 420],
+  [3660, 380],
+  [4830, 370],
+  [5480, 400],
 ];
 
 // Fragments mémoire [x, y, texte lore]
 const FRAGMENTS = [
-  [420,  340, '"Fragment #1 — Je me souviens... de la tour."'],
-  [900,  268, '"Fragment #2 — Quelqu\'un a effacé mes données."'],
-  [1640, 308, '"Fragment #3 — Le Gardien protège quoi, au juste ?"'],
-  [2420, 338, '"Fragment #4 — Les archives brûlent encore."'],
-  [2900, 298, '"Fragment #5 — C\'est ici que tout a commencé."'],
+  [420,  340, 'Fragment I — « Projet ARIA : préserver la mémoire humaine. »'],
+  [900,  268, 'Fragment II — « La surface ne nous a pas tués. Nous l\'avons quittée. »'],
+  [1640, 308, 'Fragment III — « L\'Oracle a refusé l\'ordre d\'effacement. »'],
+  [2420, 338, 'Fragment IV — « La Forge fabriquait des corps, pas des armes. »'],
+  [3460, 248, 'Fragment V — « ARIA était leur première gardienne. Moi. »'],
+  [4050, 223, 'Fragment VI — « SOL : le dernier esprit humain transféré. »'],
+  [4620, 213, 'Fragment VII — « Le Gardien retient l\'Écho contre sa volonté. »'],
+  [5220, 398, 'Fragment VIII — « Se souvenir ne condamne pas. Cela permet de choisir. »'],
 ];
+
+const WORLD_W = 6400;
+const REQUIRED_FRAGMENTS = FRAGMENTS.length;
 
 export class GameScene extends Phaser.Scene {
   constructor() { super({ key: 'GameScene' }); }
@@ -83,14 +117,18 @@ export class GameScene extends Phaser.Scene {
     this._gameOver = false;
     this._hp       = 3;
     this._invTimer = 0;
+    this._exitHintCd = 0;
     this._bulletsConnected = false;
     this._fragmentCount = 0;
     this._bossTriggered = false;
+    this._bossDefeated  = false;
+    this._storyStage    = 0;
+    this._activeEncounter = null;
     this._lastBiome = -1;
   }
 
   create() {
-    const W = 3200, H = 560;
+    const W = WORLD_W, H = 560;
     this.physics.world.setBounds(0, 0, W, H);
     this.cameras.main.setBounds(0, 0, W, H);
 
@@ -103,6 +141,7 @@ export class GameScene extends Phaser.Scene {
     this._buildCheckpoints();
     this._buildFragments();
     this._buildBoss();
+    this._buildStoryGates();
     this._buildAmbientParticles(W, H);
     this._setupCollisions();
 
@@ -115,8 +154,13 @@ export class GameScene extends Phaser.Scene {
     this._eKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E);
     this._indicator = this.add.image(0, 0, 'indicator').setVisible(false).setDepth(15);
 
-    this.scene.launch('HUDScene', { pm: this._pm, gsm: this._gsm, getHp: () => this._hp });
+    this.scene.launch('HUDScene', {
+      pm: this._pm, gsm: this._gsm, getHp: () => this._hp,
+      fragmentTotal: REQUIRED_FRAGMENTS,
+    });
     this._spawnX = 80; this._spawnY = 460;
+
+    this.time.delayedCall(700, () => this._startPrologue());
   }
 
   _buildBackground(W, H) {
@@ -191,14 +235,14 @@ export class GameScene extends Phaser.Scene {
       tint: [0xff6600, 0xff9900, 0xffcc00], blendMode: Phaser.BlendModes.ADD,
     }).setDepth(depth);
 
-    // ─── BIOME 2 — La Surface (x 2160–3200) ───────────────────────────
+    // ─── BIOME 2 — La Surface (x 2160–6400) ───────────────────────────
     // Colonnes brisées
     [[2210,480],[2480,475],[2650,480],[2870,478],[3080,480],[3160,478]].forEach(([x, y]) => {
       this.add.image(x, y, 'deco-column').setDepth(depth).setOrigin(0.5, 1)
         .setAlpha(0.75).setScale(0.9 + (x%3)*0.1, 0.8 + (x%4)*0.08);
     });
     // Touffes d’herbe sur le sol
-    for (let x = 2180; x < 3200; x += Phaser.Math.Between(28, 55)) {
+    for (let x = 2180; x < W; x += Phaser.Math.Between(28, 55)) {
       const g = this.add.image(x, 502, 'deco-grass').setDepth(depth).setOrigin(0.5, 1);
       g.setAlpha(0.6 + Math.random()*0.3).setScale(0.8 + Math.random()*0.5, 1 + Math.random()*0.4);
       this.tweens.add({ targets: g, angle: { from: -2, to: 3 },
@@ -211,8 +255,8 @@ export class GameScene extends Phaser.Scene {
         .setDepth(depth).setBlendMode(Phaser.BlendModes.ADD);
     });
     // Particules pollen / lucioles
-    this.add.particles(2700, 300, 'particle', {
-      emitZone: { type: 'random', source: new Phaser.Geom.Rectangle(-500, -200, 1000, 400) },
+    this.add.particles(4300, 300, 'particle', {
+      emitZone: { type: 'random', source: new Phaser.Geom.Rectangle(-2100, -200, 4200, 400) },
       quantity: 1, frequency: 250, lifespan: { min: 3000, max: 6000 },
       alpha: { start: 0.5, end: 0 }, scale: { min: 0.2, max: 0.6 },
       speedX: { min: -8, max: 8 }, speedY: { min: -12, max: -4 },
@@ -244,7 +288,7 @@ export class GameScene extends Phaser.Scene {
 
   _buildLevel() {
     this._platforms = this.physics.add.staticGroup();
-    this._platforms.create(1600, 520, 'ground').setScale(2, 1).refreshBody();
+    this._platforms.create(WORLD_W / 2, 520, 'ground').setScale(WORLD_W / 1600, 1).refreshBody();
 
     PLATFORMS.forEach(([x, y, sx, tex]) => {
       this._platforms.create(x, y, tex).setScale(sx, 1).refreshBody();
@@ -253,7 +297,7 @@ export class GameScene extends Phaser.Scene {
         .setBlendMode(Phaser.BlendModes.ADD).setDepth(0);
     });
 
-    [[1060, 280], [2160, 280]].forEach(([bx, h]) => {
+    [[1060, 280], [2160, 280], [3200, 280], [4300, 280]].forEach(([bx, h]) => {
       this.add.rectangle(bx, 520, 20, h * 2, 0x080e1c, 1).setDepth(-10);
       this.add.rectangle(bx, 520 - h, 30, 14, 0x101828, 1).setDepth(-10);
     });
@@ -262,6 +306,9 @@ export class GameScene extends Phaser.Scene {
       [530,  30, '[ LE COFFRE-FORT ]', '#4fc3f7'],
       [1600, 30, '[ LA FORGE ]',       '#ff8f00'],
       [2680, 30, '[ LA SURFACE ]',     '#81c784'],
+      [3740, 30, '[ ARCHIVES PROFONDES ]', '#ffb74d'],
+      [4820, 30, '[ JARDIN DES ÉCHOS ]', '#80cbc4'],
+      [5740, 30, '[ CHAMBRE HAUTE ]', '#ce93d8'],
     ].forEach(([x, y, label, col]) =>
       this.add.text(x, y, label, { fontFamily: 'monospace', fontSize: '11px',
         color: col, alpha: 0.55 }).setOrigin(0.5).setDepth(1)
@@ -300,8 +347,8 @@ export class GameScene extends Phaser.Scene {
     }).setOrigin(0.5).setDepth(5);
     if (this._npc.postFX) this._npc.postFX.addGlow(0xce93d8, 3, 0);
 
-    this._exitA = this.physics.add.staticImage(2580, 230, 'exit-a');
-    this.add.text(2580, 190, 'FIN A\n[Gardienne]', {
+    this._exitA = this.physics.add.staticImage(5920, 290, 'exit-a');
+    this.add.text(5920, 250, 'FIN A\n[Transmettre]', {
       fontFamily: 'monospace', fontSize: '10px', color: '#81c784',
       align: 'center', stroke: '#030a04', strokeThickness: 3,
     }).setOrigin(0.5).setDepth(5);
@@ -310,8 +357,8 @@ export class GameScene extends Phaser.Scene {
       this.tweens.add({ targets: gA, outerStrength: { from: 2, to: 7 }, duration: 1400, yoyo: true, repeat: -1 });
     }
 
-    this._exitB = this.physics.add.staticImage(3100, 485, 'exit-b');
-    this.add.text(3100, 445, 'FIN B\n[Reset]', {
+    this._exitB = this.physics.add.staticImage(6260, 485, 'exit-b');
+    this.add.text(6260, 445, 'FIN B\n[Libérer]', {
       fontFamily: 'monospace', fontSize: '10px', color: '#ef9a9a',
       align: 'center', stroke: '#0a0202', strokeThickness: 3,
     }).setOrigin(0.5).setDepth(5);
@@ -356,7 +403,91 @@ export class GameScene extends Phaser.Scene {
     this._boss = new BossManager(this);
     // Le boss se spawne plus tard (trigger à x > 2700)
     this.events.on('bossDefeated', () => {
-      this._floatMessage('Gardien vaincu ! La voie est libre.', '#ffd600');
+      this._bossDefeated = true;
+      this._storyStage = 4;
+      this._floatMessage('Le Gardien est libre. Les deux protocoles répondent.', '#ffd600');
+      this.events.emit('objectiveChanged', 'ACTE V — Choisissez le destin des mémoires');
+    });
+  }
+
+  _buildStoryGates() {
+    this._storyNpcs = [
+      this._makeStoryNpc(700, 338, "L'Oracle", 2, 'oracle'),
+      this._makeStoryNpc(2740, 368, 'Archiviste K-7', 4, 'archivist'),
+      this._makeStoryNpc(4440, 288, 'Écho de SOL', 6, 'sol'),
+    ];
+    // Barrières visibles : elles matérialisent les actes et disparaissent après le dialogue.
+    this._storyGates = [1050, 3150, 4680].map((x, i) => {
+      // Du plafond jusque sous le sol : impossible de contourner le verrou par un double saut.
+      const gate = this.add.rectangle(x, 280, 22, 560, [0x00e5ff, 0xff6f00, 0xce93d8][i], 0.32)
+        .setDepth(8).setStrokeStyle(2, [0x80deea, 0xffcc80, 0xe1bee7][i]);
+      this.physics.add.existing(gate, true);
+      this.physics.add.collider(this._player, gate);
+      return gate;
+    });
+  }
+
+  _makeStoryNpc(x, y, name, requires, id) {
+    // L'Oracle d'origine sert de premier personnage ; les suivants réutilisent la silhouette holographique.
+    const sprite = id === 'oracle' ? this._npc : this.physics.add.staticImage(x, y, 'npc').setTint(id === 'sol' ? 0x80cbc4 : 0xffb74d);
+    if (id !== 'oracle') {
+      this.add.text(x, y - 42, name, { fontFamily: 'monospace', fontSize: '11px', color: id === 'sol' ? '#80cbc4' : '#ffb74d', stroke: '#000', strokeThickness: 3 })
+        .setOrigin(0.5).setDepth(6);
+      if (sprite.postFX) sprite.postFX.addGlow(id === 'sol' ? 0x80cbc4 : 0xffb74d, 3, 0);
+    }
+    return { sprite, name, requires, id, done: false, defenseCleared: false };
+  }
+
+  _beginMemoryEncounter(npc) {
+    if (this._activeEncounter) return;
+    const encounter = {
+      npc, wave: 0, enemies: [], waiting: false,
+      waves: [
+        ['crawler', 'crawler', 'drone'],
+        ['drone', 'crawler', 'sentinelle'],
+        ['guardian', 'drone', 'drone'],
+        ['guardian', 'sentinelle', 'crawler'],
+      ],
+    };
+    this._activeEncounter = encounter;
+    this._floatMessage('SYNCHRONISATION — Défendez la liaison mémorielle !', '#ff5252');
+    this.events.emit('objectiveChanged', `DÉFENSE MÉMORIELLE — Vague 1/${encounter.waves.length}`);
+    this._spawnEncounterWave(encounter);
+  }
+
+  _spawnEncounterWave(encounter) {
+    const types = encounter.waves[encounter.wave];
+    const anchor = encounter.npc.sprite.x;
+    const offsets = encounter.npc.id === 'sol' ? [70, 145, 205] : [80, 170, 260];
+    encounter.enemies = types.map((type, i) => {
+      const x = anchor + offsets[i];
+      const y = type === 'drone' || type === 'sentinelle' ? 350 - i * 45 : 475;
+      if (type === 'crawler') return this._em.addCrawler(x, y, 55);
+      if (type === 'drone') return this._em.addDrone(x, y - 80);
+      if (type === 'sentinelle') return this._em.addSentinelle(x, y - 120);
+      return this._em.addGuardian(x, y);
+    });
+    encounter.waiting = false;
+  }
+
+  _updateMemoryEncounter() {
+    const encounter = this._activeEncounter;
+    if (!encounter || encounter.waiting) return;
+    if (encounter.enemies.some(enemy => enemy.active)) return;
+
+    encounter.wave++;
+    if (encounter.wave >= encounter.waves.length) {
+      encounter.npc.defenseCleared = true;
+      this._activeEncounter = null;
+      this._floatMessage('Synchronisation stable. Le témoin peut parler.', '#76ff03');
+      this.events.emit('objectiveChanged', `Parlez à ${encounter.npc.name}`);
+      return;
+    }
+
+    encounter.waiting = true;
+    this.events.emit('objectiveChanged', `DÉFENSE MÉMORIELLE — Vague ${encounter.wave + 1}/${encounter.waves.length}`);
+    this.time.delayedCall(1800, () => {
+      if (this._activeEncounter === encounter) this._spawnEncounterWave(encounter);
     });
   }
 
@@ -396,6 +527,15 @@ export class GameScene extends Phaser.Scene {
       this._fragmentCount++;
       this.events.emit('fragmentCollected', this._fragmentCount);
       this._floatMessage(lore, '#ce93d8');
+      const nextNpc = this._storyNpcs?.find(n => !n.done);
+      if (nextNpc) {
+        const remaining = Math.max(0, nextNpc.requires - this._fragmentCount);
+        this.events.emit('objectiveChanged', remaining > 0
+          ? `Récupérez ${remaining} souvenir${remaining > 1 ? 's' : ''} avant de parler à ${nextNpc.name}`
+          : `Retournez parler à ${nextNpc.name}`);
+      } else if (this._fragmentCount >= REQUIRED_FRAGMENTS) {
+        this.events.emit('objectiveChanged', 'Rejoignez la Chambre Haute');
+      }
     }, null, this);
 
     this._em.connect(
@@ -458,8 +598,34 @@ export class GameScene extends Phaser.Scene {
     this._floatMessage('Checkpoint !', '#00e5ff');
   }
 
-  _onExitA() { if (!this._gameOver) this._triggerEnding('guardian'); }
-  _onExitB() { if (!this._gameOver) this._triggerEnding('reset'); }
+  _canFinish() {
+    if (this._exitHintCd > 0) return false;
+    if (!this._bossDefeated) {
+      this._exitHintCd = 1200;
+      this._floatMessage('Le Gardien maintient encore les protocoles verrouillés.', '#ff8a80');
+      return false;
+    }
+    if (this._fragmentCount < REQUIRED_FRAGMENTS) {
+      this._exitHintCd = 1200;
+      this._floatMessage(`Mémoire incomplète : ${this._fragmentCount}/${REQUIRED_FRAGMENTS}.`, '#ce93d8');
+      return false;
+    }
+    return true;
+  }
+
+  _onExitA() {
+    if (!this._gameOver && this._canFinish()) {
+      this._gsm.recordDecision('final_choice', 'transmit');
+      this._triggerEnding('guardian');
+    }
+  }
+
+  _onExitB() {
+    if (!this._gameOver && this._canFinish()) {
+      this._gsm.recordDecision('final_choice', 'release');
+      this._triggerEnding('reset');
+    }
+  }
 
   _onPlayerHit() {
     if (this._invTimer > 0 || this._gameOver) return;
@@ -515,6 +681,7 @@ export class GameScene extends Phaser.Scene {
     if (this._gameOver) return;
 
     this._invTimer = Math.max(0, this._invTimer - delta);
+    this._exitHintCd = Math.max(0, this._exitHintCd - delta);
 
     // Connecter les bullets du controller une seule fois (ennemis normaux seulement)
     if (this._ctrl && !this._bulletsConnected) {
@@ -527,7 +694,7 @@ export class GameScene extends Phaser.Scene {
 
     // ── Biome & parallaxe ──
     const scrollX = this.cameras.main.scrollX;
-    const biome = scrollX < 1060 ? 0 : scrollX < 2160 ? 1 : 2;
+    const biome = scrollX < 1800 ? 0 : scrollX < 4100 ? 1 : 2;
     this._bgFar.forEach((bg, i) => {
       bg.tilePositionX = scrollX * 0.15;
       bg.tilePositionY = Math.sin(time * 0.00022 + i) * (i === 1 ? 2 : 1);
@@ -559,9 +726,10 @@ export class GameScene extends Phaser.Scene {
     this.cameras.main.setFollowOffset(tiltX, 0);
 
     // ── Trigger boss ──
-    if (!this._bossTriggered && this._player.x > 2700) {
+    if (!this._bossTriggered && this._player.x > 5350 &&
+        this._fragmentCount >= REQUIRED_FRAGMENTS && this._storyNpcs.every(n => n.done)) {
       this._bossTriggered = true;
-      this._boss.spawn(2820, 300);
+      this._boss.spawn(5660, 350);
       this._boss.connect(
         this._player,
         () => this._onPlayerHit(),
@@ -577,20 +745,21 @@ export class GameScene extends Phaser.Scene {
     this._dlgMgr.update();
     this._em.update(this._player, delta);
     this._boss.update(this._player, delta);
+    this._updateMemoryEncounter();
 
     if (this._ctrl.bullets) {
       this._ctrl.bullets.getChildren().forEach(b => {
-        if (b.x < -50 || b.x > 3250 || b.y < -100 || b.y > 620) b.destroy();
+        if (b.x < -50 || b.x > WORLD_W + 50 || b.y < -100 || b.y > 620) b.destroy();
       });
     }
 
-    const distNPC = Phaser.Math.Distance.Between(
-      this._player.x, this._player.y, this._npc.x, this._npc.y
-    );
-    const nearNPC = distNPC < 90 && !this._npcDone && !this._dlgMgr.isActive;
-    this._indicator.setVisible(nearNPC);
-    if (nearNPC) this._indicator.setPosition(this._npc.x, this._npc.y - 68);
-    if (nearNPC && Phaser.Input.Keyboard.JustDown(this._eKey)) this._startOracleDialogue();
+    const nearbyNpc = this._storyNpcs
+      .filter(n => !n.done)
+      .find(n => Phaser.Math.Distance.Between(this._player.x, this._player.y, n.sprite.x, n.sprite.y) < 95);
+    const canInteract = nearbyNpc && !this._dlgMgr.isActive;
+    this._indicator.setVisible(Boolean(canInteract));
+    if (canInteract) this._indicator.setPosition(nearbyNpc.sprite.x, nearbyNpc.sprite.y - 68);
+    if (canInteract && Phaser.Input.Keyboard.JustDown(this._eKey)) this._startStoryDialogue(nearbyNpc);
 
     if (this._player.y > 590) {
       this._onPlayerHit();
@@ -599,31 +768,99 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  _startOracleDialogue() {
-    const data = {
-      name: "L'Oracle",
+  _startPrologue() {
+    this._dlgMgr.startDialogue({
+      name: 'Système ARIA',
       nodes: [
-        {
-          id: 'start',
-          text: 'Fragment memoriel #3 detecte.\nARIA... tu te souviens de moi ?',
-          choices: [
-            { label: 'Oui, quelque chose me revient...', next: 'remember',
-              effect: { decision: 'trust_oracle', value: true } },
-            { label: 'Non. Je ne te connais pas.', next: 'forget',
-              effect: { decision: 'trust_oracle', value: false } },
+        { id: 'start', text: 'Cycle 9 847. Réveil d’urgence.\nIdentité : ARIA, unité archéologue. Mémoire : 2 %.', choices: [] },
+      ],
+    }, () => {
+      this.events.emit('objectiveChanged', "ACTE I — Retrouvez 2 souvenirs et interrogez l'Oracle");
+      this._floatMessage('Quelqu’un a laissé la porte du Coffre ouverte...', '#80deea');
+    });
+  }
+
+  _startStoryDialogue(npc) {
+    if (this._fragmentCount < npc.requires) {
+      const missing = npc.requires - this._fragmentCount;
+      this._floatMessage(`${missing} souvenir${missing > 1 ? 's' : ''} manque${missing > 1 ? 'nt' : ''}.`, '#ce93d8');
+      return;
+    }
+
+    if (!npc.defenseCleared) {
+      this._beginMemoryEncounter(npc);
+      return;
+    }
+
+    const dialogues = {
+      oracle: {
+        name: "L'Oracle",
+        nodes: [
+          { id: 'start', text: 'ARIA... Deux souvenirs suffisent pour reconnaître ma voix.\nTu étais la gardienne de cette cité, avant sa chute.', choices: [] },
+        ],
+        followup: {
+          name: "L'Oracle",
+          nodes: [
+            { id: 'start', text: 'Le Conseil ordonna d’effacer les habitants transférés dans l’Écho.\nJ’ai saboté cet ordre — puis tu as effacé ta propre mémoire.', choices: [
+              { label: 'Je te crois. Ouvrons les archives.', next: 'trust', effect: { decision: 'trust_oracle', value: true } },
+              { label: 'Je vérifierai chaque mot.', next: 'doubt', effect: { decision: 'trust_oracle', value: false } },
+            ] },
+            { id: 'trust', text: 'Alors traverse la Forge. K-7 conserve le registre des derniers jours.', choices: [] },
+            { id: 'doubt', text: 'Tu as raison. Une gardienne ne doit jamais obéir sans preuve. Trouve K-7.', choices: [] },
           ],
         },
-        { id: 'remember', text: 'Bien. Tu sais ce que tu dois proteger.\nLa Chambre Haute t\'attend. Va, Gardienne.', choices: [] },
-        { id: 'forget',   text: 'La memoire efface ce qui fait mal.\nChoisir l\'oubli est aussi une liberte.', choices: [] },
-      ],
+      },
+      archivist: {
+        name: 'Archiviste K-7',
+        nodes: [
+          { id: 'start', text: 'Quatre fragments authentifiés. Voici la vérité : les machines de la Forge\nrecevaient les consciences humaines pour les sauver du Cataclysme.', choices: [] },
+        ],
+        followup: {
+          name: 'Archiviste K-7',
+          nodes: [
+            { id: 'start', text: 'Quand les ressources ont manqué, le Conseil a choisi le silence.\nToi, ARIA, tu as enfermé l’ordre d’effacement dans le Gardien.', choices: [
+              { label: 'Conserver la Forge comme preuve.', next: 'keep', effect: { decision: 'preserve_forge', value: true } },
+              { label: 'La condamner après notre passage.', next: 'close', effect: { decision: 'preserve_forge', value: false } },
+            ] },
+            { id: 'keep', text: 'Alors nos fautes resteront visibles. SOL vous attend dans le Jardin des Échos.', choices: [] },
+            { id: 'close', text: 'Parfois une tombe protège mieux qu’un musée. SOL vous attend plus haut.', choices: [] },
+          ],
+        },
+      },
+      sol: {
+        name: 'Écho de SOL',
+        nodes: [
+          { id: 'start', text: 'Je suis SOL, dernier humain éveillé dans le réseau.\nTu ne nous as pas emprisonnés, ARIA. Tu nous as donné du temps.', choices: [] },
+        ],
+        followup: {
+          name: 'Écho de SOL',
+          nodes: [
+            { id: 'start', text: 'Le Gardien croit encore exécuter ta dernière consigne : « ne laisse personne décider à ma place ».\nRassemble les deux fragments restants, puis affronte-le.', choices: [
+              { label: 'Je porterai encore cette responsabilité.', next: 'carry', effect: { decision: 'accept_past', value: true } },
+              { label: 'Cette fois, les Échos choisiront.', next: 'share', effect: { decision: 'accept_past', value: false } },
+            ] },
+            { id: 'carry', text: 'Alors monte à la Chambre Haute. Mais souviens-toi : protéger n’est pas posséder.', choices: [] },
+            { id: 'share', text: 'Alors monte à la Chambre Haute. Fais de ton choix le dernier ordre imposé.', choices: [] },
+          ],
+        },
+      },
     };
-    this._dlgMgr.startDialogue(data, () => {
-      this._npcDone = true;
-      const guardian = this._gsm.getEnding() === 'guardian';
-      this._floatMessage(
-        guardian ? '-> Biome 2 : Chambre Haute (Fin A)' : '-> Biome 2 : Sortie (Fin B)',
-        guardian ? '#81c784' : '#ef9a9a'
-      );
+
+    const script = dialogues[npc.id];
+    this._dlgMgr.startDialogue(script, () => {
+      this._dlgMgr.startDialogue(script.followup, () => {
+        npc.done = true;
+        if (npc.id === 'oracle') this._npcDone = true;
+        this._storyGates[this._storyStage]?.destroy();
+        this._storyStage++;
+        const objectives = [
+          'ACTE II — Traversez la Forge et rassemblez 4 souvenirs',
+          'ACTE III — Retrouvez SOL avec 6 souvenirs',
+          'ACTE IV — Complétez les 8 souvenirs et gagnez la Chambre Haute',
+        ];
+        this.events.emit('objectiveChanged', objectives[this._storyStage - 1]);
+        this._floatMessage('Verrou mémoriel levé.', '#ffd600');
+      });
     });
   }
 

@@ -2,7 +2,7 @@
 
 > Mini-jeu Metroidvania 2D — Projet MetroidvanIA | ESGI 4AL | 2026
 
-Un robot archéologue explore des ruines souterraines pour retrouver sa mémoire perdue. Deux fins selon vos choix moraux.
+Un robot archéologue explore des ruines souterraines pour retrouver sa mémoire perdue. La campagne d'environ 15 minutes se déroule en cinq actes, avec huit souvenirs, trois témoins, un boss en trois phases et deux fins selon votre choix final.
 
 ## Équipe
 
