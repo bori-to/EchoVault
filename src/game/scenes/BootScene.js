@@ -732,7 +732,7 @@ export class BootScene extends Phaser.Scene {
         llx = 0, lly = 0,
         rlx = 0, rly = 0,
         lay = 0, ray = 0,
-        vd = false, cb = false, dj = false,
+        vd = false, cb = false, dj = false, pose = 'normal',
         fwdLeg = 'r',
       } = opts;
 
@@ -783,15 +783,69 @@ export class BootScene extends Phaser.Scene {
         g.fillRect(ox+11, by+18, 1, 8); g.fillRect(ox+20, by+18, 1, 8);
       }
 
-      // Bras
-      g.fillStyle(C.a2); g.fillRect(ox+2,  by+16+lay, 5, 9);
-      g.fillStyle(C.a3); g.fillRect(ox+3,  by+17+lay, 2, 6);
-      g.fillStyle(C.a1); g.fillRect(ox+2,  by+25+lay, 4, 6);
-      g.fillStyle(vc);   g.fillRect(ox+2,  by+30+lay, 4, 1);
-      g.fillStyle(C.a2); g.fillRect(ox+25, by+16+ray, 5, 9);
-      g.fillStyle(C.a3); g.fillRect(ox+26, by+17+ray, 2, 6);
-      g.fillStyle(C.a1); g.fillRect(ox+25, by+25+ray, 4, 6);
-      g.fillStyle(vc);   g.fillRect(ox+25, by+30+ray, 4, 1);
+      // Bras : les actions ont des silhouettes dédiées, pas seulement des offsets verticaux.
+      if (pose === 'runA') {
+        // Bras gauche projeté derrière, bras droit lancé vers l'avant.
+        g.fillStyle(C.a2); g.fillRect(ox+1,  by+16, 6, 5);
+        g.fillStyle(C.a1); g.fillRect(ox+0,  by+19, 5, 4);
+        g.fillStyle(vc);   g.fillRect(ox+0,  by+22, 4, 1);
+        g.fillStyle(C.a2); g.fillRect(ox+24, by+16, 6, 5);
+        g.fillStyle(C.a3); g.fillRect(ox+28, by+19, 4, 4);
+        g.fillStyle(vc);   g.fillRect(ox+31, by+22, 1, 2);
+      } else if (pose === 'runB') {
+        // Opposition inverse pour rendre la foulée immédiatement lisible.
+        g.fillStyle(C.a2); g.fillRect(ox+2,  by+16, 6, 5);
+        g.fillStyle(C.a3); g.fillRect(ox+0,  by+20, 5, 4);
+        g.fillStyle(vc);   g.fillRect(ox+0,  by+23, 3, 1);
+        g.fillStyle(C.a2); g.fillRect(ox+25, by+17, 6, 5);
+        g.fillStyle(C.a1); g.fillRect(ox+27, by+21, 5, 5);
+        g.fillStyle(vc);   g.fillRect(ox+30, by+25, 2, 1);
+      } else if (pose === 'jump') {
+        // Les bras accompagnent fortement l'impulsion vers le haut.
+        g.fillStyle(C.a2); g.fillRect(ox+3,  by+12, 5, 8);
+        g.fillStyle(C.a1); g.fillRect(ox+5,  by+8, 4, 7);
+        g.fillStyle(vc);   g.fillRect(ox+6,  by+7, 3, 2);
+        g.fillStyle(C.a2); g.fillRect(ox+24, by+12, 5, 8);
+        g.fillStyle(C.a1); g.fillRect(ox+23, by+8, 4, 7);
+        g.fillStyle(vc);   g.fillRect(ox+23, by+7, 3, 2);
+      } else if (pose === 'fall') {
+        // Bras ouverts pour équilibrer la silhouette pendant la chute.
+        g.fillStyle(C.a2); g.fillRect(ox+1,  by+17, 8, 5);
+        g.fillStyle(C.a1); g.fillRect(ox+0,  by+20, 5, 5);
+        g.fillStyle(vc);   g.fillRect(ox+0,  by+24, 3, 1);
+        g.fillStyle(C.a2); g.fillRect(ox+23, by+17, 8, 5);
+        g.fillStyle(C.a1); g.fillRect(ox+28, by+20, 4, 5);
+        g.fillStyle(vc);   g.fillRect(ox+30, by+24, 2, 1);
+      } else if (pose === 'shoot') {
+        g.fillStyle(C.a2); g.fillRect(ox+3,  by+17, 5, 9);
+        g.fillStyle(C.a1); g.fillRect(ox+3,  by+25, 4, 6);
+        g.fillStyle(C.a2); g.fillRect(ox+23, by+16, 6, 5);
+        g.fillStyle(C.a3); g.fillRect(ox+27, by+17, 4, 3);
+        g.fillStyle(C.a1); g.fillRect(ox+28, by+18, 4, 4);
+        g.fillStyle(vc);   g.fillRect(ox+31, by+18, 1, 4);
+      } else if (pose === 'dash') {
+        g.fillStyle(C.a2); g.fillRect(ox+1, by+17, 8, 5);
+        g.fillStyle(C.a3); g.fillRect(ox+0, by+20, 7, 4);
+        g.fillStyle(vc);   g.fillRect(ox+0, by+23, 5, 1);
+        g.fillStyle(C.a2); g.fillRect(ox+3, by+24, 8, 4);
+        g.fillStyle(C.a1); g.fillRect(ox+0, by+27, 7, 3);
+        g.fillStyle(vc);   g.fillRect(ox+0, by+29, 4, 1);
+      } else if (pose === 'charge') {
+        g.fillStyle(C.a2); g.fillRect(ox+3,  by+16, 5, 8);
+        g.fillStyle(C.a1); g.fillRect(ox+6,  by+22, 7, 4);
+        g.fillStyle(C.a2); g.fillRect(ox+24, by+16, 5, 8);
+        g.fillStyle(C.a1); g.fillRect(ox+19, by+22, 7, 4);
+        g.fillStyle(vc);   g.fillRect(ox+14, by+24, 4, 2);
+      } else {
+        g.fillStyle(C.a2); g.fillRect(ox+2,  by+16+lay, 5, 9);
+        g.fillStyle(C.a3); g.fillRect(ox+3,  by+17+lay, 2, 6);
+        g.fillStyle(C.a1); g.fillRect(ox+2,  by+25+lay, 4, 6);
+        g.fillStyle(vc);   g.fillRect(ox+2,  by+30+lay, 4, 1);
+        g.fillStyle(C.a2); g.fillRect(ox+25, by+16+ray, 5, 9);
+        g.fillStyle(C.a3); g.fillRect(ox+26, by+17+ray, 2, 6);
+        g.fillStyle(C.a1); g.fillRect(ox+25, by+25+ray, 4, 6);
+        g.fillStyle(vc);   g.fillRect(ox+25, by+30+ray, 4, 1);
+      }
 
       // Bassin
       g.fillStyle(C.b1); g.fillRect(ox+9,  by+30, 14, 5);
@@ -815,34 +869,81 @@ export class BootScene extends Phaser.Scene {
         g.fillStyle(C.l3); g.fillRect(ox+15+rlx, Y+10, 9, 2);
         g.fillStyle(C.l4); g.fillRect(ox+16+rlx, Y+10, 6, 1);
       };
-      if (fwdLeg === 'l') { drawR(); drawL(); }
-      else                 { drawL(); drawR(); }
+      if (pose === 'runA') {
+        // Jambe arrière pliée, jambe avant tendue.
+        g.fillStyle(C.l2); g.fillRect(ox+8,  by+35, 7, 5);
+        g.fillStyle(C.l1); g.fillRect(ox+5,  by+39, 7, 5);
+        g.fillStyle(C.l3); g.fillRect(ox+3,  by+43, 10, 3);
+        g.fillStyle(C.l2); g.fillRect(ox+17, by+34, 7, 6);
+        g.fillStyle(C.l1); g.fillRect(ox+20, by+39, 6, 6);
+        g.fillStyle(C.l4); g.fillRect(ox+20, by+45, 10, 2);
+      } else if (pose === 'runB') {
+        g.fillStyle(C.l2); g.fillRect(ox+17, by+35, 7, 5);
+        g.fillStyle(C.l1); g.fillRect(ox+20, by+39, 7, 5);
+        g.fillStyle(C.l3); g.fillRect(ox+20, by+43, 10, 3);
+        g.fillStyle(C.l2); g.fillRect(ox+8,  by+34, 7, 6);
+        g.fillStyle(C.l1); g.fillRect(ox+6,  by+39, 6, 6);
+        g.fillStyle(C.l4); g.fillRect(ox+2,  by+45, 10, 2);
+      } else if (pose === 'jump') {
+        // Genoux relevés pendant la montée.
+        g.fillStyle(C.l2); g.fillRect(ox+7,  by+34, 8, 5);
+        g.fillStyle(C.l1); g.fillRect(ox+5,  by+38, 7, 5);
+        g.fillStyle(C.l3); g.fillRect(ox+3,  by+41, 9, 3);
+        g.fillStyle(C.l2); g.fillRect(ox+17, by+34, 8, 5);
+        g.fillStyle(C.l1); g.fillRect(ox+20, by+38, 7, 5);
+        g.fillStyle(C.l3); g.fillRect(ox+20, by+41, 9, 3);
+      } else if (pose === 'fall') {
+        // Jambes écartées et presque tendues pendant la descente.
+        g.fillStyle(C.l2); g.fillRect(ox+8,  by+35, 7, 6);
+        g.fillStyle(C.l1); g.fillRect(ox+6,  by+40, 6, 6);
+        g.fillStyle(C.l3); g.fillRect(ox+3,  by+45, 10, 2);
+        g.fillStyle(C.l2); g.fillRect(ox+17, by+35, 7, 6);
+        g.fillStyle(C.l1); g.fillRect(ox+20, by+40, 6, 6);
+        g.fillStyle(C.l3); g.fillRect(ox+20, by+45, 10, 2);
+      } else if (fwdLeg === 'l') { drawR(); drawL(); }
+      else                        { drawL(); drawR(); }
     };
 
     // ── 9 frames ──────────────────────────────────────────────────────────
     f(0*32);                                                              // 0 idle A
     f(1*32, { by:1, vd:true });                                          // 1 idle B
-    f(2*32, { lly:-2, llx:-1, rly:1, lay:-2, ray:2, fwdLeg:'l' });     // 2 walk A
-    f(3*32, { by:1 });                                                    // 3 walk B
-    f(4*32, { rly:-2, rlx:-1, lly:1, ray:-2, lay:2 });                  // 4 walk C
-    f(5*32, { by:1 });                                                    // 5 walk D
-    f(6*32, { lly:-4, rly:-4, lay:-3, ray:-3, cb:true });               // 6 jump
-    f(7*32, { lly:1,  rly:1,  llx:-1, rlx:1, lay:3,  ray:3  });        // 7 fall
+    f(2*32, { pose:'runA', cb:true });                                    // 2 run extension A
+    f(3*32, { by:1, lly:-1, rly:-1, lay:1, ray:1 });                     // 3 run contact A
+    f(4*32, { pose:'runB', cb:true });                                    // 4 run extension B
+    f(5*32, { by:1, lly:-1, rly:-1, lay:1, ray:1 });                     // 5 run contact B
+    f(6*32, { cb:true, pose:'jump' });                                    // 6 jump
+    f(7*32, { vd:true, pose:'fall' });                                    // 7 fall
     f(8*32, { lly:-5, rly:-5, lay:-4, ray:-4, dj:true });               // 8 djump
+    f(9*32, { by:2, lly:-2, rly:-2, llx:-2, rlx:2, lay:2, ray:2 });     // 9 jump anticipation
+    f(10*32,{ by:-1, cb:true, pose:'jump' });                            // 10 jump apex
+    f(11*32,{ by:1, vd:true, pose:'fall' });                             // 11 dynamic fall
+    f(12*32,{ by:2, lly:-2, rly:-2, llx:-1, rlx:1, lay:3, ray:3 });     // 12 landing
+    f(13*32,{ by:1, lly:-2, rly:-2, llx:-2, rlx:2, cb:true, pose:'dash' }); // 13 dash
+    f(14*32,{ cb:true, pose:'shoot' });                                  // 14 shoot
+    f(15*32,{ by:1, dj:true, pose:'charge' });                           // 15 charge
+    f(16*32,{ by:1, vd:true, lay:1, ray:1 });                            // 16 idle scan
+    f(17*32,{ llx:2, rlx:2, lly:0, rly:0, lay:-4, ray:3, vd:true });     // 17 wall slide
+    f(18*32,{ by:2, llx:-2, rlx:2, lly:-3, rly:-3, lay:4, ray:4, cb:true }); // 18 stomp
 
-    g.generateTexture('aria-sheet', 32 * 9, 48);
+    g.generateTexture('aria-sheet', 32 * 19, 48);
     g.destroy();
   }
 
   _registerAnimations() {
     const T = (n) => ({ key: 'aria-sheet', frame: n });
     const sheet = this.textures.get('aria-sheet');
-    for (let i = 0; i < 9; i++) sheet.add(i, 0, i * 32, 0, 32, 48);
+    for (let i = 0; i < 19; i++) sheet.add(i, 0, i * 32, 0, 32, 48);
 
-    this.anims.create({ key:'aria-idle',  frames:[T(0),T(1)],                frameRate:3,  repeat:-1 });
-    this.anims.create({ key:'aria-walk',  frames:[T(2),T(3),T(4),T(5)],     frameRate:10, repeat:-1 });
-    this.anims.create({ key:'aria-jump',  frames:[T(6)],                     frameRate:1,  repeat:0  });
-    this.anims.create({ key:'aria-fall',  frames:[T(7)],                     frameRate:1,  repeat:0  });
-    this.anims.create({ key:'aria-djump', frames:[T(8)],                     frameRate:1,  repeat:0  });
+    this.anims.create({ key:'aria-idle',   frames:[T(0),T(0),T(1),T(0),T(16),T(0)], frameRate:3, repeat:-1 });
+    this.anims.create({ key:'aria-walk',   frames:[T(2),T(3),T(4),T(5)],     frameRate:12, repeat:-1 });
+    this.anims.create({ key:'aria-jump',   frames:[T(9),T(6),T(10)],         frameRate:12, repeat:0  });
+    this.anims.create({ key:'aria-fall',   frames:[T(7),T(11)],              frameRate:5,  repeat:-1 });
+    this.anims.create({ key:'aria-djump',  frames:[T(8),T(10),T(8)],         frameRate:14, repeat:0  });
+    this.anims.create({ key:'aria-land',   frames:[T(12),T(0)],              frameRate:12, repeat:0  });
+    this.anims.create({ key:'aria-dash',   frames:[T(9),T(13),T(13)],        frameRate:18, repeat:0  });
+    this.anims.create({ key:'aria-shoot',  frames:[T(14),T(0)],              frameRate:14, repeat:0  });
+    this.anims.create({ key:'aria-charge', frames:[T(14),T(15),T(14),T(15)], frameRate:10, repeat:-1 });
+    this.anims.create({ key:'aria-wall',   frames:[T(17),T(7)],              frameRate:5,  repeat:-1 });
+    this.anims.create({ key:'aria-stomp',  frames:[T(18),T(11)],             frameRate:10, repeat:-1 });
   }
 }

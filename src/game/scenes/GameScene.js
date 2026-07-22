@@ -146,7 +146,10 @@ export class GameScene extends Phaser.Scene {
     // Chaînes pendantes
     [[190,0],[520,0],[840,0]].forEach(([x]) => {
       for (let seg = 0; seg < 3; seg++) {
-        this.add.image(x + seg*8, 30 + seg*36, 'deco-chain').setDepth(depth).setAlpha(0.65);
+        const chain = this.add.image(x + seg*8, 30 + seg*36, 'deco-chain')
+          .setDepth(depth).setAlpha(0.65).setOrigin(0.5, 0);
+        this.tweens.add({ targets: chain, angle: { from: -2, to: 2 }, x: chain.x + 3,
+          duration: 1800 + seg * 220, delay: seg * 100, ease: 'Sine.inOut', yoyo: true, repeat: -1 });
       }
     });
     // Lueurs de runes au sol
@@ -161,6 +164,12 @@ export class GameScene extends Phaser.Scene {
     // Tuyaux de vapeur
     [[1100,480],[1340,470],[1580,475],[1760,480],[2000,472],[2130,478]].forEach(([x, y]) => {
       this.add.image(x, y, 'deco-pipe').setDepth(depth).setOrigin(0.5, 1).setAlpha(0.80);
+      this.add.particles(x, y - 66, 'particle', {
+        quantity: 1, frequency: 620, lifespan: { min: 900, max: 1500 },
+        alpha: { start: 0.28, end: 0 }, scale: { start: 0.45, end: 1.5 },
+        speedX: { min: -10, max: 10 }, speedY: { min: -34, max: -18 },
+        tint: 0xcfd8dc,
+      }).setDepth(depth);
     });
     // Flaques de lave lumineuses au sol
     [[1200,510],[1450,510],[1700,510],[1920,510]].forEach(([x, y]) => {
@@ -192,6 +201,9 @@ export class GameScene extends Phaser.Scene {
     for (let x = 2180; x < 3200; x += Phaser.Math.Between(28, 55)) {
       const g = this.add.image(x, 502, 'deco-grass').setDepth(depth).setOrigin(0.5, 1);
       g.setAlpha(0.6 + Math.random()*0.3).setScale(0.8 + Math.random()*0.5, 1 + Math.random()*0.4);
+      this.tweens.add({ targets: g, angle: { from: -2, to: 3 },
+        duration: Phaser.Math.Between(1200, 2200), delay: Phaser.Math.Between(0, 900),
+        ease: 'Sine.inOut', yoyo: true, repeat: -1 });
     }
     // Halos de luneâ (lumiere verte froide douce)
     [[2300,80],[2600,120],[2900,80],[3150,100]].forEach(([x, y]) => {
@@ -280,6 +292,8 @@ export class GameScene extends Phaser.Scene {
     }
 
     this._npc = this.physics.add.staticImage(700, 338, 'npc');
+    this.tweens.add({ targets: this._npc, y: 334, angle: { from: -1, to: 1 },
+      duration: 1400, ease: 'Sine.inOut', yoyo: true, repeat: -1 });
     this.add.text(700, 296, "L'Oracle", {
       fontFamily: 'monospace', fontSize: '12px',
       color: '#ce93d8', stroke: '#06020e', strokeThickness: 4,
@@ -516,6 +530,7 @@ export class GameScene extends Phaser.Scene {
     const biome = scrollX < 1060 ? 0 : scrollX < 2160 ? 1 : 2;
     this._bgFar.forEach((bg, i) => {
       bg.tilePositionX = scrollX * 0.15;
+      bg.tilePositionY = Math.sin(time * 0.00022 + i) * (i === 1 ? 2 : 1);
       bg.alpha = Phaser.Math.Linear(bg.alpha, i === biome ? 0.9 : 0, 0.04);
     });
 
