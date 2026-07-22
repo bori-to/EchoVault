@@ -20,7 +20,10 @@ export class CharacterSelectScene extends Phaser.Scene {
       fontFamily: 'monospace', fontSize: '11px', color: '#607d8b',
     }).setOrigin(0.5);
 
-    this._cards = this._characters.map((character, index) => this._makeCard(106 + index * 196, 242, character, index));
+    const cardGap = 196;
+    const cardsCenter = (this._characters.length - 1) / 2;
+    this._cards = this._characters.map((character, index) =>
+      this._makeCard(W / 2 + (index - cardsCenter) * cardGap, 242, character, index));
     this._hint = this.add.text(W / 2, 453, '← → CHOISIR     ENTRÉE CONFIRMER     ÉCHAP RETOUR', {
       fontFamily: 'monospace', fontSize: '10px', color: '#546e7a',
     }).setOrigin(0.5);

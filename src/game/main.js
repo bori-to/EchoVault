@@ -11,6 +11,16 @@ import { EndingScene } from './scenes/EndingScene.js';
 import { SettingsScene } from './scenes/SettingsScene.js';
 import { CinematicScene } from './scenes/CinematicScene.js';
 import { CharacterSelectScene } from './scenes/CharacterSelectScene.js';
+import { AchievementsScene } from './scenes/AchievementsScene.js';
+
+// Le canvas logique de 800×500 est agrandi en plein écran. Phaser rend les
+// textures de texte en résolution 1 par défaut, ce qui les rend floues après
+// cet agrandissement. Doubler uniquement leur résolution interne améliore tous
+// les écrans sans doubler le coût graphique du niveau et des particules.
+const originalTextFactory = Phaser.GameObjects.GameObjectFactory.prototype.text;
+Phaser.GameObjects.GameObjectFactory.prototype.text = function highResolutionText (x, y, content, style = {}) {
+  return originalTextFactory.call(this, x, y, content, { resolution: 2, ...style });
+};
 
 const config = {
   type: Phaser.AUTO,
@@ -35,7 +45,7 @@ const config = {
     },
   },
   // Boot → Menu → Game (+ HUD en parallèle) → Ending
-  scene: [BootScene, MenuScene, CharacterSelectScene, SettingsScene, CinematicScene, GameScene, HUDScene, EndingScene],
+  scene: [BootScene, MenuScene, CharacterSelectScene, AchievementsScene, SettingsScene, CinematicScene, GameScene, HUDScene, EndingScene],
 };
 
 export default new Phaser.Game(config);

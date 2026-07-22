@@ -77,6 +77,7 @@ export class HUDScene extends Phaser.Scene {
     game.events.on('objectiveChanged',  this._onObjective,     this);
     game.events.on('bossSpawned',       this._onBossSpawn,     this);
     game.events.on('shieldReady',       this._onShieldReady,   this);
+    game.events.on('achievementUnlocked', this._onAchievementUnlocked, this);
     this.input.keyboard.on('keydown-P', () => {
       if (this.scene.isActive('SettingsScene')) return;
       // SettingsScene suspendra le jeu seulement après sa propre création.
@@ -155,5 +156,22 @@ export class HUDScene extends Phaser.Scene {
       this._shieldIcon.setText('🛡 PRÊT').setStyle({ color: '#00e5ff' });
       this.tweens.add({ targets: this._shieldIcon, alpha: 0, duration: 120, yoyo: true, repeat: 3 });
     }
+  }
+
+  _onAchievementUnlocked(achievement) {
+    const { width: W } = this.scale;
+    const panel = this.add.rectangle(0, 0, 250, 54, 0x07131b, 0.97)
+      .setStrokeStyle(2, 0x00e5ff, 0.9);
+    const title = this.add.text(0, -11, '◆ SUCCÈS DÉBLOQUÉ', {
+      fontFamily: 'monospace', fontSize: '9px', color: '#00e5ff', letterSpacing: 1,
+    }).setOrigin(0.5);
+    const name = this.add.text(0, 10, achievement.title, {
+      fontFamily: 'monospace', fontSize: '12px', color: '#e9fbff', fontStyle: 'bold',
+    }).setOrigin(0.5);
+    const toast = this.add.container(W + 140, 105, [panel, title, name]).setDepth(60);
+    this.tweens.add({
+      targets: toast, x: W - 140, duration: 330, ease: 'Back.out', hold: 2300,
+      yoyo: true, onComplete: () => toast.destroy(),
+    });
   }
 }

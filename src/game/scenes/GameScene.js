@@ -24,6 +24,7 @@ import { audio }            from '../systems/AudioManager.js';
 import { settings }         from '../systems/SettingsManager.js';
 import { voice }            from '../systems/VoiceManager.js';
 import { getSelectedCharacter } from '../systems/CharacterManager.js';
+import { achievements } from '../systems/AchievementManager.js';
 
 const PLATFORMS = [
   [160,  440, 2.0, 'platform'],
@@ -132,6 +133,7 @@ export class GameScene extends Phaser.Scene {
     this._storyStage    = 0;
     this._activeEncounter = null;
     this._enemyKills = 0;
+    this._checkpointCount = 0;
     this._lastBiome = -1;
   }
 
@@ -171,7 +173,28 @@ export class GameScene extends Phaser.Scene {
       character: this._character,
     });
     this._spawnX = 80; this._spawnY = 460;
-    this.events.on('enemyDefeated', () => { this._enemyKills++; });
+    this.events.on('enemyDefeated', () => {
+      this._enemyKills++;
+      this._unlockAchievement('first_blood');
+      if (this._enemyKills >= 10) this._unlockAchievement('hunter');
+    });
+    this.events.on('fragmentCollected', count => {
+      if (count >= 1) this._unlockAchievement('memory_one');
+      if (count >= 4) this._unlockAchievement('memory_four');
+      if (count >= REQUIRED_FRAGMENTS) this._unlockAchievement('archivist');
+    });
+    this.events.on('powerUnlocked', () => {
+      this._unlockAchievement('first_module');
+      if (this._pm.getAll().length >= 3) this._unlockAchievement('full_arsenal');
+    });
+    this.events.on('checkpointActivated', () => {
+      this._checkpointCount++;
+      if (this._checkpointCount >= 3) this._unlockAchievement('wayfinder');
+    });
+    this.events.on('bossPhaseChange', phase => {
+      if (phase >= 2) this._unlockAchievement('phase_two');
+    });
+    this.time.delayedCall(500, () => this._unlockAchievement('awakening'));
 
     this.time.delayedCall(700, () => this._startPrologue());
   }
@@ -425,6 +448,7 @@ export class GameScene extends Phaser.Scene {
     // Le boss se spawne plus tard (trigger à x > 2700)
     this.events.on('bossDefeated', () => {
       audio.play('victory');
+      this._unlockAchievement('guardian');
       this._bossDefeated = true;
       this._storyStage = 4;
       this._floatMessage('Le Gardien est libre. Les deux protocoles répondent.', '#ffd600');
@@ -707,6 +731,7 @@ export class GameScene extends Phaser.Scene {
     // Essayer d'absorber avec le bouclier
     if (this._ctrl?._hasShield && this._ctrl.tryShieldAbsorb()) {
       this._invTimer = 400;
+      this._unlockAchievement('shield_block');
       this._floatMessage('Bouclier absorbe !', '#00e5ff');
       return;
     }
@@ -747,6 +772,10 @@ export class GameScene extends Phaser.Scene {
   }
 
   _triggerEnding(ending) {
+    const elapsedSeconds = Math.max(0, (Date.now() - this._runStartedAt) / 1000);
+    this._unlockAchievement('first_ending');
+    if (elapsedSeconds < 15 * 60) this._unlockAchievement('speedrun');
+    if (achievements.recordEnding(ending) >= 2) this._unlockAchievement('two_endings');
     this._gameOver = true;
     this._ctrl.setEnabled(false);
     this.cameras.main.fadeOut(800, 0, 0, 0);
@@ -757,7 +786,7 @@ export class GameScene extends Phaser.Scene {
         stats: {
           fragments: this._fragmentCount,
           kills: this._enemyKills,
-          seconds: Math.max(0, (Date.now() - this._runStartedAt) / 1000),
+          seconds: elapsedSeconds,
         },
       });
     });
@@ -981,6 +1010,11 @@ export class GameScene extends Phaser.Scene {
         this._floatMessage('Verrou mémoriel levé.', '#ffd600');
       });
     });
+  }
+
+  _unlockAchievement(id) {
+    const achievement = achievements.unlock(id);
+    if (achievement) this.events.emit('achievementUnlocked', achievement);
   }
 
   _floatMessage(text, color) {

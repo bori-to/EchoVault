@@ -39,9 +39,12 @@ export class MenuScene extends Phaser.Scene {
     this._menuButton(46, 310, 'PARAMÈTRES', 'SON · AFFICHAGE', () => {
       audio.play('ui'); this.scene.start('SettingsScene', { from: 'menu' });
     });
+    this._menuButton(46, 382, 'SUCCÈS', 'ARBRE DE PROGRESSION', () => {
+      audio.play('ui'); this.scene.start('AchievementsScene');
+    });
 
-    this.add.text(44, 407, 'CAMPAGNE NARRATIVE · ≈ 15 MIN', { fontFamily: 'monospace', fontSize: '10px', color: '#455a64' });
-    this.add.text(44, 428, 'ESPACE / ENTRÉE POUR COMMENCER', { fontFamily: 'monospace', fontSize: '10px', color: '#00b8d4' });
+    this.add.text(44, 438, 'CAMPAGNE NARRATIVE · ≈ 15 MIN', { fontFamily: 'monospace', fontSize: '9px', color: '#455a64' });
+    this.add.text(44, 457, 'ESPACE / ENTRÉE POUR COMMENCER', { fontFamily: 'monospace', fontSize: '9px', color: '#00b8d4' });
     this.add.text(W - 18, H - 18, 'ARCHIVE 09.847', { fontFamily: 'monospace', fontSize: '9px', color: '#263238' }).setOrigin(1);
 
     this.add.particles(560, 250, 'particle', {
