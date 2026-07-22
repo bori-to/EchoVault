@@ -5,18 +5,28 @@ import { audio } from './AudioManager.js';
 import { settings } from './SettingsManager.js';
 
 export class PlayerController {
-  constructor(scene, player) {
+  constructor(scene, player, character = null) {
     this.scene   = scene;
     this.player  = player;
-    this.speed   = 200;
-    this.jumpVel = -400;
+    this.character = character;
+    const stats = character?.stats || {};
+    this.weapon = character?.weapon || { id: 'laser', name: 'LASER ARC', damage: 1,
+      cooldown: 280, chargedCooldown: 700, projectileSpeed: 500 };
+    this._accent = character?.tint || 0x00e5ff;
+    this.speed   = stats.speed || 200;
+    this.jumpVel = stats.jumpVelocity || -400;
+    this._fireCooldown = this.weapon.cooldown || stats.fireCooldown || 280;
+    this._chargedCooldown = this.weapon.chargedCooldown || stats.chargedCooldown || 700;
+    this._bulletSpeed = this.weapon.projectileSpeed || stats.bulletSpeed || 500;
+    this._damage = this.weapon.damage || stats.damage || 1;
     this.maxJumps    = 1;
     this._jumpCount  = 0;
     this._jumpHeld   = false;
     this.enabled     = true;
 
-    // Tir laser
+    // Armes à distance et zones de frappe des armes de mêlée.
     this.bullets    = scene.physics.add.group();
+    this.meleeHits  = scene.physics.add.group();
     this._shootCd   = 0;
     this._chargeT   = 0;       // temps bouton X maintenu
     this._xHeld     = false;
@@ -25,7 +35,7 @@ export class PlayerController {
     // Dash
     this._dashCd    = 0;
     this._dashTimer = 0;
-    this._dashSpeed = 520;
+    this._dashSpeed = stats.dashSpeed || 520;
     this._hasDash   = false;
 
     // Wall-jump
@@ -269,25 +279,34 @@ export class PlayerController {
       audio.play('dash');
     }
 
-    // ── Tir laser / chargé (X) ──
+    // ── Arme propre au personnage (X) ──
     const xDown = this._xKey.isDown;
-    if (xDown) {
-      this._chargeT += delta;
-      if (!this._xHeld) { this._xHeld = true; }
-      if (this._chargeT > 180) this._updateChargeOrb();
-    } else {
-      if (this._xHeld && this._shootCd <= 0) {
-        if (this._chargeT > 500) {
-          this._fireCharged();
-          this._shootCd = 700;
-        } else {
-          this._fireBullet();
-          this._shootCd = 280;
-        }
+    const meleeWeapon = this.weapon.id === 'sword' || this.weapon.id === 'hammer';
+    if (meleeWeapon) {
+      if (Phaser.Input.Keyboard.JustDown(this._xKey) && this._shootCd <= 0) {
+        this._swingMelee();
+        this._shootCd = this._fireCooldown;
       }
       this._chargeT = 0;
-      this._xHeld   = false;
+      this._xHeld = false;
       this._destroyChargeOrb();
+    } else {
+      if (xDown) {
+        this._chargeT += delta;
+        if (!this._xHeld) { this._xHeld = true; }
+        if (this._chargeT > 180) this._updateChargeOrb();
+      } else {
+        if (this._xHeld && this._shootCd <= 0) {
+          const charged = this._chargeT > 500;
+          if (this.weapon.id === 'plasma') this._firePlasma(charged);
+          else if (charged) this._fireCharged();
+          else this._fireBullet();
+          this._shootCd = charged ? this._chargedCooldown : this._fireCooldown;
+        }
+        this._chargeT = 0;
+        this._xHeld   = false;
+        this._destroyChargeOrb();
+      }
     }
 
     // Indicateur de charge (glow progressif)
@@ -309,9 +328,10 @@ export class PlayerController {
     const by = p.y - 6;
     const b  = this.scene.physics.add.image(bx, by, 'bullet');
     this.bullets.add(b, true);
-    b.setTint(0x00e5ff);
+    b.setTint(this._accent);
+    b.damage = this._damage;
     b.body.setAllowGravity(false);
-    b.body.velocity.x = this._facing * 500;
+    b.body.velocity.x = this._facing * this._bulletSpeed;
     b.setDepth(12);
     this._shootAnimTimer = 140;
     p.play('aria-shoot', true);
@@ -332,9 +352,10 @@ export class PlayerController {
       const b = this.scene.physics.add.image(bx, by + lane * 8, 'bullet');
       this.bullets.add(b, true);
       b.setTint(0xffffff);
+      b.damage = this._damage;
       b.setScale(1.8, 2.2);
       b.body.setAllowGravity(false);
-      b.body.velocity.x = this._facing * 450;
+      b.body.velocity.x = this._facing * this._bulletSpeed * 0.9;
       b.body.velocity.y = lane * 20;
       b.setDepth(12);
       b.setAlpha(0.92);
@@ -347,13 +368,69 @@ export class PlayerController {
     this._spawnActionRing(0xffffff, 10, 220);
   }
 
+  // ─── Canon plasma de VOLT ───────────────────────────────────────────────
+  _firePlasma(charged = false) {
+    audio.play(charged ? 'charged' : 'shoot');
+    const p = this.player;
+    const bx = p.x + this._facing * 22;
+    const b = this.scene.physics.add.image(bx, p.y - 6, 'weapon-plasma');
+    this.bullets.add(b, true);
+    b.damage = this._damage + (charged ? 1 : 0);
+    b.body.setAllowGravity(false);
+    b.body.velocity.x = this._facing * this._bulletSpeed * (charged ? 0.82 : 1);
+    b.setScale(charged ? 1.65 : 1).setDepth(12).setBlendMode('ADD');
+    if (b.postFX) b.postFX.addGlow(this._accent, charged ? 7 : 4, 0);
+    this._shootAnimTimer = 180;
+    p.play('aria-shoot', true);
+    this._spawnActionRing(this._accent, charged ? 14 : 8, 180);
+    if (charged && settings.get('screenShake')) this.scene.cameras.main.shake(100, 0.005);
+    this.scene.time.delayedCall(1700, () => { if (b.active) b.destroy(); });
+  }
+
+  // ─── Épée de NYX / marteau d'ATLAS ─────────────────────────────────────
+  _swingMelee() {
+    const p = this.player;
+    const hammer = this.weapon.id === 'hammer';
+    const range = this.weapon.range || 54;
+    const hit = this.scene.add.zone(p.x + this._facing * range * 0.5, p.y, range, hammer ? 58 : 46);
+    this.scene.physics.add.existing(hit);
+    hit.body.setAllowGravity(false);
+    hit.damage = this._damage;
+    hit.hitTargets = new Set();
+    this.meleeHits.add(hit);
+
+    const item = this.scene.add.image(hammer ? 30 : 25, hammer ? 6 : 10,
+      hammer ? 'weapon-hammer' : 'weapon-sword').setOrigin(0.5, 1);
+    if (item.postFX) item.postFX.addGlow(this._accent, hammer ? 5 : 3, 0);
+    const swing = this.scene.add.container(p.x, p.y, [item])
+      .setDepth(16).setScale(this._facing, 1).setRotation(-1.25);
+    const arc = this.scene.add.circle(p.x, p.y, hammer ? 38 : 31, this._accent, 0)
+      .setStrokeStyle(hammer ? 5 : 3, this._accent, 0.65).setDepth(14);
+    arc.setScale(1, 0.72);
+
+    this._shootAnimTimer = hammer ? 260 : 170;
+    p.play('aria-shoot', true);
+    audio.play(hammer ? 'boss' : 'dash');
+    this.scene.tweens.add({
+      targets: swing, rotation: hammer ? 1.05 : 1.25, duration: hammer ? 250 : 145,
+      ease: 'Quad.out', onComplete: () => swing.destroy(),
+    });
+    this.scene.tweens.add({ targets: arc, alpha: 0, scaleX: 1.35, duration: hammer ? 280 : 170,
+      onComplete: () => arc.destroy() });
+    if (hammer) {
+      this._spawnActionRing(this._accent, 18, 300);
+      if (settings.get('screenShake')) this.scene.cameras.main.shake(130, 0.006);
+    }
+    this.scene.time.delayedCall(hammer ? 230 : 135, () => { if (hit.active) hit.destroy(); });
+  }
+
   _spawnDashTrail() {
     const p = this.player;
     for (let i = 0; i < 5; i++) {
       this.scene.time.delayedCall(i * 30, () => {
         if (!p.active) return;
         const ghost = this.scene.add.image(p.x, p.y, 'aria-sheet', 13)
-          .setFlipX(p.flipX).setTint(0x00e5ff).setAlpha(0.38 - i * 0.05).setDepth(8);
+          .setFlipX(p.flipX).setTint(this._accent).setAlpha(0.38 - i * 0.05).setDepth(8);
         this.scene.tweens.add({ targets: ghost, alpha: 0, scaleX: 0.82, scaleY: 1.12,
           duration: 260, onComplete: () => ghost.destroy() });
       });

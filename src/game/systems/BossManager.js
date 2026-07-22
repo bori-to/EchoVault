@@ -61,8 +61,9 @@ export class BossManager {
     }, null, s);
     s.physics.add.overlap(playerBullets, this.sprite, (a, b) => {
       const bullet = playerBullets.contains(a) ? a : b;
+      const damage = bullet?.damage || 1;
       if (bullet?.active) bullet.destroy();
-      onHit();
+      onHit({ damage });
     }, null, s);
   }
 
@@ -86,9 +87,9 @@ export class BossManager {
     this.scene.events.emit('bossAttemptReset', { max: MAX_HP });
   }
 
-  hit() {
+  hit(damage = 1) {
     if (!this.active || this._hitCd > 0) return;
-    const result = this.machine.damage(1);
+    const result = this.machine.damage(damage);
     if (!result.accepted) return;
     this._hitCd = 260;
     audio.play('hit');

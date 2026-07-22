@@ -52,7 +52,7 @@ export class EndingScene extends Phaser.Scene {
     this.add.text(W / 2, 354, `SOUVENIRS  ${this._stats.fragments || 8}/8     ÉCHOS APAISÉS  ${this._stats.kills || 0}     TEMPS  ${minutes}:${seconds}`,
       { fontFamily: 'monospace', fontSize: '10px', color: '#78909c' }).setOrigin(0.5);
 
-    this._button(300, 420, 'REJOUER', () => { audio.play('power'); this.scene.start('GameScene'); }, cfg);
+    this._button(300, 420, 'REJOUER', () => { audio.play('power'); this.scene.start('CharacterSelectScene'); }, cfg);
     this._button(500, 420, 'MENU PRINCIPAL', () => { audio.play('back'); this.scene.start('MenuScene'); }, cfg);
     this.add.text(W / 2, 470, 'Merci d’avoir joué à EchoVault', { fontFamily: 'monospace', fontSize: '9px', color: '#37474f' }).setOrigin(0.5);
     this.cameras.main.fadeIn(900);

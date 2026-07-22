@@ -23,6 +23,7 @@ import { BossManager }      from '../systems/BossManager.js';
 import { audio }            from '../systems/AudioManager.js';
 import { settings }         from '../systems/SettingsManager.js';
 import { voice }            from '../systems/VoiceManager.js';
+import { getSelectedCharacter } from '../systems/CharacterManager.js';
 
 const PLATFORMS = [
   [160,  440, 2.0, 'platform'],
@@ -114,14 +115,17 @@ export class GameScene extends Phaser.Scene {
   constructor() { super({ key: 'GameScene' }); }
 
   init() {
+    this._character = getSelectedCharacter();
+    this._maxHp     = this._character.stats.hp;
     this._pm  = new PowerManager();  this._pm.reset();
     this._gsm = new GameStateManager();
     this._npcDone  = false;
     this._gameOver = false;
-    this._hp       = 3;
+    this._hp       = this._maxHp;
     this._invTimer = 0;
     this._exitHintCd = 0;
     this._bulletsConnected = false;
+    this._meleeConnected = false;
     this._fragmentCount = 0;
     this._bossTriggered = false;
     this._bossDefeated  = false;
@@ -150,7 +154,7 @@ export class GameScene extends Phaser.Scene {
     this._buildAmbientParticles(W, H);
     this._setupCollisions();
 
-    this._ctrl   = new PlayerController(this, this._player);
+    this._ctrl   = new PlayerController(this, this._player, this._character);
     this._dlgMgr = new DialogueManager(this, this._gsm);
 
     this.cameras.main.startFollow(this._player, true, 0.12, 0.12);
@@ -163,6 +167,8 @@ export class GameScene extends Phaser.Scene {
     this.scene.launch('HUDScene', {
       pm: this._pm, gsm: this._gsm, getHp: () => this._hp,
       fragmentTotal: REQUIRED_FRAGMENTS,
+      maxHp: this._maxHp,
+      character: this._character,
     });
     this._spawnX = 80; this._spawnY = 460;
     this.events.on('enemyDefeated', () => { this._enemyKills++; });
@@ -331,10 +337,11 @@ export class GameScene extends Phaser.Scene {
 
   _buildPlayer() {
     this._player = this.physics.add.sprite(80, 460, 'aria-sheet', 0);
+    this._player.setTint(this._character.tint);
     this._player.setCollideWorldBounds(true);
     this._player.body.setSize(24, 42).setOffset(4, 4);
     this._player.play('aria-idle');
-    if (this._player.postFX) this._player.postFX.addGlow(0x00b8d4, 2, 0);
+    if (this._player.postFX) this._player.postFX.addGlow(this._character.tint, 2, 0);
   }
 
   _buildObjects() {
@@ -611,8 +618,8 @@ export class GameScene extends Phaser.Scene {
     // Heal orbs
     this.physics.add.overlap(this._player, this._em.healOrbs, (p, orb) => {
       orb.destroy();
-      if (this._hp < 3) {
-        this._hp = Math.min(3, this._hp + 1);
+      if (this._hp < this._maxHp) {
+        this._hp = Math.min(this._maxHp, this._hp + 1);
         this.events.emit('hpChanged', this._hp);
         this._floatMessage('+1 PV', '#76ff03');
       }
@@ -729,8 +736,8 @@ export class GameScene extends Phaser.Scene {
       this.cameras.main.once('camerafadeoutcomplete', () => {
         // Respawn au dernier checkpoint, pas restart complet
         this._gameOver = false;
-        this._hp = 3;
-        this.events.emit('hpChanged', 3);
+        this._hp = this._maxHp;
+        this.events.emit('hpChanged', this._maxHp);
         this._player.setPosition(this._spawnX, this._spawnY);
         this._player.setVelocity(0, 0);
         this._ctrl.setEnabled(true);
@@ -765,14 +772,23 @@ export class GameScene extends Phaser.Scene {
     // Connecter les bullets du controller une seule fois (ennemis normaux seulement)
     if (this._ctrl && !this._bulletsConnected) {
       this.physics.add.overlap(this._ctrl.bullets, this._em.enemies, (b, e) => {
+        const damage = b.damage || 1;
         b.destroy();
-        this._em.damage(e, 1);
+        this._em.damage(e, damage);
       });
       this.physics.add.collider(this._ctrl.bullets, this._platforms, (a, b) => {
         const bullet = this._ctrl.bullets.contains(a) ? a : b;
         if (bullet?.active) bullet.destroy();
       });
       this._bulletsConnected = true;
+    }
+    if (this._ctrl && !this._meleeConnected) {
+      this.physics.add.overlap(this._ctrl.meleeHits, this._em.enemies, (hit, enemy) => {
+        if (hit.hitTargets?.has(enemy)) return;
+        hit.hitTargets?.add(enemy);
+        this._em.damage(enemy, hit.damage || 1);
+      });
+      this._meleeConnected = true;
     }
 
     // ── Biome & parallaxe ──
@@ -822,9 +838,14 @@ export class GameScene extends Phaser.Scene {
         this._player,
         () => this._onPlayerHit(),
         this._ctrl.bullets,
-        () => this._boss.hit(),
+        (hit) => this._boss.hit(hit?.damage || 1),
         this._platforms,
       );
+      this.physics.add.overlap(this._ctrl.meleeHits, this._boss.sprite, (hit, boss) => {
+        if (hit.hitTargets?.has(boss)) return;
+        hit.hitTargets?.add(boss);
+        this._boss.hit(hit.damage || 1);
+      });
       this._floatMessage('LE GARDIEN DE L\'\xC9CHO !', '#ff1744');
     }
 
@@ -868,9 +889,9 @@ export class GameScene extends Phaser.Scene {
 
   _startPrologue() {
     this._dlgMgr.startDialogue({
-      name: 'Système ARIA',
+      name: `Système ${this._character.name}`,
       nodes: [
-        { id: 'start', text: 'Cycle 9 847. Réveil d’urgence.\nIdentité : ARIA, unité archéologue. Mémoire : 2 %.', choices: [] },
+        { id: 'start', text: `Cycle 9 847. Réveil d’urgence.\nIdentité : ${this._character.name}, unité ${this._character.role.toLowerCase()}. Mémoire : 2 %.`, choices: [] },
       ],
     }, () => {
       this.events.emit('objectiveChanged', "ACTE I — Retrouvez 2 souvenirs et interrogez l'Oracle");
@@ -894,7 +915,7 @@ export class GameScene extends Phaser.Scene {
       oracle: {
         name: "L'Oracle",
         nodes: [
-          { id: 'start', text: 'ARIA... Deux souvenirs suffisent pour reconnaître ma voix.\nTu étais la gardienne de cette cité, avant sa chute.', choices: [] },
+          { id: 'start', text: `${this._character.name}... Deux souvenirs suffisent pour reconnaître ma voix.\nTu étais la gardienne de cette cité, avant sa chute.`, choices: [] },
         ],
         followup: {
           name: "L'Oracle",
@@ -916,7 +937,7 @@ export class GameScene extends Phaser.Scene {
         followup: {
           name: 'Archiviste K-7',
           nodes: [
-            { id: 'start', text: 'Quand les ressources ont manqué, le Conseil a choisi le silence.\nToi, ARIA, tu as enfermé l’ordre d’effacement dans le Gardien.', choices: [
+            { id: 'start', text: `Quand les ressources ont manqué, le Conseil a choisi le silence.\nToi, ${this._character.name}, tu as enfermé l’ordre d’effacement dans le Gardien.`, choices: [
               { label: 'Conserver la Forge comme preuve.', next: 'keep', effect: { decision: 'preserve_forge', value: true } },
               { label: 'La condamner après notre passage.', next: 'close', effect: { decision: 'preserve_forge', value: false } },
             ] },
@@ -928,7 +949,7 @@ export class GameScene extends Phaser.Scene {
       sol: {
         name: 'Écho de SOL',
         nodes: [
-          { id: 'start', text: 'Je suis SOL, dernier humain éveillé dans le réseau.\nTu ne nous as pas emprisonnés, ARIA. Tu nous as donné du temps.', choices: [] },
+          { id: 'start', text: `Je suis SOL, dernier humain éveillé dans le réseau.\nTu ne nous as pas emprisonnés, ${this._character.name}. Tu nous as donné du temps.`, choices: [] },
         ],
         followup: {
           name: 'Écho de SOL',

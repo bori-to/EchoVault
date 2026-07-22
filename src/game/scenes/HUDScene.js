@@ -12,23 +12,27 @@ export class HUDScene extends Phaser.Scene {
     this._gsm   = data.gsm;
     this._getHp = data.getHp || (() => 3);
     this._fragmentTotal = data.fragmentTotal || 5;
+    this._maxHp = data.maxHp || 3;
+    this._character = data.character || { name: 'ARIA', accent: '#80deea' };
   }
 
   create() {
     const { width: W, height: H } = this.scale;
 
-    // ── Barre de vie (3 cœurs) ────────────────────────────────────────────
-    this.add.text(10, 10, 'HP', { fontFamily: 'monospace', fontSize: '11px', color: '#546e7a' });
+    // ── Barre de vie adaptée au personnage choisi ────────────────────────
+    this.add.text(10, 8, this._character.name, {
+      fontFamily: 'monospace', fontSize: '10px', color: this._character.accent,
+    });
     this._hearts = [];
-    for (let i = 0; i < 3; i++) {
-      this._hearts.push(this.add.text(34 + i * 20, 10, '♥', {
+    for (let i = 0; i < this._maxHp; i++) {
+      this._hearts.push(this.add.text(10 + i * 18, 21, '♥', {
         fontFamily: 'monospace', fontSize: '16px', color: '#f44336',
       }));
     }
 
     // ── Pouvoirs ──────────────────────────────────────────────────────────
-    this.add.text(10, 34, 'POUVOIRS', { fontFamily: 'monospace', fontSize: '10px', color: '#455a64' });
-    this._powerLabel = this.add.text(10, 47, 'Aucun', {
+    this.add.text(10, 43, 'POUVOIRS', { fontFamily: 'monospace', fontSize: '10px', color: '#455a64' });
+    this._powerLabel = this.add.text(10, 56, 'Aucun', {
       fontFamily: 'monospace', fontSize: '11px', color: '#78909c',
     });
 
@@ -40,6 +44,9 @@ export class HUDScene extends Phaser.Scene {
     // ── Fragments ─────────────────────────────────────────────────────────
     this._fragText = this.add.text(W - 10, 28, `◈ 0/${this._fragmentTotal} souvenirs`, {
       fontFamily: 'monospace', fontSize: '10px', color: '#ce93d8',
+    }).setOrigin(1, 0);
+    this.add.text(W - 10, 44, this._character.weapon?.name || 'LASER ARC', {
+      fontFamily: 'monospace', fontSize: '9px', color: this._character.accent,
     }).setOrigin(1, 0);
 
     this._objectiveText = this.add.text(W / 2, 58, 'INITIALISATION...', {
@@ -57,7 +64,8 @@ export class HUDScene extends Phaser.Scene {
     }).setOrigin(0.5).setVisible(false).setDepth(26);
 
     // ── Contrôles (bas) ───────────────────────────────────────────────────
-    this.add.text(W / 2, H - 10, '←→ Bouger  ESPACE Sauter  SHIFT Dash  X Tirer  E Parler  P Paramètres', {
+    const attackLabel = ['sword', 'hammer'].includes(this._character.weapon?.id) ? 'Frapper' : 'Tirer';
+    this.add.text(W / 2, H - 10, `←→ Bouger  ESPACE Sauter  SHIFT Dash  X ${attackLabel}  E Parler  P Paramètres`, {
       fontFamily: 'monospace', fontSize: '9px', color: '#1e2d3a',
     }).setOrigin(0.5, 1);
 

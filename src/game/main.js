@@ -10,6 +10,7 @@ import { HUDScene }    from './scenes/HUDScene.js';
 import { EndingScene } from './scenes/EndingScene.js';
 import { SettingsScene } from './scenes/SettingsScene.js';
 import { CinematicScene } from './scenes/CinematicScene.js';
+import { CharacterSelectScene } from './scenes/CharacterSelectScene.js';
 
 const config = {
   type: Phaser.AUTO,
@@ -34,7 +35,7 @@ const config = {
     },
   },
   // Boot → Menu → Game (+ HUD en parallèle) → Ending
-  scene: [BootScene, MenuScene, SettingsScene, CinematicScene, GameScene, HUDScene, EndingScene],
+  scene: [BootScene, MenuScene, CharacterSelectScene, SettingsScene, CinematicScene, GameScene, HUDScene, EndingScene],
 };
 
 export default new Phaser.Game(config);

@@ -33,6 +33,38 @@ export class BootScene extends Phaser.Scene {
       g.destroy();
     }
 
+    // ─── Armes propres aux unités ────────────────────────────────────────
+    {
+      const g = mk();
+      g.fillStyle(0x00151b, 0.85); g.fillRect(4, 26, 4, 8);
+      g.fillStyle(0xffcc80); g.fillRect(1, 24, 10, 3);
+      g.fillStyle(0x00b8d4, 0.45); g.fillTriangle(1, 24, 6, 0, 11, 24);
+      g.fillStyle(0xb9fbff); g.fillTriangle(3, 23, 6, 2, 9, 23);
+      g.fillStyle(0xffffff); g.fillTriangle(5, 21, 6, 3, 7, 21);
+      g.generateTexture('weapon-sword', 12, 34);
+      g.destroy();
+    }
+    {
+      const g = mk();
+      g.fillStyle(0x3e2723); g.fillRect(9, 12, 4, 20);
+      g.fillStyle(0xffb74d, 0.35); g.fillRect(0, 2, 22, 13);
+      g.fillStyle(0x5d4037); g.fillRect(1, 3, 20, 11);
+      g.fillStyle(0xffcc80); g.fillRect(2, 3, 18, 3);
+      g.fillStyle(0xff8f00); g.fillRect(8, 6, 6, 5);
+      g.fillStyle(0xffffff); g.fillRect(10, 7, 2, 3);
+      g.generateTexture('weapon-hammer', 22, 32);
+      g.destroy();
+    }
+    {
+      const g = mk();
+      g.fillStyle(0xff1744, 0.18); g.fillCircle(10, 10, 10);
+      g.fillStyle(0xff4081, 0.42); g.fillCircle(10, 10, 7);
+      g.fillStyle(0xff80ab); g.fillCircle(10, 10, 4);
+      g.fillStyle(0xffffff); g.fillCircle(8, 8, 2);
+      g.generateTexture('weapon-plasma', 20, 20);
+      g.destroy();
+    }
+
     // ─── Enemy bullet 8×8 ────────────────────────────────────────────────
     {
       const g = mk();
