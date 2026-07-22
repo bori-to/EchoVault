@@ -22,6 +22,7 @@ import { EnemyManager }     from '../systems/EnemyManager.js';
 import { BossManager }      from '../systems/BossManager.js';
 import { audio }            from '../systems/AudioManager.js';
 import { settings }         from '../systems/SettingsManager.js';
+import { voice }            from '../systems/VoiceManager.js';
 
 const PLATFORMS = [
   [160,  440, 2.0, 'platform'],
@@ -157,6 +158,7 @@ export class GameScene extends Phaser.Scene {
 
     this._eKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E);
     this._indicator = this.add.image(0, 0, 'indicator').setVisible(false).setDepth(15);
+    this._buildBossTestPortal();
 
     this.scene.launch('HUDScene', {
       pm: this._pm, gsm: this._gsm, getHp: () => this._hp,
@@ -423,6 +425,51 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
+  _buildBossTestPortal() {
+    this._testTeleportUsed = false;
+    this._bossTestPortal = this.add.image(150, 468, 'exit-a').setTint(0xffd600).setDepth(9);
+    this._bossTestLabel = this.add.text(150, 420, 'PORTAIL TEST\nBOSS  [E]', {
+      fontFamily: 'monospace', fontSize: '10px', color: '#ffd600', align: 'center',
+      stroke: '#000', strokeThickness: 3,
+    }).setOrigin(0.5).setDepth(10);
+    this.tweens.add({ targets: this._bossTestPortal, alpha: { from: 0.45, to: 1 },
+      scaleX: { from: 0.9, to: 1.08 }, duration: 720, yoyo: true, repeat: -1 });
+  }
+
+  _useBossTestPortal() {
+    if (this._testTeleportUsed || !settings.get('bossTestTeleporter')) return;
+    this._testTeleportUsed = true;
+
+    this._fragmentCount = REQUIRED_FRAGMENTS;
+    this._fragments.clear(true, true);
+    this.events.emit('fragmentCollected', REQUIRED_FRAGMENTS);
+    this._storyNpcs.forEach(npc => { npc.done = true; });
+    this._storyGates.forEach(gate => { if (gate?.active) gate.destroy(); });
+    this._storyStage = 3;
+    this._activeEncounter = null;
+    this._em.clearAll();
+
+    if (!this._pm.hasUnlocked('doubleJump')) this._pm.unlock('doubleJump');
+    if (!this._pm.hasUnlocked('dash')) this._pm.unlock('dash');
+    if (!this._pm.hasUnlocked('shield')) this._pm.unlock('shield');
+    this._ctrl.enableDoubleJump();
+    this._ctrl.enableDash();
+    if (!this._ctrl._hasShield) this._ctrl.enableShield();
+    [this._crystal, this._dashPowerup, this._shieldPow].forEach(item => {
+      if (item?.active) item.destroy();
+    });
+    ['doubleJump', 'dash', 'shield'].forEach(power => this.events.emit('powerUnlocked', power));
+
+    this._spawnX = 5480; this._spawnY = 400;
+    this._player.setPosition(this._spawnX, this._spawnY).setVelocity(0, 0);
+    this._bossTestPortal.setVisible(false);
+    this._bossTestLabel.setVisible(false);
+    this.events.emit('objectiveChanged', 'TEST BOSS — Entrez dans la Chambre Haute');
+    audio.play('power');
+    voice.speak('Mode test. Boss prêt. Entrez dans la Chambre Haute.', { persona: 'system' });
+    this.cameras.main.flash(450, 255, 214, 0);
+  }
+
   _buildStoryGates() {
     this._storyNpcs = [
       this._makeStoryNpc(700, 338, "L'Oracle", 2, 'oracle'),
@@ -541,6 +588,7 @@ export class GameScene extends Phaser.Scene {
       this.events.emit('fragmentCollected', this._fragmentCount);
       audio.play('collect');
       this._floatMessage(lore, '#ce93d8');
+      voice.speak(lore, { persona: 'system' });
       const nextNpc = this._storyNpcs?.find(n => !n.done);
       if (nextNpc) {
         const remaining = Math.max(0, nextNpc.requires - this._fragmentCount);
@@ -590,6 +638,7 @@ export class GameScene extends Phaser.Scene {
     this._crystal.destroy();
     this.events.emit('powerUnlocked', 'doubleJump');
     this._floatMessage('Double Saut debloque !  [ESPACE x2]', '#ffd600');
+    voice.speak('Module de double saut restauré.', { persona: 'system' });
     audio.play('power');
   }
 
@@ -600,6 +649,7 @@ export class GameScene extends Phaser.Scene {
     this._dashPowerup.destroy();
     this.events.emit('powerUnlocked', 'dash');
     this._floatMessage('Dash debloque !  [SHIFT]', '#ffcc02');
+    voice.speak('Module de propulsion restauré.', { persona: 'system' });
     audio.play('power');
   }
 
@@ -612,6 +662,7 @@ export class GameScene extends Phaser.Scene {
     this._spawnY = cp.y;
     this.events.emit('checkpointActivated');
     this._floatMessage('Checkpoint !', '#00e5ff');
+    voice.speak('Point de restauration synchronisé.', { persona: 'system' });
     audio.play('checkpoint');
   }
 
@@ -669,6 +720,9 @@ export class GameScene extends Phaser.Scene {
   _die() {
     this._gameOver = true;
     this._ctrl.setEnabled(false);
+    // Une mort pendant le combat invalide entièrement la tentative en cours.
+    // Le boss attendra ensuite que le joueur sorte puis revienne dans l'arène.
+    if (this._boss?.isEncounterActive()) this._boss.resetAttempt(true);
     if (settings.get('screenShake')) this.cameras.main.shake(400, 0.012);
     this.time.delayedCall(600, () => {
       this.cameras.main.fadeOut(600, 0, 0, 0);
@@ -714,6 +768,10 @@ export class GameScene extends Phaser.Scene {
         b.destroy();
         this._em.damage(e, 1);
       });
+      this.physics.add.collider(this._ctrl.bullets, this._platforms, (a, b) => {
+        const bullet = this._ctrl.bullets.contains(a) ? a : b;
+        if (bullet?.active) bullet.destroy();
+      });
       this._bulletsConnected = true;
     }
 
@@ -758,6 +816,7 @@ export class GameScene extends Phaser.Scene {
         this._fragmentCount >= REQUIRED_FRAGMENTS && this._storyNpcs.every(n => n.done)) {
       this._bossTriggered = true;
       audio.play('boss');
+      voice.speak("Le Gardien de l'Écho est réveillé.", { persona: 'system' });
       this._boss.spawn(5660, 350);
       this._boss.connect(
         this._player,
@@ -786,9 +845,19 @@ export class GameScene extends Phaser.Scene {
       .filter(n => !n.done)
       .find(n => Phaser.Math.Distance.Between(this._player.x, this._player.y, n.sprite.x, n.sprite.y) < 95);
     const canInteract = nearbyNpc && !this._dlgMgr.isActive;
-    this._indicator.setVisible(Boolean(canInteract));
-    if (canInteract) this._indicator.setPosition(nearbyNpc.sprite.x, nearbyNpc.sprite.y - 68);
-    if (canInteract && Phaser.Input.Keyboard.JustDown(this._eKey)) this._startStoryDialogue(nearbyNpc);
+    const portalEnabled = settings.get('bossTestTeleporter') && !this._testTeleportUsed;
+    this._bossTestPortal.setVisible(portalEnabled);
+    this._bossTestLabel.setVisible(portalEnabled);
+    const nearTestPortal = portalEnabled && !this._dlgMgr.isActive &&
+      Phaser.Math.Distance.Between(this._player.x, this._player.y,
+        this._bossTestPortal.x, this._bossTestPortal.y) < 95;
+    this._indicator.setVisible(Boolean(nearTestPortal || canInteract));
+    if (nearTestPortal) this._indicator.setPosition(this._bossTestPortal.x, this._bossTestPortal.y - 68);
+    else if (canInteract) this._indicator.setPosition(nearbyNpc.sprite.x, nearbyNpc.sprite.y - 68);
+    if (Phaser.Input.Keyboard.JustDown(this._eKey)) {
+      if (nearTestPortal) this._useBossTestPortal();
+      else if (canInteract) this._startStoryDialogue(nearbyNpc);
+    }
 
     if (this._player.y > 590) {
       this._onPlayerHit();

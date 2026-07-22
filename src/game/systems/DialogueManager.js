@@ -8,6 +8,7 @@
  * Voir prompts_logs/03_code_prompts.md — Entrée #004
  */
 import { audio } from './AudioManager.js';
+import { voice } from './VoiceManager.js';
 
 export class DialogueManager {
   /**
@@ -142,6 +143,9 @@ export class DialogueManager {
     audio.play('dialogue');
     this._nameTxt.setText(this._data.name || 'Inconnu');
     this._bodyTxt.setText(node.text);
+    // Tous les dialogues utilisent la même voix claire que les annonces
+    // d'actes. La voix masculine est réservée à la narration hors dialogue.
+    voice.speak(node.text, { persona: 'system' });
 
     // Réinitialise les choix
     this._choiceTxts.forEach(ct => ct.setText(''));
@@ -174,6 +178,7 @@ export class DialogueManager {
 
   _endDialogue() {
     this.isActive = false;
+    voice.stop();
     this._setUIVisible(false);
     if (this._onComplete) this._onComplete();
   }

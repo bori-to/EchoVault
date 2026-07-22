@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { audio } from '../systems/AudioManager.js';
+import { voice } from '../systems/VoiceManager.js';
 
 const CONTENT = {
   guardian: {
@@ -56,6 +57,10 @@ export class EndingScene extends Phaser.Scene {
     this.add.text(W / 2, 470, 'Merci d’avoir joué à EchoVault', { fontFamily: 'monospace', fontSize: '9px', color: '#37474f' }).setOrigin(0.5);
     this.cameras.main.fadeIn(900);
     this.time.delayedCall(500, () => audio.chord(['collect', 'power', 'victory'], 230));
+    this.time.delayedCall(1000, () => voice.speak(
+      `${cfg.title}. ${cfg.body} ${cfg.epilogue}`,
+      { persona: 'narrator' },
+    ));
   }
 
   _button(x, y, label, action, cfg) {
@@ -63,6 +68,6 @@ export class EndingScene extends Phaser.Scene {
       .setOrigin(0.5).setInteractive({ useHandCursor: true });
     btn.on('pointerover', () => { btn.setStyle({ color: cfg.accent }); btn.setScale(1.04); })
       .on('pointerout', () => { btn.setStyle({ color: '#dce7e9' }); btn.setScale(1); })
-      .on('pointerdown', action);
+      .on('pointerdown', () => { voice.stop(); action(); });
   }
 }

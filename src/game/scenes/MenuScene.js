@@ -71,6 +71,6 @@ export class MenuScene extends Phaser.Scene {
     if (this._starting) return;
     this._starting = true; audio.play('power');
     this.cameras.main.fadeOut(450);
-    this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('GameScene'));
+    this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('CinematicScene'));
   }
 }

@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { settings } from '../systems/SettingsManager.js';
 import { audio } from '../systems/AudioManager.js';
+import { voice } from '../systems/VoiceManager.js';
 
 export class SettingsScene extends Phaser.Scene {
   constructor() { super({ key: 'SettingsScene' }); }
@@ -9,9 +10,10 @@ export class SettingsScene extends Phaser.Scene {
 
   create() {
     const { width: W, height: H } = this.scale;
+    const cx = W / 2;
     this.add.rectangle(W / 2, H / 2, W, H, 0x03050b);
     this.add.tileSprite(W / 2, H / 2, W, H, 'bg-brick').setAlpha(0.35);
-    this.add.rectangle(W / 2, H / 2, 520, 390, 0x060b16, 0.96).setStrokeStyle(2, 0x00b8d4, 0.7);
+    this.add.rectangle(W / 2, H / 2, 540, 470, 0x060b16, 0.96).setStrokeStyle(2, 0x00b8d4, 0.7);
     this.add.text(W / 2, 74, 'PARAMÈTRES', {
       fontFamily: 'monospace', fontSize: '30px', color: '#80deea', stroke: '#00151b', strokeThickness: 5,
     }).setOrigin(0.5);
@@ -19,19 +21,37 @@ export class SettingsScene extends Phaser.Scene {
       fontFamily: 'monospace', fontSize: '10px', color: '#546e7a', letterSpacing: 2,
     }).setOrigin(0.5);
 
-    this._volumeText = this._row(160, 'VOLUME DES EFFETS', () => this._volumeLabel());
-    this._smallButton(535, 160, '−', () => this._changeVolume(-0.1));
-    this._smallButton(580, 160, '+', () => this._changeVolume(0.1));
-    this._muteText = this._row(215, 'SON', () => settings.get('muted') ? 'MUET' : 'ACTIF', () => {
+    this._volumeText = this._row(130, 'VOLUME DES EFFETS', () => this._volumeLabel());
+    this._smallButton(cx + 155, 130, '−', () => this._changeVolume(-0.1));
+    this._smallButton(cx + 205, 130, '+', () => this._changeVolume(0.1));
+    this._muteText = this._row(180, 'SON', () => settings.get('muted') ? 'MUET' : 'ACTIF', () => {
       settings.set('muted', !settings.get('muted')); this._refresh(); audio.play('ui');
     });
-    this._shakeText = this._row(270, 'SECOUSSES ÉCRAN', () => settings.get('screenShake') ? 'ACTIVES' : 'DÉSACTIVÉES', () => {
+    this._voiceText = this._row(230, 'VOIX FRANÇAISES', () => settings.get('voiceEnabled') ? 'ACTIVES' : 'DÉSACTIVÉES', () => {
+      const enabled = !settings.get('voiceEnabled');
+      settings.set('voiceEnabled', enabled); this._refresh();
+      if (enabled) voice.speak('Voix françaises activées.', { persona: 'system' });
+      else voice.stop();
+      audio.play('ui');
+    });
+    this._guidanceText = this._row(280, 'VOIX DES OBJECTIFS', () => settings.get('guidanceVoiceEnabled') ? 'ACTIVE' : 'DÉSACTIVÉE', () => {
+      const enabled = !settings.get('guidanceVoiceEnabled');
+      settings.set('guidanceVoiceEnabled', enabled); this._refresh();
+      if (enabled) voice.speak('Guidage vocal activé.', { persona: 'system', category: 'guidance' });
+      else voice.stop();
+      audio.play('ui');
+    });
+    this._shakeText = this._row(330, 'SECOUSSES ÉCRAN', () => settings.get('screenShake') ? 'ACTIVES' : 'DÉSACTIVÉES', () => {
       settings.set('screenShake', !settings.get('screenShake')); this._refresh(); audio.play('ui');
     });
+    this._bossTestText = this._row(375, 'PORTAIL TEST DU BOSS', () => settings.get('bossTestTeleporter') ? 'VISIBLE' : 'MASQUÉ', () => {
+      settings.set('bossTestTeleporter', !settings.get('bossTestTeleporter'));
+      this._refresh(); audio.play('ui');
+    });
 
-    this._button(W / 2, 340, 'RÉTABLIR PAR DÉFAUT', () => { settings.reset(); this._refresh(); audio.play('power'); });
-    this._button(W / 2, 402, this._fromGame ? 'REPRENDRE LA PARTIE' : 'RETOUR AU MENU', () => this._back(), true);
-    this.add.text(W / 2, 458, '[ÉCHAP] Retour', { fontFamily: 'monospace', fontSize: '10px', color: '#37474f' }).setOrigin(0.5);
+    this._button(W / 2, 415, 'RÉTABLIR PAR DÉFAUT', () => { settings.reset(); this._refresh(); audio.play('power'); });
+    this._button(W / 2, 454, this._fromGame ? 'REPRENDRE LA PARTIE' : 'RETOUR AU MENU', () => this._back(), true);
+    this.add.text(W / 2, 487, '[ÉCHAP] Retour', { fontFamily: 'monospace', fontSize: '10px', color: '#37474f' }).setOrigin(0.5);
     this.input.keyboard.on('keydown-ESC', () => this._back());
     this.cameras.main.fadeIn(220);
 
@@ -50,9 +70,22 @@ export class SettingsScene extends Phaser.Scene {
   }
 
   _row(y, label, value, action = null) {
-    this.add.text(170, y, label, { fontFamily: 'monospace', fontSize: '13px', color: '#90a4ae' }).setOrigin(0, 0.5);
-    const txt = this.add.text(475, y, value(), { fontFamily: 'monospace', fontSize: '13px', color: '#00e5ff' }).setOrigin(1, 0.5);
-    if (action) txt.setInteractive({ useHandCursor: true }).on('pointerdown', action);
+    const cx = this.scale.width / 2;
+    const bg = this.add.rectangle(cx, y, 460, 40, 0x0b1420, 0.62)
+      .setStrokeStyle(1, 0x1b3440, 0.65);
+    this.add.text(cx - 210, y, label, {
+      fontFamily: 'monospace', fontSize: '13px', color: '#90a4ae',
+    }).setOrigin(0, 0.5);
+    const txt = this.add.text(cx + 95, y, value(), {
+      fontFamily: 'monospace', fontSize: '13px', color: '#00e5ff',
+    }).setOrigin(1, 0.5);
+    if (action) {
+      bg.setInteractive({ useHandCursor: true })
+        .on('pointerover', () => bg.setFillStyle(0x10303a, 0.82))
+        .on('pointerout', () => bg.setFillStyle(0x0b1420, 0.62))
+        .on('pointerdown', action);
+      txt.setInteractive({ useHandCursor: true }).on('pointerdown', action);
+    }
     txt._value = value;
     return txt;
   }
@@ -75,7 +108,9 @@ export class SettingsScene extends Phaser.Scene {
   }
 
   _refresh() {
-    [this._volumeText, this._muteText, this._shakeText].forEach(t => t.setText(t._value()));
+    [this._volumeText, this._muteText, this._voiceText, this._guidanceText,
+      this._shakeText, this._bossTestText]
+      .forEach(t => t.setText(t._value()));
   }
 
   _back() {

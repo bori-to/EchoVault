@@ -1,4 +1,12 @@
-const DEFAULTS = Object.freeze({ volume: 0.65, muted: false, screenShake: true });
+const DEFAULTS = Object.freeze({
+  volume: 0.65,
+  muted: false,
+  voiceEnabled: true,
+  guidanceVoiceEnabled: true,
+  bossTestTeleporter: false,
+  screenShake: true,
+});
+const SETTINGS_VERSION = 2;
 const STORAGE_KEY = 'echovault.settings.v1';
 
 class SettingsManager {
@@ -11,6 +19,14 @@ class SettingsManager {
     try {
       const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
       this.values = { ...DEFAULTS, ...saved };
+      // Le portail etait actif par defaut dans la premiere version. Cette
+      // migration le masque aussi pour les sauvegardes deja presentes, puis
+      // laisse le joueur le reactiver normalement depuis les parametres.
+      if (saved.settingsVersion !== SETTINGS_VERSION) {
+        this.values.bossTestTeleporter = false;
+        this.values.settingsVersion = SETTINGS_VERSION;
+        this.save();
+      }
     } catch (_) { this.values = { ...DEFAULTS }; }
     this.values.volume = Math.max(0, Math.min(1, Number(this.values.volume) || 0));
   }
@@ -25,4 +41,3 @@ class SettingsManager {
 }
 
 export const settings = new SettingsManager();
-

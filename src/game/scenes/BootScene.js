@@ -3,9 +3,14 @@
  * Palette sombre atmosphérique, sprites pixel-art détaillés, textures pour parallax.
  */
 import Phaser from 'phaser';
+import cinematicVaultUrl from '../../assets/cinematics/echo-vault-opening.jpg?url';
 
 export class BootScene extends Phaser.Scene {
   constructor() { super({ key: 'BootScene' }); }
+
+  preload() {
+    this.load.image('cinematic-vault', cinematicVaultUrl);
+  }
 
   create() {
     this._generateTextures();

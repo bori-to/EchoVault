@@ -2,6 +2,7 @@
  * HUDScene — overlay de jeu (HP, pouvoirs, contrôles).
  */
 import Phaser from 'phaser';
+import { voice } from '../systems/VoiceManager.js';
 
 export class HUDScene extends Phaser.Scene {
   constructor() { super({ key: 'HUDScene' }); }
@@ -101,6 +102,7 @@ export class HUDScene extends Phaser.Scene {
 
   _onObjective(text) {
     this._objectiveText.setText(text).setAlpha(1);
+    voice.speak(text, { persona: 'system', category: 'guidance', interrupt: false });
     this.tweens.add({ targets: this._objectiveText, scaleX: 1.03, scaleY: 1.03,
       duration: 150, yoyo: true });
   }
@@ -115,6 +117,19 @@ export class HUDScene extends Phaser.Scene {
       gs.events.on('bossHit', (hp) => {
         const pct = Math.max(0, hp / max);
         this._bossBar.setScale(pct, 1);
+      });
+      gs.events.on('bossPhaseChange', (phase) => {
+        const colors = ['#ff5252', '#ff9800', '#e040fb'];
+        this._bossLabel.setText("LE GARDIEN DE L'ÉCHO — PHASE " + phase)
+          .setStyle({ color: colors[phase - 1] });
+        this._bossBar.setFillStyle([0xff1744, 0xff6f00, 0xe040fb][phase - 1]);
+      });
+      gs.events.on('bossAttemptReset', () => {
+        this._bossBar.setScale(1, 1).setFillStyle(0xff1744);
+        this._bossLabel.setText('LE GARDIEN — EN ATTENTE').setStyle({ color: '#90a4ae' });
+      });
+      gs.events.on('bossAttemptStarted', () => {
+        this._bossLabel.setText("LE GARDIEN DE L'ÉCHO — PHASE 1").setStyle({ color: '#ff5252' });
       });
       gs.events.on('bossDefeated', () => {
         this.tweens.add({ targets: [this._bossBarBg, this._bossBar, this._bossLabel],

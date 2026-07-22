@@ -35,6 +35,7 @@ npm run test       # Tests unitaires (Vitest)
 | Dash *(à débloquer)* | `Shift` |
 | Interaction / Dialogue | `E` |
 | Paramètres / Pause | `P` |
+| Portail de test du boss | `E` devant le portail jaune au départ *(désactivable dans Paramètres)* |
 
 ## Structure du projet
 

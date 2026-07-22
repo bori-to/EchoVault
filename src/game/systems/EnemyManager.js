@@ -26,6 +26,14 @@ export class EnemyManager {
   // ─── Getters utiles ──────────────────────────────────────────────────────
   get healOrbs() { return this._healOrbs; }
 
+  /** Nettoyage silencieux utilisé par le portail de test du boss. */
+  clearAll() {
+    this._data.forEach(d => { if (d.sprite?.active) d.sprite.destroy(); });
+    this._data = [];
+    this.enemies.clear(true, true);
+    this.bullets.clear(true, true);
+  }
+
   // ─── API publique ────────────────────────────────────────────────────────
   addCrawler(x, y, range = 80) {
     const s = this._makeSprite(x, y, 'enemy-crawler', 0xe53935);
@@ -66,6 +74,10 @@ export class EnemyManager {
   connect(player, onPlayerHit, playerBullets, onEnemyHit, platforms) {
     const scene = this.scene;
     scene.physics.add.collider(this.enemies, platforms);
+    scene.physics.add.collider(this.bullets, platforms, (a, b) => {
+      const bullet = this.bullets.contains(a) ? a : b;
+      if (bullet?.active) bullet.destroy();
+    });
 
     // Contact ennemi → joueur (vérifie stomp d'abord)
     scene.physics.add.overlap(player, this.enemies, (p, e) => {

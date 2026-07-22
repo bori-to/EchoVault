@@ -40,6 +40,7 @@ export class PlayerController {
     this._shieldCd      = 0;
     this._shieldHp      = 0;
     this._shieldSprite  = null;
+    this._shieldOrbit   = null;
 
     // Stomp
     this._stomping = false;
@@ -75,10 +76,31 @@ export class PlayerController {
 
   _buildShieldSprite() {
     if (this._shieldSprite) this._shieldSprite.destroy();
-    this._shieldSprite = this.scene.add.circle(0, 0, 22, 0x00e5ff, 0.28)
+
+    // Une coque fine laisse Aria visible, contrairement a l'ancienne boule pleine.
+    const shell = this.scene.add.graphics();
+    shell.fillStyle(0x00bcd4, 0.055);
+    shell.fillEllipse(0, 0, 51, 61);
+    shell.lineStyle(2, 0x72f6ff, 0.9);
+    shell.strokeEllipse(0, 0, 51, 61);
+    shell.lineStyle(1, 0x00b8d4, 0.35);
+    shell.strokeEllipse(0, 0, 45, 55);
+
+    // Segments discontinus et points d'ancrage : aspect bouclier technologique.
+    const orbit = this.scene.add.graphics();
+    orbit.lineStyle(2, 0xffffff, 0.9);
+    orbit.beginPath(); orbit.arc(0, 0, 27, -1.42, -0.55); orbit.strokePath();
+    orbit.beginPath(); orbit.arc(0, 0, 27, 1.72, 2.58); orbit.strokePath();
+    orbit.fillStyle(0x9ffaff, 1);
+    orbit.fillCircle(0, -30, 2);
+    orbit.fillCircle(0, 30, 2);
+    orbit.fillCircle(-25, 0, 1.5);
+    orbit.fillCircle(25, 0, 1.5);
+
+    if (shell.postFX) shell.postFX.addGlow(0x00e5ff, 2, 0);
+    this._shieldOrbit = orbit;
+    this._shieldSprite = this.scene.add.container(0, 0, [shell, orbit])
       .setDepth(14);
-    if (this._shieldSprite.postFX)
-      this._shieldSprite.postFX.addGlow(0x00e5ff, 5, 0);
   }
 
   /** Absorbe un hit de bouclier — retourne true si le hit est absorbé. */
@@ -89,10 +111,14 @@ export class PlayerController {
     this._shieldCd     = 8000;
     if (this._shieldSprite) {
       this.scene.tweens.add({
-        targets: this._shieldSprite, alpha: 0, duration: 300,
+        targets: this._shieldSprite,
+        alpha: 0,
+        scaleX: 1.35,
+        scaleY: 1.18,
+        duration: 220,
         onComplete: () => {
           if (this._shieldSprite) {
-            this._shieldSprite.setAlpha(0.28);
+            this._shieldSprite.setAlpha(1).setScale(1);
             this._shieldSprite.setVisible(false);
           }
         },
@@ -125,13 +151,24 @@ export class PlayerController {
       if (this._shieldCd <= 0) {
         this._shieldActive = true;
         this._shieldHp     = 1;
-        if (this._shieldSprite) this._shieldSprite.setVisible(true);
+        if (this._shieldSprite) {
+          this._shieldSprite.setAlpha(0).setScale(0.75).setVisible(true);
+          this.scene.tweens.add({
+            targets: this._shieldSprite,
+            alpha: 1,
+            scaleX: 1,
+            scaleY: 1,
+            duration: 260,
+            ease: 'Back.Out',
+          });
+        }
         this.scene.events.emit('shieldReady');
       }
     }
     // Position bouclier suit le joueur
     if (this._shieldSprite && this._shieldActive) {
       this._shieldSprite.setPosition(this.player.x, this.player.y);
+      if (this._shieldOrbit) this._shieldOrbit.rotation += delta * 0.00045;
     }
 
     const body     = this.player.body;
