@@ -30,13 +30,24 @@ export class GameStateManager {
   }
 
   /**
+   * Retourne le parcours final choisi avant le combat du Gardien.
+   * Le fallback conserve la compatibilité avec les anciennes parties/tests.
+   * @returns {'transmit' | 'release'}
+   */
+  getRoute() {
+    const route = this._decisions['final_route'];
+    if (route === 'transmit' || route === 'release') return route;
+    return this._decisions['trust_oracle'] === true ? 'transmit' : 'release';
+  }
+
+  /**
    * Détermine la fin à afficher selon les décisions accumulées.
    * - 'guardian' : joueur a fait confiance à l'Oracle → fin coexistence
    * - 'reset'    : joueur a refusé ou ignoré l'Oracle → fin effacement
    * @returns {'guardian' | 'reset'}
    */
   getEnding() {
-    return this._decisions['trust_oracle'] === true ? 'guardian' : 'reset';
+    return this.getRoute() === 'transmit' ? 'guardian' : 'reset';
   }
 
   /** Réinitialise toutes les décisions (nouvelle partie). */

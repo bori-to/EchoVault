@@ -11,7 +11,7 @@
  *   - Tir laser touche X
  *   - 3 HP joueur, clignotement + invincibilité 1.2s après dégâts
  *   - Oracle (NPC, Biome 0) -> décision narrative
- *   - Deux portes de fin (haut biome 2 et sol biome 2)
+ *   - Deux parcours de fin exclusifs : relais supérieur ou noyau inférieur
  */
 import Phaser from 'phaser';
 import { PlayerController } from '../systems/PlayerController.js';
@@ -135,6 +135,9 @@ export class GameScene extends Phaser.Scene {
     this._enemyKills = 0;
     this._checkpointCount = 0;
     this._lastBiome = -1;
+    this._endingRoute = null;
+    this._endingRouteReady = false;
+    this._endingRouteEnemies = [];
   }
 
   create() {
@@ -391,25 +394,27 @@ export class GameScene extends Phaser.Scene {
     }).setOrigin(0.5).setDepth(5);
     if (this._npc.postFX) this._npc.postFX.addGlow(0xce93d8, 3, 0);
 
-    this._exitA = this.physics.add.staticImage(5920, 290, 'exit-a');
-    this.add.text(5920, 250, 'FIN A\n[Transmettre]', {
+    this._exitA = this.physics.add.staticImage(6260, 250, 'exit-a');
+    this._exitALabel = this.add.text(6260, 207, 'RELAIS MÉMORIEL\n[Transmettre]', {
       fontFamily: 'monospace', fontSize: '10px', color: '#81c784',
       align: 'center', stroke: '#030a04', strokeThickness: 3,
-    }).setOrigin(0.5).setDepth(5);
+    }).setOrigin(0.5).setDepth(5).setVisible(false);
     if (this._exitA.postFX) {
       const gA = this._exitA.postFX.addGlow(0x4caf50, 4, 0);
       this.tweens.add({ targets: gA, outerStrength: { from: 2, to: 7 }, duration: 1400, yoyo: true, repeat: -1 });
     }
+    this._exitA.disableBody(true, true);
 
     this._exitB = this.physics.add.staticImage(6260, 485, 'exit-b');
-    this.add.text(6260, 445, 'FIN B\n[Libérer]', {
+    this._exitBLabel = this.add.text(6260, 445, 'NOYAU DES ÉCHOS\n[Verrouillé]', {
       fontFamily: 'monospace', fontSize: '10px', color: '#ef9a9a',
       align: 'center', stroke: '#0a0202', strokeThickness: 3,
-    }).setOrigin(0.5).setDepth(5);
+    }).setOrigin(0.5).setDepth(5).setVisible(false);
     if (this._exitB.postFX) {
       const gB = this._exitB.postFX.addGlow(0xf44336, 4, 0);
       this.tweens.add({ targets: gB, outerStrength: { from: 2, to: 7 }, duration: 1600, yoyo: true, repeat: -1 });
     }
+    this._exitB.disableBody(true, true);
   }
 
   _buildEnemies() {
@@ -451,9 +456,61 @@ export class GameScene extends Phaser.Scene {
       this._unlockAchievement('guardian');
       this._bossDefeated = true;
       this._storyStage = 4;
-      this._floatMessage('Le Gardien est libre. Les deux protocoles répondent.', '#ffd600');
-      this.events.emit('objectiveChanged', 'ACTE V — Choisissez le destin des mémoires');
+      this._activateEndingRoute();
     });
+  }
+
+  _activateEndingRoute() {
+    if (this._endingRoute) return;
+    this._endingRoute = this._gsm.getRoute();
+
+    if (this._endingRoute === 'transmit') {
+      // La transmission emprunte une vraie voie haute, inaccessible en marchant
+      // simplement sur le sol de l'arène.
+      const ascent = [
+        [5760, 402, 1.0], [5900, 340, 1.05], [6045, 278, 1.0], [6190, 310, 1.0],
+      ];
+      ascent.forEach(([x, y, scale]) => {
+        const platform = this._platforms.create(x, y, 'platform-surface').setScale(scale, 1).refreshBody();
+        platform.setTint(0x80e8c1);
+        this.add.rectangle(x, y + 11, 106 * scale, 4, 0x4caf8a, 0.42).setDepth(1);
+      });
+      this._routeBlocker = this.add.rectangle(5830, 430, 30, 180, 0x123a32, 0.9)
+        .setStrokeStyle(2, 0x80e8c1, 0.8).setDepth(4);
+      this.physics.add.existing(this._routeBlocker, true);
+      this.physics.add.collider(this._player, this._routeBlocker);
+      this._exitA.enableBody(false, 6260, 250, true, true);
+      this._exitALabel.setVisible(true);
+      this._endingRouteReady = true;
+      this._floatMessage('Le relais supérieur répond à votre serment.', '#80e8c1');
+      this.events.emit('objectiveChanged', 'ACTE V-A — Gravissez le relais et transmettez les mémoires');
+      voice.speak('Route de transmission ouverte. Rejoignez le relais supérieur.', { persona: 'system' });
+      return;
+    }
+
+    // La libération ouvre le couloir inférieur, mais impose de détruire trois
+    // verrous physiques avant que le noyau accepte la déconnexion.
+    this._exitBLabel.setVisible(true);
+    this._endingRouteEnemies = [
+      this._em.addCrawler(5840, 475, 65),
+      this._em.addDrone(6030, 390),
+      this._em.addGuardian(6180, 475),
+    ];
+    this._floatMessage('Le noyau exige la destruction de ses trois verrous.', '#ff8a80');
+    this.events.emit('objectiveChanged', 'ACTE V-B — Brisez les 3 verrous du noyau inférieur');
+    voice.speak('Route de libération ouverte. Détruisez les trois verrous du noyau.', { persona: 'system' });
+  }
+
+  _updateEndingRoute() {
+    if (this._endingRoute !== 'release' || this._endingRouteReady) return;
+    const remaining = this._endingRouteEnemies.filter(enemy => enemy?.active).length;
+    if (remaining > 0) return;
+    this._endingRouteReady = true;
+    this._exitB.enableBody(false, 6260, 485, true, true);
+    this._exitBLabel.setText('NOYAU DES ÉCHOS\n[Libérer]').setVisible(true);
+    this._floatMessage('Les verrous sont brisés. Le noyau est accessible.', '#ff9aaa');
+    this.events.emit('objectiveChanged', 'ACTE V-B — Entrez dans le noyau et libérez les Échos');
+    voice.speak('Les trois verrous sont brisés. Entrez dans le noyau.', { persona: 'system' });
   }
 
   _buildBossTestPortal() {
@@ -477,6 +534,7 @@ export class GameScene extends Phaser.Scene {
     this._storyNpcs.forEach(npc => { npc.done = true; });
     this._storyGates.forEach(gate => { if (gate?.active) gate.destroy(); });
     this._storyStage = 3;
+    this._gsm.recordDecision('final_route', 'release');
     this._activeEncounter = null;
     this._em.clearAll();
 
@@ -709,20 +767,25 @@ export class GameScene extends Phaser.Scene {
       this._floatMessage(`Mémoire incomplète : ${this._fragmentCount}/${REQUIRED_FRAGMENTS}.`, '#ce93d8');
       return false;
     }
+    if (!this._endingRouteReady) {
+      this._exitHintCd = 1200;
+      this._floatMessage('Le parcours choisi n’est pas encore terminé.', '#ffcc80');
+      return false;
+    }
     return true;
   }
 
   _onExitA() {
-    if (!this._gameOver && this._canFinish()) {
-      this._gsm.recordDecision('final_choice', 'transmit');
-      this._triggerEnding('guardian');
+    if (!this._gameOver && this._endingRoute === 'transmit' && this._canFinish()) {
+      this._gsm.recordDecision('route_completed', 'transmit');
+      this._triggerEnding(this._gsm.getEnding());
     }
   }
 
   _onExitB() {
-    if (!this._gameOver && this._canFinish()) {
-      this._gsm.recordDecision('final_choice', 'release');
-      this._triggerEnding('reset');
+    if (!this._gameOver && this._endingRoute === 'release' && this._canFinish()) {
+      this._gsm.recordDecision('route_completed', 'release');
+      this._triggerEnding(this._gsm.getEnding());
     }
   }
 
@@ -884,6 +947,7 @@ export class GameScene extends Phaser.Scene {
     this._em.update(this._player, delta);
     this._boss.update(this._player, delta);
     this._updateMemoryEncounter();
+    this._updateEndingRoute();
 
     if (this._ctrl.bullets) {
       this._ctrl.bullets.getChildren().forEach(b => {
@@ -984,11 +1048,11 @@ export class GameScene extends Phaser.Scene {
           name: 'Écho de SOL',
           nodes: [
             { id: 'start', text: 'Le Gardien croit encore exécuter ta dernière consigne : « ne laisse personne décider à ma place ».\nRassemble les deux fragments restants, puis affronte-le.', choices: [
-              { label: 'Je porterai encore cette responsabilité.', next: 'carry', effect: { decision: 'accept_past', value: true } },
-              { label: 'Cette fois, les Échos choisiront.', next: 'share', effect: { decision: 'accept_past', value: false } },
+              { label: 'Transmettre les mémoires au monde.', next: 'carry', effect: { decision: 'final_route', value: 'transmit' } },
+              { label: 'Libérer les Échos du réseau.', next: 'share', effect: { decision: 'final_route', value: 'release' } },
             ] },
-            { id: 'carry', text: 'Alors monte à la Chambre Haute. Mais souviens-toi : protéger n’est pas posséder.', choices: [] },
-            { id: 'share', text: 'Alors monte à la Chambre Haute. Fais de ton choix le dernier ordre imposé.', choices: [] },
+            { id: 'carry', text: 'Le relais supérieur s’ouvrira après le Gardien. Son ascension mènera les mémoires vers la surface.', choices: [] },
+            { id: 'share', text: 'Le noyau inférieur s’ouvrira après le Gardien. Brise ses trois verrous pour rendre leur choix aux Échos.', choices: [] },
           ],
         },
       },
@@ -1006,7 +1070,12 @@ export class GameScene extends Phaser.Scene {
           'ACTE III — Retrouvez SOL avec 6 souvenirs',
           'ACTE IV — Complétez les 8 souvenirs et gagnez la Chambre Haute',
         ];
-        this.events.emit('objectiveChanged', objectives[this._storyStage - 1]);
+        const routeObjective = npc.id === 'sol'
+          ? this._gsm.getRoute() === 'transmit'
+            ? 'ACTE IV-A — Réunissez les 8 souvenirs et ouvrez la voie du relais'
+            : 'ACTE IV-B — Réunissez les 8 souvenirs et ouvrez la voie du noyau'
+          : objectives[this._storyStage - 1];
+        this.events.emit('objectiveChanged', routeObjective);
         this._floatMessage('Verrou mémoriel levé.', '#ffd600');
       });
     });

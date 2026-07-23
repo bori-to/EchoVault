@@ -1,6 +1,6 @@
 /**
  * Tests unitaires — GameStateManager
- * Couvre : recordDecision, getDecision, getEnding, reset
+ * Couvre : recordDecision, getDecision, getRoute, getEnding, reset
  * Module pur sans dépendance Phaser → environnement Node.
  *
  * Lancer : npm test
@@ -30,6 +30,17 @@ describe('GameStateManager', () => {
   it('devrait retourner "reset" si trust_oracle = false', () => {
     gsm.recordDecision('trust_oracle', false);
     expect(gsm.getEnding()).toBe('reset');
+  });
+
+  it('devrait faire primer le parcours choisi avant le boss sur le premier avis donné à l’Oracle', () => {
+    gsm.recordDecision('trust_oracle', true);
+    gsm.recordDecision('final_route', 'release');
+    expect(gsm.getRoute()).toBe('release');
+    expect(gsm.getEnding()).toBe('reset');
+
+    gsm.recordDecision('final_route', 'transmit');
+    expect(gsm.getRoute()).toBe('transmit');
+    expect(gsm.getEnding()).toBe('guardian');
   });
 
   // ─── Cas limites ────────────────────────────────────────────────────────────
