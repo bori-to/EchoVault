@@ -13,7 +13,7 @@ Un robot archéologue explore des ruines souterraines pour retrouver sa mémoire
 
 ## Jouer
 
-**Build en ligne :** [https://[username].github.io/EchoVault/](https://github.com) *(disponible à partir du Livrable 2)*
+**Build en ligne :** [https://bori-to.github.io/EchoVault/](https://bori-to.github.io/EchoVault/)
 
 ## Lancer en local
 
@@ -55,12 +55,13 @@ EchoVault/
 - **Moteur :** Phaser 3.60+ (JavaScript ES6)
 - **Bundler :** Vite
 - **Tests :** Vitest
-- **CI/CD :** GitHub Actions → GitHub Pages
+- **CI/CD :** GitHub Actions → GitHub Pages (`master`)
 - **Assets IA :** Leonardo AI (sprites), Stable Diffusion XL (tilesets), Suno AI (audio)
 
 ## Documents
 
-- [Étude de faisabilité](docs/feasibility_report.md)
+- [Étude de faisabilité - PDF final (10 pages)](docs/feasibility_report.pdf)
+- [Source Markdown de l'étude](docs/feasibility_report.md)
 - [Architecture technique](docs/architecture.md)
 - [Analyse des risques](docs/risk_analysis.md)
 - [Journal des prompts LLM](prompts_logs/)
