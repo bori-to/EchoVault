@@ -8,6 +8,7 @@ const promptsPath = path.join(promptsDir, '01_prompts_utilisateur_exacts.md');
 const attachmentPath = path.join(promptsDir, '00_conversation_piece_jointe_brute.txt');
 const sessionPath = 'C:/Users/adrie/.codex/sessions/2026/07/22/rollout-2026-07-22T12-09-35-019f894d-5847-7883-8215-73638a16a86b.jsonl';
 const outputPath = path.join(promptsDir, 'Prompt_Log_EchoVault.pdf');
+const traceabilityPath = path.join(promptsDir, '02_tracabilite_integrations_ia.md');
 
 const promptMarkdown = await fs.readFile(promptsPath, 'utf8');
 const attachmentRaw = await fs.readFile(attachmentPath, 'utf8');
@@ -83,6 +84,41 @@ for (const entry of entries) {
   if (!entry.output) missing.push(entry.number);
 }
 if (missing.length) throw new Error(`Aucun output réel trouvé pour les entrées : ${missing.join(', ')}`);
+
+for (const entry of entries) {
+  entry.model = entry.number <= 22
+    ? 'Claude Sonnet 4.6 High'
+    : 'Codex 5.6 Sol Medium';
+  entry.manualChanges = 'Aucune';
+  entry.codeTrace = 'Code généré par IA ; aucun code modifié manuellement';
+  entry.decision = entry.number === 19 ? 'REJETÉ' : 'ACCEPTÉ';
+  entry.decisionReason = entry.number === 19
+    ? "L'avatar produit à partir de l'image envoyée n'a pas été retenu."
+    : 'Output retenu pour le projet conformément à la décision de l’équipe.';
+}
+
+const escapeTableCell = value => String(value).replace(/\|/g, '\\|').replace(/\r?\n/g, '<br>');
+const traceabilityLines = [
+  '# Traçabilité des intégrations IA - EchoVault',
+  '',
+  'Ce tableau complète le Prompt Log avec les informations déclarées par l’équipe.',
+  '',
+  '| Entrée | Source | Modèle et version | Modifications manuelles | Distinction du code | Décision | Justification |',
+  '|---:|---|---|---|---|---|---|',
+  ...entries.map(entry => {
+    const source = entry.number <= 22 ? 'Conversation jointe' : 'Conversation Codex';
+    return `| #${String(entry.number).padStart(3, '0')} | ${source} | ${escapeTableCell(entry.model)} | ${entry.manualChanges} | ${escapeTableCell(entry.codeTrace)} | **${entry.decision}** | ${escapeTableCell(entry.decisionReason)} |`;
+  }),
+  '',
+  '## Déclarations de l’équipe',
+  '',
+  '- Aucune modification manuelle n’a été effectuée sur les outputs ou le code généré.',
+  '- Toutes les intégrations sont acceptées sauf l’entrée #019 relative à l’avatar produit depuis une image envoyée.',
+  '- Entrées #001 à #022 : Claude Sonnet 4.6 High.',
+  '- Entrées #023 à #055 : Codex 5.6 Sol Medium.',
+  '',
+];
+await fs.writeFile(traceabilityPath, traceabilityLines.join('\n'), 'utf8');
 
 const PAGE_W = 595;
 const PAGE_H = 842;
@@ -220,7 +256,7 @@ function drawSection(title, subtitle) {
 function drawEntryHeader(entry, continuation = false) {
   const attachment = entry.number <= 22;
   const source = attachment ? 'Pièce jointe' : 'Conversation actuelle';
-  const tool = attachment ? 'GitHub Copilot' : 'Codex (GPT-5)';
+  const tool = entry.model;
   roundedBox(MARGIN_X, y, CONTENT_W, 56, COLORS.white, COLORS.border);
   ctx.fillStyle = COLORS.pale; ctx.fillRect(MARGIN_X + 1, y + 1, CONTENT_W - 2, 27);
   ctx.fillStyle = COLORS.navy; ctx.font = 'bold 11px Arial';
@@ -275,14 +311,36 @@ function drawEntry(entry) {
   }
   drawLabel('OUTPUT REÇU — TRANSCRIPTION RÉELLE');
   drawFlowingText(entry.output, entry, 'OUTPUT REÇU', '8px Arial', 11, COLORS.ink, '#f2fbfc');
-  if (y > PAGE_H - BOTTOM - 32) {
+  if (y > PAGE_H - BOTTOM - 145) {
     endPage();
-    beginPage(`EchoVault - Entrée #${String(entry.number).padStart(3, '0')} — clôture`);
+    beginPage(`EchoVault - Entrée #${String(entry.number).padStart(3, '0')} — traçabilité`);
+    drawEntryHeader(entry, true);
   }
+  drawLabel('TRAÇABILITÉ DE L’INTÉGRATION');
+  const traceHeight = 102;
+  const decisionColor = entry.decision === 'ACCEPTÉ' ? '#207a5a' : '#b83a4b';
+  const traceTop = y;
+  roundedBox(MARGIN_X, traceTop, CONTENT_W, traceHeight, '#f8fafb', COLORS.border, 3);
+  ctx.fillStyle = COLORS.muted; ctx.font = 'bold 7px Arial';
+  ctx.fillText('MODÈLE ET VERSION', MARGIN_X + 12, traceTop + 17);
+  ctx.fillText('MODIFICATIONS MANUELLES', MARGIN_X + 270, traceTop + 17);
+  ctx.fillStyle = COLORS.ink; ctx.font = '8px Arial';
+  ctx.fillText(entry.model, MARGIN_X + 12, traceTop + 32);
+  ctx.fillText(entry.manualChanges, MARGIN_X + 270, traceTop + 32);
+  ctx.fillStyle = COLORS.muted; ctx.font = 'bold 7px Arial';
+  ctx.fillText('DISTINCTION CODE IA / CODE MANUEL', MARGIN_X + 12, traceTop + 51);
+  ctx.fillStyle = COLORS.ink; ctx.font = '8px Arial';
+  ctx.fillText(entry.codeTrace, MARGIN_X + 12, traceTop + 66);
+  ctx.fillStyle = decisionColor; ctx.font = 'bold 8px Arial';
+  ctx.fillText(`DÉCISION : ${entry.decision}`, MARGIN_X + 12, traceTop + 86);
+  ctx.fillStyle = COLORS.muted; ctx.font = '7.5px Arial';
+  const reasonLines = wrapText(entry.decisionReason, CONTENT_W - 180);
+  reasonLines.slice(0, 2).forEach((line, index) => ctx.fillText(line, MARGIN_X + 145, traceTop + 86 + index * 10));
+  y += traceHeight + 9;
   ctx.fillStyle = '#f4f7f8'; ctx.fillRect(MARGIN_X, y, CONTENT_W, 22);
   ctx.fillStyle = COLORS.muted; ctx.font = '7px Arial';
-  ctx.fillText("Décision d'intégration : tracée dans le projet", MARGIN_X + 9, y + 14);
-  ctx.textAlign = 'right'; ctx.fillText('Output : source réelle vérifiée', MARGIN_X + CONTENT_W - 9, y + 14); ctx.textAlign = 'left';
+  ctx.fillText('Output réel et métadonnées de traçabilité vérifiés', MARGIN_X + 9, y + 14);
+  ctx.textAlign = 'right'; ctx.fillText(`Intégration : ${entry.decision}`, MARGIN_X + CONTENT_W - 9, y + 14); ctx.textAlign = 'left';
   endPage();
 }
 

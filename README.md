@@ -2,7 +2,7 @@
 
 > Mini-jeu Metroidvania 2D — Projet MetroidvanIA | ESGI 4AL | 2026
 
-Un robot archéologue explore des ruines souterraines pour retrouver sa mémoire perdue. La campagne d'environ 15 minutes se déroule en cinq actes, avec huit souvenirs, trois témoins, un boss en trois phases et deux fins selon votre choix final.
+Un robot archéologue explore des ruines souterraines pour retrouver sa mémoire perdue. La campagne d'environ 15 minutes se déroule en cinq actes, avec huit souvenirs, trois témoins, un boss en trois phases et deux parcours de fin exclusifs décidés avant le combat final.
 
 ## Équipe
 
@@ -56,7 +56,9 @@ EchoVault/
 - **Bundler :** Vite
 - **Tests :** Vitest
 - **CI/CD :** GitHub Actions → GitHub Pages (`master`)
-- **Assets IA :** Leonardo AI (sprites), Stable Diffusion XL (tilesets), Suno AI (audio)
+- **Graphismes :** textures procédurales Canvas/Phaser et une image de cinématique générée avec l'outil d'image OpenAI via Codex
+- **Audio :** effets synthétisés avec Web Audio API ; aucun fichier musical tiers
+- **Voix :** synthèse vocale française fournie à l'exécution par Web Speech API et les voix du navigateur/système
 
 ## Documents
 
@@ -64,9 +66,15 @@ EchoVault/
 - [Source Markdown de l'étude](docs/feasibility_report.md)
 - [Architecture technique](docs/architecture.md)
 - [Analyse des risques](docs/risk_analysis.md)
+- [Rapport de tests](docs/test_report.md)
+- [Rapport de playtests](docs/playtest_report.md)
+- [Rapport de bugs](docs/bug_report.md)
+- [Journal des erreurs et solutions](docs/error_journal.md)
 - [Journal des prompts LLM](prompts_logs/)
 - [Crédits et licences](ACKNOWLEDGEMENTS.md)
+- [Licence MIT du projet](LICENSE)
+- [Avis des composants tiers](public/THIRD_PARTY_NOTICES.txt)
 
 ## Licence
 
-Ce projet est réalisé dans un cadre académique. Voir [ACKNOWLEDGEMENTS.md](ACKNOWLEDGEMENTS.md) pour les licences des assets et outils utilisés.
+Le code et les contenus propres au projet sont distribués sous [licence MIT](LICENSE), dans la limite des droits détenus par l'équipe. Les assets, services IA et composants tiers sont détaillés dans [ACKNOWLEDGEMENTS.md](ACKNOWLEDGEMENTS.md).
