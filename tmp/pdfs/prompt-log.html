@@ -1,0 +1,781 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><style>
+  @page { size: A4; margin: 18mm 15mm 18mm; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: Arial, Helvetica, sans-serif; color: #172033; font-size: 9.5pt; line-height: 1.35; }
+  .cover { min-height: 250mm; page-break-after: always; display: flex; flex-direction: column; justify-content: center; }
+  .badge { color: #007c91; font-size: 11pt; font-weight: 700; letter-spacing: 1.7px; text-transform: uppercase; }
+  h1 { margin: 8px 0 6px; font-size: 30pt; color: #11233f; line-height: 1.05; }
+  .subtitle { margin: 0 0 26px; color: #516078; font-size: 13pt; }
+  .notice { border-left: 5px solid #00a6bd; background: #eaf8fb; padding: 13px 16px; margin: 12px 0 22px; }
+  .project-grid { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid #bdd3da; }
+  .project-grid div { padding: 10px 12px; border-bottom: 1px solid #d8e5e9; }
+  .project-grid div:nth-child(odd) { border-right: 1px solid #d8e5e9; }
+  .project-grid b { color: #006f83; }
+  .summary { margin-top: 24px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .stat { background: #11233f; color: white; padding: 15px 10px; text-align: center; border-radius: 5px; }
+  .stat strong { display: block; font-size: 22pt; color: #65d9e8; }
+  .section-banner { page-break-before: always; background: #11233f; color: white; padding: 12px 15px; margin: 0 0 13px; border-left: 6px solid #00a6bd; }
+  .section-banner h2 { margin: 0; font-size: 16pt; }
+  .section-banner p { margin: 4px 0 0; color: #bcd8df; }
+  .entry { border: 1px solid #b8cbd3; border-radius: 5px; margin: 0 0 12px; page-break-inside: avoid; overflow: hidden; }
+  .entry.long { page-break-inside: auto; }
+  .entry-title { display: flex; justify-content: space-between; align-items: center; background: #eef7f9; color: #10233e; padding: 7px 10px; font-size: 11pt; font-weight: 700; border-bottom: 1px solid #c8dce2; }
+  .entry-title .source { font-size: 8pt; color: #007c91; font-weight: 600; }
+  .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 16px; padding: 7px 10px; color: #536176; font-size: 8.5pt; }
+  .meta-grid b { color: #25364e; }
+  .field-label { color: #007c91; font-weight: 700; text-transform: uppercase; letter-spacing: .55px; font-size: 8pt; margin: 2px 10px 4px; }
+  pre { margin: 0 10px 8px; padding: 9px 10px; background: #f8fafb; border: 1px solid #dce6ea; border-left: 4px solid #00a6bd; white-space: pre-wrap; overflow-wrap: anywhere; font: 9pt/1.42 Consolas, 'Courier New', monospace; color: #111827; }
+  .output { margin: 0 10px 7px; color: #4d5b70; font-size: 8.5pt; }
+  .decision { display: flex; justify-content: space-between; gap: 10px; padding: 6px 10px; background: #f4f7f8; color: #627083; font-size: 7.8pt; border-top: 1px solid #dce6ea; }
+  .group-marker { page-break-before: always; }
+</style></head><body>
+  <section class="cover">
+    <div class="badge">Template - Prompt Log d'équipe</div>
+    <h1>Prompt Log<br>EchoVault</h1>
+    <p class="subtitle">Journal fidèle des échanges utilisateur avec les assistants IA</p>
+    <div class="notice"><b>Règle de traçabilité :</b> seuls les prompts réellement envoyés par l'utilisateur sont reproduits. Ils sont conservés sans correction, reformulation ni invention.</div>
+    <div class="project-grid">
+      <div><b>Projet :</b> EchoVault</div><div><b>Promotion :</b> 4AL</div>
+      <div><b>Équipe :</b> non renseignée</div><div><b>Date d'édition :</b> 23 juillet 2026</div>
+      <div><b>Source 1 :</b> conversation en pièce jointe</div><div><b>Source 2 :</b> conversation actuelle</div>
+    </div>
+    <div class="summary"><div class="stat"><strong>55</strong>prompts vérifiés</div><div class="stat"><strong>22</strong>pièce jointe</div><div class="stat"><strong>33</strong>conversation actuelle</div></div>
+  </section>
+  <div class="section-banner"><h2>Conversation de la pièce jointe</h2><p>Entrées #001 à #022 - transcription exacte</p></div>
+  
+    <section class="entry">
+      <div class="entry-title"><span>Entrée #001</span><span class="source">Conversation de la pièce jointe</span></div>
+      <div class="meta-grid">
+        <div><b>Auteur :</b> Utilisateur</div><div><b>Outil :</b> GitHub Copilot</div>
+        <div><b>Projet :</b> EchoVault</div><div><b>Statut :</b> Prompt réel vérifié</div>
+      </div>
+      <div class="field-label">Prompt envoyé - transcription exacte</div>
+      <pre>Fais moi le livrable 1 c&#039;est marquer dans le Sujet (10).pdf</pre>
+      <div class="field-label">Output reçu</div>
+      <p class="output">Réponse complète conservée dans 00_conversation_piece_jointe_brute.txt.</p>
+      <div class="decision"><span>Décision d'intégration : tracée dans le projet</span><span>Hallucination : non évaluée</span></div>
+    </section>
+
+    <section class="entry">
+      <div class="entry-title"><span>Entrée #002</span><span class="source">Conversation de la pièce jointe</span></div>
+      <div class="meta-grid">
+        <div><b>Auteur :</b> Utilisateur</div><div><b>Outil :</b> GitHub Copilot</div>
+        <div><b>Projet :</b> EchoVault</div><div><b>Statut :</b> Prompt réel vérifié</div>
+      </div>
+      <div class="field-label">Prompt envoyé - transcription exacte</div>
+      <pre>@agent Try Again</pre>
+      <div class="field-label">Output reçu</div>
+      <p class="output">Réponse complète conservée dans 00_conversation_piece_jointe_brute.txt.</p>
+      <div class="decision"><span>Décision d'intégration : tracée dans le projet</span><span>Hallucination : non évaluée</span></div>
+    </section>
+
+    <section class="entry">
+      <div class="entry-title"><span>Entrée #003</span><span class="source">Conversation de la pièce jointe</span></div>
+      <div class="meta-grid">
+        <div><b>Auteur :</b> Utilisateur</div><div><b>Outil :</b> GitHub Copilot</div>
+        <div><b>Projet :</b> EchoVault</div><div><b>Statut :</b> Prompt réel vérifié</div>
+      </div>
+      <div class="field-label">Prompt envoyé - transcription exacte</div>
+      <pre>Fais moi le livrable 2 c&#039;est marquer dans le Sujet (10).pdf</pre>
+      <div class="field-label">Output reçu</div>
+      <p class="output">Réponse complète conservée dans 00_conversation_piece_jointe_brute.txt.</p>
+      <div class="decision"><span>Décision d'intégration : tracée dans le projet</span><span>Hallucination : non évaluée</span></div>
+    </section>
+
+    <section class="entry">
+      <div class="entry-title"><span>Entrée #004</span><span class="source">Conversation de la pièce jointe</span></div>
+      <div class="meta-grid">
+        <div><b>Auteur :</b> Utilisateur</div><div><b>Outil :</b> GitHub Copilot</div>
+        <div><b>Projet :</b> EchoVault</div><div><b>Statut :</b> Prompt réel vérifié</div>
+      </div>
+      <div class="field-label">Prompt envoyé - transcription exacte</div>
+      <pre>améliore les graphisme du jeux, il est vraiment pas beau la je te donne des exemple en PJ</pre>
+      <div class="field-label">Output reçu</div>
+      <p class="output">Réponse complète conservée dans 00_conversation_piece_jointe_brute.txt.</p>
+      <div class="decision"><span>Décision d'intégration : tracée dans le projet</span><span>Hallucination : non évaluée</span></div>
+    </section>
+
+    <section class="entry">
+      <div class="entry-title"><span>Entrée #005</span><span class="source">Conversation de la pièce jointe</span></div>
+      <div class="meta-grid">
+        <div><b>Auteur :</b> Utilisateur</div><div><b>Outil :</b> GitHub Copilot</div>
+        <div><b>Projet :</b> EchoVault</div><div><b>Statut :</b> Prompt réel vérifié</div>
+      </div>
+      <div class="field-label">Prompt envoyé - transcription exacte</div>
+      <pre>continue</pre>
+      <div class="field-label">Output reçu</div>
+      <p class="output">Réponse complète conservée dans 00_conversation_piece_jointe_brute.txt.</p>
+      <div class="decision"><span>Décision d'intégration : tracée dans le projet</span><span>Hallucination : non évaluée</span></div>
+    </section>
+
+    <section class="entry">
+      <div class="entry-title"><span>Entrée #006</span><span class="source">Conversation de la pièce jointe</span></div>
+      <div class="meta-grid">
+        <div><b>Auteur :</b> Utilisateur</div><div><b>Outil :</b> GitHub Copilot</div>
+        <div><b>Projet :</b> EchoVault</div><div><b>Statut :</b> Prompt réel vérifié</div>
+      </div>
+      <div class="field-label">Prompt envoyé - transcription exacte</div>
+      <pre>pourquoi le jeux prends pas tous l&#039;ecran ?</pre>
+      <div class="field-label">Output reçu</div>
+      <p class="output">Réponse complète conservée dans 00_conversation_piece_jointe_brute.txt.</p>
+      <div class="decision"><span>Décision d'intégration : tracée dans le projet</span><span>Hallucination : non évaluée</span></div>
+    </section>
+
+    <section class="entry">
+      <div class="entry-title"><span>Entrée #007</span><span class="source">Conversation de la pièce jointe</span></div>
+      <div class="meta-grid">
+        <div><b>Auteur :</b> Utilisateur</div><div><b>Outil :</b> GitHub Copilot</div>
+        <div><b>Projet :</b> EchoVault</div><div><b>Statut :</b> Prompt réel vérifié</div>
+      </div>
+      <div class="field-label">Prompt envoyé - transcription exacte</div>
+      <pre>améliore le personnages et les anmiations, c&#039;est vraiment pas beau est pas fluides</pre>
+      <div class="field-label">Output reçu</div>
+      <p class="output">Réponse complète conservée dans 00_conversation_piece_jointe_brute.txt.</p>
+      <div class="decision"><span>Décision d'intégration : tracée dans le projet</span><span>Hallucination : non évaluée</span></div>
+    </section>
+
+    <section class="entry">
+      <div class="entry-title"><span>Entrée #008</span><span class="source">Conversation de la pièce jointe</span></div>
+      <div class="meta-grid">
+        <div><b>Auteur :</b> Utilisateur</div><div><b>Outil :</b> GitHub Copilot</div>
+        <div><b>Projet :</b> EchoVault</div><div><b>Statut :</b> Prompt réel vérifié</div>
+      </div>
+      <div class="field-label">Prompt envoyé - transcription exacte</div>
+      <pre>le jump est trop haut. Ensuite ajoute une logique de jeux specifique au jeux, ameliore la map, avec plus de choses a decouvrir, plusieurs biomes. avec des montres, une facon de tuer les monstres et d&#039;autres pouvoirs.</pre>
+      <div class="field-label">Output reçu</div>
+      <p class="output">Réponse complète conservée dans 00_conversation_piece_jointe_brute.txt.</p>
+      <div class="decision"><span>Décision d'intégration : tracée dans le projet</span><span>Hallucination : non évaluée</span></div>
+    </section>
+
+    <section class="entry">
+      <div class="entry-title"><span>Entrée #009</span><span class="source">Conversation de la pièce jointe</span></div>
+      <div class="meta-grid">
+        <div><b>Auteur :</b> Utilisateur</div><div><b>Outil :</b> GitHub Copilot</div>
+        <div><b>Projet :</b> EchoVault</div><div><b>Statut :</b> Prompt réel vérifié</div>
+      </div>
+      <div class="field-label">Prompt envoyé - transcription exacte</div>
+      <pre>@agent Try Again</pre>
+      <div class="field-label">Output reçu</div>
+      <p class="output">Réponse complète conservée dans 00_conversation_piece_jointe_brute.txt.</p>
+      <div class="decision"><span>Décision d'intégration : tracée dans le projet</span><span>Hallucination : non évaluée</span></div>
+    </section>
+
+    <section class="entry">
+      <div class="entry-title"><span>Entrée #010</span><span class="source">Conversation de la pièce jointe</span></div>
+      <div class="meta-grid">
+        <div><b>Auteur :</b> Utilisateur</div><div><b>Outil :</b> GitHub Copilot</div>
+        <div><b>Projet :</b> EchoVault</div><div><b>Statut :</b> Prompt réel vérifié</div>
+      </div>
+      <div class="field-label">Prompt envoyé - transcription exacte</div>
+      <pre>le laser ne ce tir pas, il reste sur place</pre>
+      <div class="field-label">Output reçu</div>
+      <p class="output">Réponse complète conservée dans 00_conversation_piece_jointe_brute.txt.</p>
+      <div class="decision"><span>Décision d'intégration : tracée dans le projet</span><span>Hallucination : non évaluée</span></div>
+    </section>
+
+    <section class="entry">
+      <div class="entry-title"><span>Entrée #011</span><span class="source">Conversation de la pièce jointe</span></div>
+      <div class="meta-grid">
+        <div><b>Auteur :</b> Utilisateur</div><div><b>Outil :</b> GitHub Copilot</div>
+        <div><b>Projet :</b> EchoVault</div><div><b>Statut :</b> Prompt réel vérifié</div>
+      </div>
+      <div class="field-label">Prompt envoyé - transcription exacte</div>
+      <pre>c&#039;est bien donne moi des idees de quoi ajouter</pre>
+      <div class="field-label">Output reçu</div>
+      <p class="output">Réponse complète conservée dans 00_conversation_piece_jointe_brute.txt.</p>
+      <div class="decision"><span>Décision d'intégration : tracée dans le projet</span><span>Hallucination : non évaluée</span></div>
+    </section>
+
+    <section class="entry">
+      <div class="entry-title"><span>Entrée #012</span><span class="source">Conversation de la pièce jointe</span></div>
+      <div class="meta-grid">
+        <div><b>Auteur :</b> Utilisateur</div><div><b>Outil :</b> GitHub Copilot</div>
+        <div><b>Projet :</b> EchoVault</div><div><b>Statut :</b> Prompt réel vérifié</div>
+      </div>
+      <div class="field-label">Prompt envoyé - transcription exacte</div>
+      <pre>implemente tout ce que tu m&#039;ad dit</pre>
+      <div class="field-label">Output reçu</div>
+      <p class="output">Réponse complète conservée dans 00_conversation_piece_jointe_brute.txt.</p>
+      <div class="decision"><span>Décision d'intégration : tracée dans le projet</span><span>Hallucination : non évaluée</span></div>
+    </section>
+
+    <section class="entry">
+      <div class="entry-title"><span>Entrée #013</span><span class="source">Conversation de la pièce jointe</span></div>
+      <div class="meta-grid">
+        <div><b>Auteur :</b> Utilisateur</div><div><b>Outil :</b> GitHub Copilot</div>
+        <div><b>Projet :</b> EchoVault</div><div><b>Statut :</b> Prompt réel vérifié</div>
+      </div>
+      <div class="field-label">Prompt envoyé - transcription exacte</div>
+      <pre>@agent Try Again</pre>
+      <div class="field-label">Output reçu</div>
+      <p class="output">Réponse complète conservée dans 00_conversation_piece_jointe_brute.txt.</p>
+      <div class="decision"><span>Décision d'intégration : tracée dans le projet</span><span>Hallucination : non évaluée</span></div>
+    </section>
+
+    <section class="entry">
+      <div class="entry-title"><span>Entrée #014</span><span class="source">Conversation de la pièce jointe</span></div>
+      <div class="meta-grid">
+        <div><b>Auteur :</b> Utilisateur</div><div><b>Outil :</b> GitHub Copilot</div>
+        <div><b>Projet :</b> EchoVault</div><div><b>Statut :</b> Prompt réel vérifié</div>
+      </div>
+      <div class="field-label">Prompt envoyé - transcription exacte</div>
+      <pre>quand je touche le boss avec un laser, il disparrais</pre>
+      <div class="field-label">Output reçu</div>
+      <p class="output">Réponse complète conservée dans 00_conversation_piece_jointe_brute.txt.</p>
+      <div class="decision"><span>Décision d'intégration : tracée dans le projet</span><span>Hallucination : non évaluée</span></div>
+    </section>
+
+    <section class="entry">
+      <div class="entry-title"><span>Entrée #015</span><span class="source">Conversation de la pièce jointe</span></div>
+      <div class="meta-grid">
+        <div><b>Auteur :</b> Utilisateur</div><div><b>Outil :</b> GitHub Copilot</div>
+        <div><b>Projet :</b> EchoVault</div><div><b>Statut :</b> Prompt réel vérifié</div>
+      </div>
+      <div class="field-label">Prompt envoyé - transcription exacte</div>
+      <pre>quand on tire sur le boss, il disparais directement mais on voit encore sa barre de vie, fait en sorte qu&#039;il disparaissent pas direct.</pre>
+      <div class="field-label">Output reçu</div>
+      <p class="output">Réponse complète conservée dans 00_conversation_piece_jointe_brute.txt.</p>
+      <div class="decision"><span>Décision d'intégration : tracée dans le projet</span><span>Hallucination : non évaluée</span></div>
+    </section>
+
+    <section class="entry">
+      <div class="entry-title"><span>Entrée #016</span><span class="source">Conversation de la pièce jointe</span></div>
+      <div class="meta-grid">
+        <div><b>Auteur :</b> Utilisateur</div><div><b>Outil :</b> GitHub Copilot</div>
+        <div><b>Projet :</b> EchoVault</div><div><b>Statut :</b> Prompt réel vérifié</div>
+      </div>
+      <div class="field-label">Prompt envoyé - transcription exacte</div>
+      <pre>la barre de vie du boss ne baisse pas quand on le tape</pre>
+      <div class="field-label">Output reçu</div>
+      <p class="output">Réponse complète conservée dans 00_conversation_piece_jointe_brute.txt.</p>
+      <div class="decision"><span>Décision d'intégration : tracée dans le projet</span><span>Hallucination : non évaluée</span></div>
+    </section>
+
+    <section class="entry">
+      <div class="entry-title"><span>Entrée #017</span><span class="source">Conversation de la pièce jointe</span></div>
+      <div class="meta-grid">
+        <div><b>Auteur :</b> Utilisateur</div><div><b>Outil :</b> GitHub Copilot</div>
+        <div><b>Projet :</b> EchoVault</div><div><b>Statut :</b> Prompt réel vérifié</div>
+      </div>
+      <div class="field-label">Prompt envoyé - transcription exacte</div>
+      <pre>améliore les décors et les assets du jeux, je veux un truc hyper beau, tu peux aller sur itch.io pour télecharger des assets</pre>
+      <div class="field-label">Output reçu</div>
+      <p class="output">Réponse complète conservée dans 00_conversation_piece_jointe_brute.txt.</p>
+      <div class="decision"><span>Décision d'intégration : tracée dans le projet</span><span>Hallucination : non évaluée</span></div>
+    </section>
+
+    <section class="entry">
+      <div class="entry-title"><span>Entrée #018</span><span class="source">Conversation de la pièce jointe</span></div>
+      <div class="meta-grid">
+        <div><b>Auteur :</b> Utilisateur</div><div><b>Outil :</b> GitHub Copilot</div>
+        <div><b>Projet :</b> EchoVault</div><div><b>Statut :</b> Prompt réel vérifié</div>
+      </div>
+      <div class="field-label">Prompt envoyé - transcription exacte</div>
+      <pre>Crée tous les assets pixel art présents sur cette planche au format PNG avec fond transparent. Chaque asset doit être dans un fichier séparé (32x32 ou 64x64), prêt à être utilisé dans le jeux. Génère également l&#039;animation du personnage, ensuite ajoute les assets au jeux</pre>
+      <div class="field-label">Output reçu</div>
+      <p class="output">Réponse complète conservée dans 00_conversation_piece_jointe_brute.txt.</p>
+      <div class="decision"><span>Décision d'intégration : tracée dans le projet</span><span>Hallucination : non évaluée</span></div>
+    </section>
+
+    <section class="entry">
+      <div class="entry-title"><span>Entrée #019</span><span class="source">Conversation de la pièce jointe</span></div>
+      <div class="meta-grid">
+        <div><b>Auteur :</b> Utilisateur</div><div><b>Outil :</b> GitHub Copilot</div>
+        <div><b>Projet :</b> EchoVault</div><div><b>Statut :</b> Prompt réel vérifié</div>
+      </div>
+      <div class="field-label">Prompt envoyé - transcription exacte</div>
+      <pre>je t&#039;envoie une image regarde la, je veux la remplacer par mon aria-sheet.png</pre>
+      <div class="field-label">Output reçu</div>
+      <p class="output">Réponse complète conservée dans 00_conversation_piece_jointe_brute.txt.</p>
+      <div class="decision"><span>Décision d'intégration : tracée dans le projet</span><span>Hallucination : non évaluée</span></div>
+    </section>
+
+    <section class="entry">
+      <div class="entry-title"><span>Entrée #020</span><span class="source">Conversation de la pièce jointe</span></div>
+      <div class="meta-grid">
+        <div><b>Auteur :</b> Utilisateur</div><div><b>Outil :</b> GitHub Copilot</div>
+        <div><b>Projet :</b> EchoVault</div><div><b>Statut :</b> Prompt réel vérifié</div>
+      </div>
+      <div class="field-label">Prompt envoyé - transcription exacte</div>
+      <pre>utilise mes assets dans l&#039;image, utilise exactement ca</pre>
+      <div class="field-label">Output reçu</div>
+      <p class="output">Réponse complète conservée dans 00_conversation_piece_jointe_brute.txt.</p>
+      <div class="decision"><span>Décision d'intégration : tracée dans le projet</span><span>Hallucination : non évaluée</span></div>
+    </section>
+
+    <section class="entry">
+      <div class="entry-title"><span>Entrée #021</span><span class="source">Conversation de la pièce jointe</span></div>
+      <div class="meta-grid">
+        <div><b>Auteur :</b> Utilisateur</div><div><b>Outil :</b> GitHub Copilot</div>
+        <div><b>Projet :</b> EchoVault</div><div><b>Statut :</b> Prompt réel vérifié</div>
+      </div>
+      <div class="field-label">Prompt envoyé - transcription exacte</div>
+      <pre>pourquoi mon perso est un carrer ?</pre>
+      <div class="field-label">Output reçu</div>
+      <p class="output">Réponse complète conservée dans 00_conversation_piece_jointe_brute.txt.</p>
+      <div class="decision"><span>Décision d'intégration : tracée dans le projet</span><span>Hallucination : non évaluée</span></div>
+    </section>
+
+    <section class="entry">
+      <div class="entry-title"><span>Entrée #022</span><span class="source">Conversation de la pièce jointe</span></div>
+      <div class="meta-grid">
+        <div><b>Auteur :</b> Utilisateur</div><div><b>Outil :</b> GitHub Copilot</div>
+        <div><b>Projet :</b> EchoVault</div><div><b>Statut :</b> Prompt réel vérifié</div>
+      </div>
+      <div class="field-label">Prompt envoyé - transcription exacte</div>
+      <pre>exporte toute cette conversation dans le dossier prompts_log, efface les prompts dedans qui ne sont pas les vrai? tu doit mettre notre conversation avec exactement les prompts que je t&#039;ai demander</pre>
+      <div class="field-label">Output reçu</div>
+      <p class="output">Réponse complète conservée dans 00_conversation_piece_jointe_brute.txt.</p>
+      <div class="decision"><span>Décision d'intégration : tracée dans le projet</span><span>Hallucination : non évaluée</span></div>
+    </section>
+
+    <section class="entry">
+      <div class="entry-title"><span>Entrée #023</span><span class="source">Conversation actuelle</span></div>
+      <div class="meta-grid">
+        <div><b>Auteur :</b> Utilisateur</div><div><b>Outil :</b> Codex (GPT-5)</div>
+        <div><b>Projet :</b> EchoVault</div><div><b>Statut :</b> Prompt réel vérifié</div>
+      </div>
+      <div class="field-label">Prompt envoyé - transcription exacte</div>
+      <pre>L&#039;histoire de mon jeu EchoVault n&#039;est pas assez longue, acctuellement je peux finir le jeu en 1min si je vais direct à la fin du jeu, il faut que tu rallonge la durer du jeu a environ 15min. Rallonge l&#039;histoire, le scenarios, etc</pre>
+      <div class="field-label">Output reçu</div>
+      <p class="output">Réponse et modifications conservées dans la conversation actuelle et dans le projet EchoVault.</p>
+      <div class="decision"><span>Décision d'intégration : tracée dans le projet</span><span>Hallucination : non évaluée</span></div>
+    </section>
+
+    <section class="entry">
+      <div class="entry-title"><span>Entrée #024</span><span class="source">Conversation actuelle</span></div>
+      <div class="meta-grid">
+        <div><b>Auteur :</b> Utilisateur</div><div><b>Outil :</b> Codex (GPT-5)</div>
+        <div><b>Projet :</b> EchoVault</div><div><b>Statut :</b> Prompt réel vérifié</div>
+      </div>
+      <div class="field-label">Prompt envoyé - transcription exacte</div>
+      <pre>le murs n&#039;est pas aassez haut et l&#039;ennemis rouge clignote c&#039;est pas bien, de plus qaudn je saute sur leurs tete, il y a que 1 qui le fait mourir des 2</pre>
+      <div class="field-label">Output reçu</div>
+      <p class="output">Réponse et modifications conservées dans la conversation actuelle et dans le projet EchoVault.</p>
+      <div class="decision"><span>Décision d'intégration : tracée dans le projet</span><span>Hallucination : non évaluée</span></div>
+    </section>
+
+    <section class="entry">
+      <div class="entry-title"><span>Entrée #025</span><span class="source">Conversation actuelle</span></div>
+      <div class="meta-grid">
+        <div><b>Auteur :</b> Utilisateur</div><div><b>Outil :</b> Codex (GPT-5)</div>
+        <div><b>Projet :</b> EchoVault</div><div><b>Statut :</b> Prompt réel vérifié</div>
+      </div>
+      <div class="field-label">Prompt envoyé - transcription exacte</div>
+      <pre>c&#039;est ennemis clignote / apparaissent disparraisent rapidement</pre>
+      <div class="field-label">Output reçu</div>
+      <p class="output">Réponse et modifications conservées dans la conversation actuelle et dans le projet EchoVault.</p>
+      <div class="decision"><span>Décision d'intégration : tracée dans le projet</span><span>Hallucination : non évaluée</span></div>
+    </section>
+
+    <section class="entry">
+      <div class="entry-title"><span>Entrée #026</span><span class="source">Conversation actuelle</span></div>
+      <div class="meta-grid">
+        <div><b>Auteur :</b> Utilisateur</div><div><b>Outil :</b> Codex (GPT-5)</div>
+        <div><b>Projet :</b> EchoVault</div><div><b>Statut :</b> Prompt réel vérifié</div>
+      </div>
+      <div class="field-label">Prompt envoyé - transcription exacte</div>
+      <pre>refait l&#039;ecran du menu du jeu, ainsi que les ecran de fin, et ajoute des parametre, ensuite ajoute des effet sonores</pre>
+      <div class="field-label">Output reçu</div>
+      <p class="output">Réponse et modifications conservées dans la conversation actuelle et dans le projet EchoVault.</p>
+      <div class="decision"><span>Décision d'intégration : tracée dans le projet</span><span>Hallucination : non évaluée</span></div>
+    </section>
+
+    <section class="entry">
+      <div class="entry-title"><span>Entrée #027</span><span class="source">Conversation actuelle</span></div>
+      <div class="meta-grid">
+        <div><b>Auteur :</b> Utilisateur</div><div><b>Outil :</b> Codex (GPT-5)</div>
+        <div><b>Projet :</b> EchoVault</div><div><b>Statut :</b> Prompt réel vérifié</div>
+      </div>
+      <div class="field-label">Prompt envoyé - transcription exacte</div>
+      <pre>quand j&#039;appuis sur p j&#039;accede pas au parametre, le jeux ce fige juste</pre>
+      <div class="field-label">Output reçu</div>
+      <p class="output">Réponse et modifications conservées dans la conversation actuelle et dans le projet EchoVault.</p>
+      <div class="decision"><span>Décision d'intégration : tracée dans le projet</span><span>Hallucination : non évaluée</span></div>
+    </section>
+
+    <section class="entry">
+      <div class="entry-title"><span>Entrée #028</span><span class="source">Conversation actuelle</span></div>
+      <div class="meta-grid">
+        <div><b>Auteur :</b> Utilisateur</div><div><b>Outil :</b> Codex (GPT-5)</div>
+        <div><b>Projet :</b> EchoVault</div><div><b>Statut :</b> Prompt réel vérifié</div>
+      </div>
+      <div class="field-label">Prompt envoyé - transcription exacte</div>
+      <pre>ca n&#039;affiche toujours pas les parametre j&#039;ai le meme bug, de plus quand j&#039;ai finis le jeu je peux plus cliquer sur nouvelle partie, ca fait rien</pre>
+      <div class="field-label">Output reçu</div>
+      <p class="output">Réponse et modifications conservées dans la conversation actuelle et dans le projet EchoVault.</p>
+      <div class="decision"><span>Décision d'intégration : tracée dans le projet</span><span>Hallucination : non évaluée</span></div>
+    </section>
+
+    <section class="entry">
+      <div class="entry-title"><span>Entrée #029</span><span class="source">Conversation actuelle</span></div>
+      <div class="meta-grid">
+        <div><b>Auteur :</b> Utilisateur</div><div><b>Outil :</b> Codex (GPT-5)</div>
+        <div><b>Projet :</b> EchoVault</div><div><b>Statut :</b> Prompt réel vérifié</div>
+      </div>
+      <div class="field-label">Prompt envoyé - transcription exacte</div>
+      <pre>Pourquoi le jeu prends pas tout l&#039;ecran y&#039;a des bandes noirs ?</pre>
+      <div class="field-label">Output reçu</div>
+      <p class="output">Réponse et modifications conservées dans la conversation actuelle et dans le projet EchoVault.</p>
+      <div class="decision"><span>Décision d'intégration : tracée dans le projet</span><span>Hallucination : non évaluée</span></div>
+    </section>
+
+    <section class="entry">
+      <div class="entry-title"><span>Entrée #030</span><span class="source">Conversation actuelle</span></div>
+      <div class="meta-grid">
+        <div><b>Auteur :</b> Utilisateur</div><div><b>Outil :</b> Codex (GPT-5)</div>
+        <div><b>Projet :</b> EchoVault</div><div><b>Statut :</b> Prompt réel vérifié</div>
+      </div>
+      <div class="field-label">Prompt envoyé - transcription exacte</div>
+      <pre>des fois y&#039;a des petits lag sur le jeu regle ca</pre>
+      <div class="field-label">Output reçu</div>
+      <p class="output">Réponse et modifications conservées dans la conversation actuelle et dans le projet EchoVault.</p>
+      <div class="decision"><span>Décision d'intégration : tracée dans le projet</span><span>Hallucination : non évaluée</span></div>
+    </section>
+
+    <section class="entry">
+      <div class="entry-title"><span>Entrée #031</span><span class="source">Conversation actuelle</span></div>
+      <div class="meta-grid">
+        <div><b>Auteur :</b> Utilisateur</div><div><b>Outil :</b> Codex (GPT-5)</div>
+        <div><b>Projet :</b> EchoVault</div><div><b>Statut :</b> Prompt réel vérifié</div>
+      </div>
+      <div class="field-label">Prompt envoyé - transcription exacte</div>
+      <pre>ok ajoute une cinematique en 3D de fou au debut du jeu pour expliquer l&#039;histoire/introduire</pre>
+      <div class="field-label">Output reçu</div>
+      <p class="output">Réponse et modifications conservées dans la conversation actuelle et dans le projet EchoVault.</p>
+      <div class="decision"><span>Décision d'intégration : tracée dans le projet</span><span>Hallucination : non évaluée</span></div>
+    </section>
+
+    <section class="entry">
+      <div class="entry-title"><span>Entrée #032</span><span class="source">Conversation actuelle</span></div>
+      <div class="meta-grid">
+        <div><b>Auteur :</b> Utilisateur</div><div><b>Outil :</b> Codex (GPT-5)</div>
+        <div><b>Projet :</b> EchoVault</div><div><b>Statut :</b> Prompt réel vérifié</div>
+      </div>
+      <div class="field-label">Prompt envoyé - transcription exacte</div>
+      <pre>Maintenant sur tous les textes, ajoute des vrai voix francais qui parle, utilise dex voix IA</pre>
+      <div class="field-label">Output reçu</div>
+      <p class="output">Réponse et modifications conservées dans la conversation actuelle et dans le projet EchoVault.</p>
+      <div class="decision"><span>Décision d'intégration : tracée dans le projet</span><span>Hallucination : non évaluée</span></div>
+    </section>
+
+    <section class="entry">
+      <div class="entry-title"><span>Entrée #033</span><span class="source">Conversation actuelle</span></div>
+      <div class="meta-grid">
+        <div><b>Auteur :</b> Utilisateur</div><div><b>Outil :</b> Codex (GPT-5)</div>
+        <div><b>Projet :</b> EchoVault</div><div><b>Statut :</b> Prompt réel vérifié</div>
+      </div>
+      <div class="field-label">Prompt envoyé - transcription exacte</div>
+      <pre>ajoute qu&#039;on peut desactiver juste la voix de narration qui dit quoi faire, et la voix de narration fait trop robot</pre>
+      <div class="field-label">Output reçu</div>
+      <p class="output">Réponse et modifications conservées dans la conversation actuelle et dans le projet EchoVault.</p>
+      <div class="decision"><span>Décision d'intégration : tracée dans le projet</span><span>Hallucination : non évaluée</span></div>
+    </section>
+
+    <section class="entry">
+      <div class="entry-title"><span>Entrée #034</span><span class="source">Conversation actuelle</span></div>
+      <div class="meta-grid">
+        <div><b>Auteur :</b> Utilisateur</div><div><b>Outil :</b> Codex (GPT-5)</div>
+        <div><b>Projet :</b> EchoVault</div><div><b>Statut :</b> Prompt réel vérifié</div>
+      </div>
+      <div class="field-label">Prompt envoyé - transcription exacte</div>
+      <pre>les parametres sont buguer, de plus utilise une voix d&#039;homme pour la narration</pre>
+      <div class="field-label">Output reçu</div>
+      <p class="output">Réponse et modifications conservées dans la conversation actuelle et dans le projet EchoVault.</p>
+      <div class="decision"><span>Décision d'intégration : tracée dans le projet</span><span>Hallucination : non évaluée</span></div>
+    </section>
+
+    <section class="entry">
+      <div class="entry-title"><span>Entrée #035</span><span class="source">Conversation actuelle</span></div>
+      <div class="meta-grid">
+        <div><b>Auteur :</b> Utilisateur</div><div><b>Outil :</b> Codex (GPT-5)</div>
+        <div><b>Projet :</b> EchoVault</div><div><b>Statut :</b> Prompt réel vérifié</div>
+      </div>
+      <div class="field-label">Prompt envoyé - transcription exacte</div>
+      <pre>la voix qui dit les actes est bien, utilise cette voix pour tout sauf la narration utilise une voix humaine d&#039;homme</pre>
+      <div class="field-label">Output reçu</div>
+      <p class="output">Réponse et modifications conservées dans la conversation actuelle et dans le projet EchoVault.</p>
+      <div class="decision"><span>Décision d'intégration : tracée dans le projet</span><span>Hallucination : non évaluée</span></div>
+    </section>
+
+    <section class="entry long">
+      <div class="entry-title"><span>Entrée #036</span><span class="source">Conversation actuelle</span></div>
+      <div class="meta-grid">
+        <div><b>Auteur :</b> Utilisateur</div><div><b>Outil :</b> Codex (GPT-5)</div>
+        <div><b>Projet :</b> EchoVault</div><div><b>Statut :</b> Prompt réel vérifié</div>
+      </div>
+      <div class="field-label">Prompt envoyé - transcription exacte</div>
+      <pre>Modifie le combat de boss pour le rendre plus difficile et structuré en trois phases.
+Quand le joueur meurt pendant le combat :
+le boss récupère immédiatement 100 % de sa vie ;
+son état, ses attaques, ses effets et ses délais sont totalement réinitialisés ;
+il revient obligatoirement à la phase 1 ;
+les projectiles et dangers encore présents dans l’arène sont supprimés ;
+le combat ne redémarre qu’après le retour du joueur dans l’arène.
+Organise le combat ainsi :
+Phase 1 — de 100 % à 65 % de vie : attaques simples, lisibles, mais suffisamment rapides pour mettre la pression ;
+Phase 2 — de 65 % à 30 % : attaques plus rapides, nouveaux enchaînements, déplacements plus agressifs et davantage de projectiles ;
+Phase 3 — sous 30 % : boss très agressif, temps de récupération réduits, attaques combinées et effets visuels plus intenses.
+Chaque changement de phase doit être déclenché une seule fois par tentative, avec une courte animation de transition : immobilisation momentanée du boss, onde de choc, changement de couleur ou d’aura, puis lancement de la nouvelle phase.
+Si le joueur meurt, tous les indicateurs de transition doivent être remis à zéro afin que les phases 2 et 3 puissent être déclenchées normalement lors de la tentative suivante.
+Conserve les mécaniques et le style visuel déjà présents dans le projet. Centralise la logique dans une machine à états claire (phase1, phase2, phase3, reset) et évite les minuteries ou événements dupliqués après plusieurs morts. Ajoute aussi une courte période de sécurité au redémarrage pour empêcher le boss d’attaquer avant que le joueur soit prêt.
+Vérifie enfin les scénarios suivants :
+Le boss passe correctement dans les trois phases.
+Une seule transition est déclenchée par seuil.
+Mourir pendant n’importe quelle phase restaure toute sa vie.
+Après une mort, le boss recommence toujours en phase 1.
+Aucun ancien projectile, effet ou timer ne subsiste.
+Plusieurs morts successives ne cassent pas le combat et n’accélèrent pas involontairement les attaques.</pre>
+      <div class="field-label">Output reçu</div>
+      <p class="output">Réponse et modifications conservées dans la conversation actuelle et dans le projet EchoVault.</p>
+      <div class="decision"><span>Décision d'intégration : tracée dans le projet</span><span>Hallucination : non évaluée</span></div>
+    </section>
+
+    <section class="entry">
+      <div class="entry-title"><span>Entrée #037</span><span class="source">Conversation actuelle</span></div>
+      <div class="meta-grid">
+        <div><b>Auteur :</b> Utilisateur</div><div><b>Outil :</b> Codex (GPT-5)</div>
+        <div><b>Projet :</b> EchoVault</div><div><b>Statut :</b> Prompt réel vérifié</div>
+      </div>
+      <div class="field-label">Prompt envoyé - transcription exacte</div>
+      <pre>quand je suis arriver au boss ca a fait completement crash le jeu, de plud ajoute un truc au debut pour ce tp au boss direct pour tester, un truc qu&#039;on peut desactiver</pre>
+      <div class="field-label">Output reçu</div>
+      <p class="output">Réponse et modifications conservées dans la conversation actuelle et dans le projet EchoVault.</p>
+      <div class="decision"><span>Décision d'intégration : tracée dans le projet</span><span>Hallucination : non évaluée</span></div>
+    </section>
+
+    <section class="entry">
+      <div class="entry-title"><span>Entrée #038</span><span class="source">Conversation actuelle</span></div>
+      <div class="meta-grid">
+        <div><b>Auteur :</b> Utilisateur</div><div><b>Outil :</b> Codex (GPT-5)</div>
+        <div><b>Projet :</b> EchoVault</div><div><b>Statut :</b> Prompt réel vérifié</div>
+      </div>
+      <div class="field-label">Prompt envoyé - transcription exacte</div>
+      <pre>fait en sorte que quand un laser ou une balle d&#039;un enemie touche un mur elle disparaissent, en gros y&#039;a la colision</pre>
+      <div class="field-label">Output reçu</div>
+      <p class="output">Réponse et modifications conservées dans la conversation actuelle et dans le projet EchoVault.</p>
+      <div class="decision"><span>Décision d'intégration : tracée dans le projet</span><span>Hallucination : non évaluée</span></div>
+    </section>
+
+    <section class="entry">
+      <div class="entry-title"><span>Entrée #039</span><span class="source">Conversation actuelle</span></div>
+      <div class="meta-grid">
+        <div><b>Auteur :</b> Utilisateur</div><div><b>Outil :</b> Codex (GPT-5)</div>
+        <div><b>Projet :</b> EchoVault</div><div><b>Statut :</b> Prompt réel vérifié</div>
+      </div>
+      <div class="field-label">Prompt envoyé - transcription exacte</div>
+      <pre>mes lasers disparaissent à un moment alors que pas celui du boss, les balles du boss doivent aussi disparraitre à un moment </pre>
+      <div class="field-label">Output reçu</div>
+      <p class="output">Réponse et modifications conservées dans la conversation actuelle et dans le projet EchoVault.</p>
+      <div class="decision"><span>Décision d'intégration : tracée dans le projet</span><span>Hallucination : non évaluée</span></div>
+    </section>
+
+    <section class="entry">
+      <div class="entry-title"><span>Entrée #040</span><span class="source">Conversation actuelle</span></div>
+      <div class="meta-grid">
+        <div><b>Auteur :</b> Utilisateur</div><div><b>Outil :</b> Codex (GPT-5)</div>
+        <div><b>Projet :</b> EchoVault</div><div><b>Statut :</b> Prompt réel vérifié</div>
+      </div>
+      <div class="field-label">Prompt envoyé - transcription exacte</div>
+      <pre>ses munitions vont pas assez loin et le boss tirs trop souvent</pre>
+      <div class="field-label">Output reçu</div>
+      <p class="output">Réponse et modifications conservées dans la conversation actuelle et dans le projet EchoVault.</p>
+      <div class="decision"><span>Décision d'intégration : tracée dans le projet</span><span>Hallucination : non évaluée</span></div>
+    </section>
+
+    <section class="entry">
+      <div class="entry-title"><span>Entrée #041</span><span class="source">Conversation actuelle</span></div>
+      <div class="meta-grid">
+        <div><b>Auteur :</b> Utilisateur</div><div><b>Outil :</b> Codex (GPT-5)</div>
+        <div><b>Projet :</b> EchoVault</div><div><b>Statut :</b> Prompt réel vérifié</div>
+      </div>
+      <div class="field-label">Prompt envoyé - transcription exacte</div>
+      <pre>le premier bouclier que on a ces une boule bleu c&#039;est oas très beau</pre>
+      <div class="field-label">Output reçu</div>
+      <p class="output">Réponse et modifications conservées dans la conversation actuelle et dans le projet EchoVault.</p>
+      <div class="decision"><span>Décision d'intégration : tracée dans le projet</span><span>Hallucination : non évaluée</span></div>
+    </section>
+
+    <section class="entry">
+      <div class="entry-title"><span>Entrée #042</span><span class="source">Conversation actuelle</span></div>
+      <div class="meta-grid">
+        <div><b>Auteur :</b> Utilisateur</div><div><b>Outil :</b> Codex (GPT-5)</div>
+        <div><b>Projet :</b> EchoVault</div><div><b>Statut :</b> Prompt réel vérifié</div>
+      </div>
+      <div class="field-label">Prompt envoyé - transcription exacte</div>
+      <pre>pendant la phase 2 le boss doit tirer 3 fois moins vite</pre>
+      <div class="field-label">Output reçu</div>
+      <p class="output">Réponse et modifications conservées dans la conversation actuelle et dans le projet EchoVault.</p>
+      <div class="decision"><span>Décision d'intégration : tracée dans le projet</span><span>Hallucination : non évaluée</span></div>
+    </section>
+
+    <section class="entry">
+      <div class="entry-title"><span>Entrée #043</span><span class="source">Conversation actuelle</span></div>
+      <div class="meta-grid">
+        <div><b>Auteur :</b> Utilisateur</div><div><b>Outil :</b> Codex (GPT-5)</div>
+        <div><b>Projet :</b> EchoVault</div><div><b>Statut :</b> Prompt réel vérifié</div>
+      </div>
+      <div class="field-label">Prompt envoyé - transcription exacte</div>
+      <pre>mais le portail vers le boss desactiver de base</pre>
+      <div class="field-label">Output reçu</div>
+      <p class="output">Réponse et modifications conservées dans la conversation actuelle et dans le projet EchoVault.</p>
+      <div class="decision"><span>Décision d'intégration : tracée dans le projet</span><span>Hallucination : non évaluée</span></div>
+    </section>
+
+    <section class="entry">
+      <div class="entry-title"><span>Entrée #044</span><span class="source">Conversation actuelle</span></div>
+      <div class="meta-grid">
+        <div><b>Auteur :</b> Utilisateur</div><div><b>Outil :</b> Codex (GPT-5)</div>
+        <div><b>Projet :</b> EchoVault</div><div><b>Statut :</b> Prompt réel vérifié</div>
+      </div>
+      <div class="field-label">Prompt envoyé - transcription exacte</div>
+      <pre>ajoute plusieurs perso qu&#039;on peut choisir avec des stats differente par perso</pre>
+      <div class="field-label">Output reçu</div>
+      <p class="output">Réponse et modifications conservées dans la conversation actuelle et dans le projet EchoVault.</p>
+      <div class="decision"><span>Décision d'intégration : tracée dans le projet</span><span>Hallucination : non évaluée</span></div>
+    </section>
+
+    <section class="entry">
+      <div class="entry-title"><span>Entrée #045</span><span class="source">Conversation actuelle</span></div>
+      <div class="meta-grid">
+        <div><b>Auteur :</b> Utilisateur</div><div><b>Outil :</b> Codex (GPT-5)</div>
+        <div><b>Projet :</b> EchoVault</div><div><b>Statut :</b> Prompt réel vérifié</div>
+      </div>
+      <div class="field-label">Prompt envoyé - transcription exacte</div>
+      <pre>ajoute une épée au début enfaite au début on choisis soit lépee soit le laser</pre>
+      <div class="field-label">Output reçu</div>
+      <p class="output">Réponse et modifications conservées dans la conversation actuelle et dans le projet EchoVault.</p>
+      <div class="decision"><span>Décision d'intégration : tracée dans le projet</span><span>Hallucination : non évaluée</span></div>
+    </section>
+
+    <section class="entry">
+      <div class="entry-title"><span>Entrée #046</span><span class="source">Conversation actuelle</span></div>
+      <div class="meta-grid">
+        <div><b>Auteur :</b> Utilisateur</div><div><b>Outil :</b> Codex (GPT-5)</div>
+        <div><b>Projet :</b> EchoVault</div><div><b>Statut :</b> Prompt réel vérifié</div>
+      </div>
+      <div class="field-label">Prompt envoyé - transcription exacte</div>
+      <pre>enleve les dernier modif que t&#039;as commencer dans le prompt :ajoute une épée au début enfaite au début on choisis soit lépee soit le laser</pre>
+      <div class="field-label">Output reçu</div>
+      <p class="output">Réponse et modifications conservées dans la conversation actuelle et dans le projet EchoVault.</p>
+      <div class="decision"><span>Décision d'intégration : tracée dans le projet</span><span>Hallucination : non évaluée</span></div>
+    </section>
+
+    <section class="entry">
+      <div class="entry-title"><span>Entrée #047</span><span class="source">Conversation actuelle</span></div>
+      <div class="meta-grid">
+        <div><b>Auteur :</b> Utilisateur</div><div><b>Outil :</b> Codex (GPT-5)</div>
+        <div><b>Projet :</b> EchoVault</div><div><b>Statut :</b> Prompt réel vérifié</div>
+      </div>
+      <div class="field-label">Prompt envoyé - transcription exacte</div>
+      <pre>ajoute que chaque perso a une arme different, laser, épée, etc trouve les 2 autres armes</pre>
+      <div class="field-label">Output reçu</div>
+      <p class="output">Réponse et modifications conservées dans la conversation actuelle et dans le projet EchoVault.</p>
+      <div class="decision"><span>Décision d'intégration : tracée dans le projet</span><span>Hallucination : non évaluée</span></div>
+    </section>
+
+    <section class="entry">
+      <div class="entry-title"><span>Entrée #048</span><span class="source">Conversation actuelle</span></div>
+      <div class="meta-grid">
+        <div><b>Auteur :</b> Utilisateur</div><div><b>Outil :</b> Codex (GPT-5)</div>
+        <div><b>Projet :</b> EchoVault</div><div><b>Statut :</b> Prompt réel vérifié</div>
+      </div>
+      <div class="field-label">Prompt envoyé - transcription exacte</div>
+      <pre>ajoute tout nu arbre de succès qu&#039;on peut débloquer</pre>
+      <div class="field-label">Output reçu</div>
+      <p class="output">Réponse et modifications conservées dans la conversation actuelle et dans le projet EchoVault.</p>
+      <div class="decision"><span>Décision d'intégration : tracée dans le projet</span><span>Hallucination : non évaluée</span></div>
+    </section>
+
+    <section class="entry">
+      <div class="entry-title"><span>Entrée #049</span><span class="source">Conversation actuelle</span></div>
+      <div class="meta-grid">
+        <div><b>Auteur :</b> Utilisateur</div><div><b>Outil :</b> Codex (GPT-5)</div>
+        <div><b>Projet :</b> EchoVault</div><div><b>Statut :</b> Prompt réel vérifié</div>
+      </div>
+      <div class="field-label">Prompt envoyé - transcription exacte</div>
+      <pre>Pourquoi c&#039;est pas au milieu ?</pre>
+      <div class="field-label">Output reçu</div>
+      <p class="output">Réponse et modifications conservées dans la conversation actuelle et dans le projet EchoVault.</p>
+      <div class="decision"><span>Décision d'intégration : tracée dans le projet</span><span>Hallucination : non évaluée</span></div>
+    </section>
+
+    <section class="entry">
+      <div class="entry-title"><span>Entrée #050</span><span class="source">Conversation actuelle</span></div>
+      <div class="meta-grid">
+        <div><b>Auteur :</b> Utilisateur</div><div><b>Outil :</b> Codex (GPT-5)</div>
+        <div><b>Projet :</b> EchoVault</div><div><b>Statut :</b> Prompt réel vérifié</div>
+      </div>
+      <div class="field-label">Prompt envoyé - transcription exacte</div>
+      <pre>le choix des perso n&#039;est pas centrer non plus</pre>
+      <div class="field-label">Output reçu</div>
+      <p class="output">Réponse et modifications conservées dans la conversation actuelle et dans le projet EchoVault.</p>
+      <div class="decision"><span>Décision d'intégration : tracée dans le projet</span><span>Hallucination : non évaluée</span></div>
+    </section>
+
+    <section class="entry">
+      <div class="entry-title"><span>Entrée #051</span><span class="source">Conversation actuelle</span></div>
+      <div class="meta-grid">
+        <div><b>Auteur :</b> Utilisateur</div><div><b>Outil :</b> Codex (GPT-5)</div>
+        <div><b>Projet :</b> EchoVault</div><div><b>Statut :</b> Prompt réel vérifié</div>
+      </div>
+      <div class="field-label">Prompt envoyé - transcription exacte</div>
+      <pre>quand on fait p ajoute que on peut retourner au menu et voir les succès</pre>
+      <div class="field-label">Output reçu</div>
+      <p class="output">Réponse et modifications conservées dans la conversation actuelle et dans le projet EchoVault.</p>
+      <div class="decision"><span>Décision d'intégration : tracée dans le projet</span><span>Hallucination : non évaluée</span></div>
+    </section>
+
+    <section class="entry">
+      <div class="entry-title"><span>Entrée #052</span><span class="source">Conversation actuelle</span></div>
+      <div class="meta-grid">
+        <div><b>Auteur :</b> Utilisateur</div><div><b>Outil :</b> Codex (GPT-5)</div>
+        <div><b>Projet :</b> EchoVault</div><div><b>Statut :</b> Prompt réel vérifié</div>
+      </div>
+      <div class="field-label">Prompt envoyé - transcription exacte</div>
+      <pre>quand on fait voir les succès depuis les parametre juste l&#039;ecran ce fige</pre>
+      <div class="field-label">Output reçu</div>
+      <p class="output">Réponse et modifications conservées dans la conversation actuelle et dans le projet EchoVault.</p>
+      <div class="decision"><span>Décision d'intégration : tracée dans le projet</span><span>Hallucination : non évaluée</span></div>
+    </section>
+
+    <section class="entry">
+      <div class="entry-title"><span>Entrée #053</span><span class="source">Conversation actuelle</span></div>
+      <div class="meta-grid">
+        <div><b>Auteur :</b> Utilisateur</div><div><b>Outil :</b> Codex (GPT-5)</div>
+        <div><b>Projet :</b> EchoVault</div><div><b>Statut :</b> Prompt réel vérifié</div>
+      </div>
+      <div class="field-label">Prompt envoyé - transcription exacte</div>
+      <pre>la qualités n&#039;est pas folle on arrive pas à lire</pre>
+      <div class="field-label">Output reçu</div>
+      <p class="output">Réponse et modifications conservées dans la conversation actuelle et dans le projet EchoVault.</p>
+      <div class="decision"><span>Décision d'intégration : tracée dans le projet</span><span>Hallucination : non évaluée</span></div>
+    </section>
+
+    <section class="entry">
+      <div class="entry-title"><span>Entrée #054</span><span class="source">Conversation actuelle</span></div>
+      <div class="meta-grid">
+        <div><b>Auteur :</b> Utilisateur</div><div><b>Outil :</b> Codex (GPT-5)</div>
+        <div><b>Projet :</b> EchoVault</div><div><b>Statut :</b> Prompt réel vérifié</div>
+      </div>
+      <div class="field-label">Prompt envoyé - transcription exacte</div>
+      <pre>j&#039;ai le mem probleme sur tout le jeu</pre>
+      <div class="field-label">Output reçu</div>
+      <p class="output">Réponse et modifications conservées dans la conversation actuelle et dans le projet EchoVault.</p>
+      <div class="decision"><span>Décision d'intégration : tracée dans le projet</span><span>Hallucination : non évaluée</span></div>
+    </section>
+
+    <section class="entry">
+      <div class="entry-title"><span>Entrée #055</span><span class="source">Conversation actuelle</span></div>
+      <div class="meta-grid">
+        <div><b>Auteur :</b> Utilisateur</div><div><b>Outil :</b> Codex (GPT-5)</div>
+        <div><b>Projet :</b> EchoVault</div><div><b>Statut :</b> Prompt réel vérifié</div>
+      </div>
+      <div class="field-label">Prompt envoyé - transcription exacte</div>
+      <pre>exporte toute la conv en PJ dans le dossier prompts_log, efface les prompts dedans qui ne sont pas les vrai. Tu doit mettre notre conversation avec exactement les prompts que je t&#039;ai demander. Une fois que tu a mit la conv en PJ dans le prompts_log, met la conversation actuelle avec exactement les prompts à la suite des prompts de la conv en PJ. Pour faire le fichier de dossier prompts_log tu dois te nTemplate prompt log.pdf</pre>
+      <div class="field-label">Output reçu</div>
+      <p class="output">Réponse et modifications conservées dans la conversation actuelle et dans le projet EchoVault.</p>
+      <div class="decision"><span>Décision d'intégration : tracée dans le projet</span><span>Hallucination : non évaluée</span></div>
+    </section>
+</body></html>
