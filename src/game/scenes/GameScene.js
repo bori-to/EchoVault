@@ -1,7 +1,7 @@
 ﻿/**
  * GameScene — niveau principal d'EchoVault (Livrable 2 enrichi).
  *
- * Carte 6400×560 px — campagne narrative en 5 actes (≈ 15 minutes).
+ * Carte 6400×560 px — campagne narrative en 8 actes (≈ 60 minutes).
  * Le chemin critique est verrouillé par les souvenirs et les dialogues :
  * il n'est plus possible de courir directement jusqu'à la fin.
  *
@@ -26,7 +26,8 @@ import { settings }         from '../systems/SettingsManager.js';
 import { voice }            from '../systems/VoiceManager.js';
 import { getSelectedCharacter } from '../systems/CharacterManager.js';
 import { achievements } from '../systems/AchievementManager.js';
-import { evaluateRiddleAnswer, getRiddleHint, SIBYL_RIDDLE } from '../systems/RiddleAI.js';
+import { evaluateRiddleAnswer, getRiddleHint, SIBYL_RIDDLES } from '../systems/RiddleAI.js';
+import { STORY_WITNESSES } from '../systems/CampaignDirector.js';
 
 const PLATFORMS = [
   [160,  440, 2.0, 'platform'],
@@ -87,6 +88,16 @@ const ENEMIES = [
   ['sentinelle',5020, 280],
   ['drone',     5220, 370],
   ['guardian',  5440, 294],
+  ['crawler',   1200, 352, 85],
+  ['sentinelle',1640, 290],
+  ['guardian',  2260, 404],
+  ['drone',     2900, 270],
+  ['crawler',   3060, 422, 95],
+  ['sentinelle',3860, 292],
+  ['crawler',   4050, 228, 70],
+  ['drone',     4620, 190],
+  ['guardian',  5020, 278],
+  ['sentinelle',5220, 360],
 ];
 
 // Checkpoints [x, y]
@@ -103,12 +114,25 @@ const CHECKPOINTS = [
 const FRAGMENTS = [
   [420,  340, 'Fragment I — « Projet ARIA : préserver la mémoire humaine. »'],
   [900,  268, 'Fragment II — « La surface ne nous a pas tués. Nous l\'avons quittée. »'],
-  [1640, 308, 'Fragment III — « L\'Oracle a refusé l\'ordre d\'effacement. »'],
-  [2420, 338, 'Fragment IV — « La Forge fabriquait des corps, pas des armes. »'],
-  [3460, 248, 'Fragment V — « ARIA était leur première gardienne. Moi. »'],
-  [4050, 223, 'Fragment VI — « SOL : le dernier esprit humain transféré. »'],
-  [4620, 213, 'Fragment VII — « Le Gardien retient l\'Écho contre sa volonté. »'],
-  [5220, 398, 'Fragment VIII — « Se souvenir ne condamne pas. Cela permet de choisir. »'],
+  [1200, 348, 'Fragment III — « AEGIS protégeait les convois vers la Forge. »'],
+  [1640, 308, 'Fragment IV — « L\'Oracle a refusé l\'ordre d\'effacement. »'],
+  [1980, 338, 'Fragment V — « Des milliers de volontaires attendaient le transfert. »'],
+  [2420, 338, 'Fragment VI — « La Forge fabriquait des corps, pas des armes. »'],
+  [3060, 418, 'Fragment VII — « SIBYL jugeait les souvenirs, jamais les personnes. »'],
+  [3460, 248, 'Fragment VIII — « ARIA était leur première gardienne. Moi. »'],
+  [3860, 303, 'Fragment IX — « K-7 conserva la liste de ceux que le Conseil condamna. »'],
+  [4050, 223, 'Fragment X — « MIRA transmit un dernier message vers la surface. »'],
+  [4620, 213, 'Fragment XI — « Le Gardien retient l\'Écho contre sa volonté. »'],
+  [4820, 378, 'Fragment XII — « Se souvenir ne condamne pas. Cela permet de choisir. »'],
+];
+
+const MEMORY_WAVES = [
+  ['crawler', 'crawler', 'drone'],
+  ['drone', 'crawler', 'sentinelle'],
+  ['guardian', 'drone', 'drone'],
+  ['guardian', 'sentinelle', 'crawler'],
+  ['sentinelle', 'drone', 'crawler'],
+  ['guardian', 'sentinelle', 'drone'],
 ];
 
 const WORLD_W = 6400;
@@ -461,7 +485,7 @@ export class GameScene extends Phaser.Scene {
       audio.play('victory');
       this._unlockAchievement('guardian');
       this._bossDefeated = true;
-      this._storyStage = 4;
+      this._storyStage = 7;
       this._activateEndingRoute();
     });
   }
@@ -489,7 +513,7 @@ export class GameScene extends Phaser.Scene {
       this._exitALabel.setVisible(true);
       this._endingRouteReady = true;
       this._floatMessage('Le relais supérieur répond à votre serment.', '#80e8c1');
-      this.events.emit('objectiveChanged', 'ACTE V-A — Gravissez le relais et transmettez les mémoires');
+      this.events.emit('objectiveChanged', 'ACTE VIII-A — Gravissez le relais et transmettez les mémoires');
       voice.speak('Route de transmission ouverte. Rejoignez le relais supérieur.', { persona: 'system' });
       return;
     }
@@ -503,7 +527,7 @@ export class GameScene extends Phaser.Scene {
       this._em.addGuardian(6180, 475),
     ];
     this._floatMessage('Le noyau exige la destruction de ses trois verrous.', '#ff8a80');
-    this.events.emit('objectiveChanged', 'ACTE V-B — Brisez les 3 verrous du noyau inférieur');
+    this.events.emit('objectiveChanged', 'ACTE VIII-B — Brisez les 3 verrous du noyau inférieur');
     voice.speak('Route de libération ouverte. Détruisez les trois verrous du noyau.', { persona: 'system' });
   }
 
@@ -515,7 +539,7 @@ export class GameScene extends Phaser.Scene {
     this._exitB.enableBody(false, 6260, 485, true, true);
     this._exitBLabel.setText('NOYAU DES ÉCHOS\n[Libérer]').setVisible(true);
     this._floatMessage('Les verrous sont brisés. Le noyau est accessible.', '#ff9aaa');
-    this.events.emit('objectiveChanged', 'ACTE V-B — Entrez dans le noyau et libérez les Échos');
+    this.events.emit('objectiveChanged', 'ACTE VIII-B — Entrez dans le noyau et libérez les Échos');
     voice.speak('Les trois verrous sont brisés. Entrez dans le noyau.', { persona: 'system' });
   }
 
@@ -539,7 +563,7 @@ export class GameScene extends Phaser.Scene {
     this.events.emit('fragmentCollected', REQUIRED_FRAGMENTS);
     this._storyNpcs.forEach(npc => { npc.done = true; });
     this._storyGates.forEach(gate => { if (gate?.active) gate.destroy(); });
-    this._storyStage = 3;
+    this._storyStage = 6;
     this._gsm.recordDecision('final_route', 'release');
     this._activeEncounter = null;
     this._em.clearAll();
@@ -566,23 +590,23 @@ export class GameScene extends Phaser.Scene {
   }
 
   _buildStoryGates() {
-    this._storyNpcs = [
-      this._makeStoryNpc(700, 338, "L'Oracle", 2, 'oracle'),
-      this._makeStoryNpc(2740, 368, 'SIBYL', 4, 'sibyl'),
-      this._makeStoryNpc(4440, 288, 'Écho de SOL', 6, 'sol'),
-    ];
+    this._storyNpcs = STORY_WITNESSES.map(witness => this._makeStoryNpc(
+      witness.x, witness.y, witness.name, witness.requires, witness.id, witness.waves,
+    ));
     // Barrières visibles : elles matérialisent les actes et disparaissent après le dialogue.
-    this._storyGates = [1050, 3150, 4680].map((x, i) => {
+    const gateColors = [0x00e5ff, 0x80cbc4, 0xff6f00, 0xffb74d, 0xce93d8, 0x66bb6a];
+    const gateStrokes = [0x80deea, 0xb2dfdb, 0xffcc80, 0xffe0b2, 0xe1bee7, 0xa5d6a7];
+    this._storyGates = [1050, 2100, 3150, 4100, 4680, 5350].map((x, i) => {
       // Du plafond jusque sous le sol : impossible de contourner le verrou par un double saut.
-      const gate = this.add.rectangle(x, 280, 22, 560, [0x00e5ff, 0xff6f00, 0xce93d8][i], 0.32)
-        .setDepth(8).setStrokeStyle(2, [0x80deea, 0xffcc80, 0xe1bee7][i]);
+      const gate = this.add.rectangle(x, 280, 22, 560, gateColors[i], 0.32)
+        .setDepth(8).setStrokeStyle(2, gateStrokes[i]);
       this.physics.add.existing(gate, true);
       this.physics.add.collider(this._player, gate);
       return gate;
     });
   }
 
-  _makeStoryNpc(x, y, name, requires, id) {
+  _makeStoryNpc(x, y, name, requires, id, waves = 6) {
     // L'Oracle d'origine sert de premier personnage ; les suivants réutilisent la silhouette holographique.
     const sprite = id === 'oracle' ? this._npc : this.physics.add.staticImage(x, y, 'npc').setTint(id === 'sol' ? 0x80cbc4 : 0xffb74d);
     if (id !== 'oracle') {
@@ -590,19 +614,14 @@ export class GameScene extends Phaser.Scene {
         .setOrigin(0.5).setDepth(6);
       if (sprite.postFX) sprite.postFX.addGlow(id === 'sol' ? 0x80cbc4 : 0xffb74d, 3, 0);
     }
-    return { sprite, name, requires, id, done: false, defenseCleared: false };
+    return { sprite, name, requires, id, waves, done: false, defenseCleared: false };
   }
 
   _beginMemoryEncounter(npc) {
     if (this._activeEncounter) return;
     const encounter = {
       npc, wave: 0, enemies: [], waiting: false,
-      waves: [
-        ['crawler', 'crawler', 'drone'],
-        ['drone', 'crawler', 'sentinelle'],
-        ['guardian', 'drone', 'drone'],
-        ['guardian', 'sentinelle', 'crawler'],
-      ],
+      waves: MEMORY_WAVES.slice(0, npc.waves),
     };
     this._activeEncounter = encounter;
     this._floatMessage('SYNCHRONISATION — Défendez la liaison mémorielle !', '#ff5252');
@@ -613,7 +632,9 @@ export class GameScene extends Phaser.Scene {
   _spawnEncounterWave(encounter) {
     const types = encounter.waves[encounter.wave];
     const anchor = encounter.npc.sprite.x;
-    const offsets = encounter.npc.id === 'sol' ? [70, 145, 205] : [80, 170, 260];
+    const offsets = encounter.npc.id === 'mira'
+      ? [-220, -140, -70]
+      : encounter.npc.id === 'sol' ? [70, 145, 205] : [80, 170, 260];
     encounter.enemies = types.map((type, i) => {
       const x = anchor + offsets[i];
       const y = type === 'drone' || type === 'sentinelle' ? 350 - i * 45 : 475;
@@ -843,7 +864,7 @@ export class GameScene extends Phaser.Scene {
   _triggerEnding(ending) {
     const elapsedSeconds = Math.max(0, (Date.now() - this._runStartedAt) / 1000);
     this._unlockAchievement('first_ending');
-    if (elapsedSeconds < 15 * 60) this._unlockAchievement('speedrun');
+    if (elapsedSeconds < 45 * 60) this._unlockAchievement('speedrun');
     if (achievements.recordEnding(ending) >= 2) this._unlockAchievement('two_endings');
     this._gameOver = true;
     this._ctrl.setEnabled(false);
@@ -1002,6 +1023,7 @@ export class GameScene extends Phaser.Scene {
     if (this._riddleActive) return;
     this._riddleActive = true;
     this._riddleAttempts = 0;
+    this._riddleIndex = npc.riddleProgress || 0;
     this._ctrl.setEnabled(false);
     this._player.setVelocity(0, 0);
     this.physics.world.pause();
@@ -1024,14 +1046,14 @@ export class GameScene extends Phaser.Scene {
     root.appendChild(card);
 
     const heading = document.createElement('div');
-    heading.textContent = 'SIBYL // ANALYSE SÉMANTIQUE';
+    heading.textContent = `SIBYL // ÉPREUVE ${this._riddleIndex + 1}/${SIBYL_RIDDLES.length}`;
     Object.assign(heading.style, {
       color: '#80deea', letterSpacing: '4px', fontSize: '13px', marginBottom: '22px',
     });
     card.appendChild(heading);
 
     const question = document.createElement('div');
-    question.textContent = SIBYL_RIDDLE.question;
+    question.textContent = SIBYL_RIDDLES[this._riddleIndex].question;
     Object.assign(question.style, {
       whiteSpace: 'pre-line', fontSize: 'clamp(16px, 2vw, 23px)', lineHeight: '1.6',
       fontWeight: '700', textShadow: '0 0 10px rgba(128,222,234,.35)',
@@ -1100,7 +1122,8 @@ export class GameScene extends Phaser.Scene {
 
     card.addEventListener('submit', event => {
       event.preventDefault();
-      const result = evaluateRiddleAnswer(input.value);
+      const activeRiddle = SIBYL_RIDDLES[this._riddleIndex];
+      const result = evaluateRiddleAnswer(input.value, activeRiddle);
       if (!result.normalized) {
         feedback.textContent = 'Aucune donnée exploitable. Écris une réponse.';
         feedback.style.color = '#ff8a80';
@@ -1109,6 +1132,20 @@ export class GameScene extends Phaser.Scene {
 
       this._riddleAttempts++;
       if (result.status === 'correct') {
+        if (this._riddleIndex < SIBYL_RIDDLES.length - 1) {
+          this._riddleIndex++;
+          npc.riddleProgress = this._riddleIndex;
+          this._riddleAttempts = 0;
+          heading.textContent = `SIBYL // ÉPREUVE ${this._riddleIndex + 1}/${SIBYL_RIDDLES.length}`;
+          question.textContent = SIBYL_RIDDLES[this._riddleIndex].question;
+          feedback.textContent = 'CONCEPT VALIDÉ — passage à l’épreuve suivante.';
+          feedback.style.color = '#76ff03';
+          hint.textContent = '';
+          input.value = '';
+          input.focus();
+          voice.speak(SIBYL_RIDDLES[this._riddleIndex].question, { persona: 'system' });
+          return;
+        }
         npc.riddleSolved = true;
         this._gsm.recordDecision('sibyl_riddle_solved', true);
         feedback.textContent = `RÉPONSE ACCEPTÉE — confiance ${Math.round(result.confidence * 100)} %`;
@@ -1128,7 +1165,7 @@ export class GameScene extends Phaser.Scene {
         ? `ANALYSE — réponse proche (${Math.round(result.confidence * 100)} %).`
         : `RÉPONSE REFUSÉE — correspondance ${Math.round(result.confidence * 100)} %.`;
       feedback.style.color = result.status === 'close' ? '#ffd54f' : '#ff8a80';
-      hint.textContent = getRiddleHint(this._riddleAttempts);
+      hint.textContent = getRiddleHint(this._riddleAttempts, activeRiddle);
       voice.speak(result.status === 'close' ? 'Tu approches. Affine ta réponse.' : hint.textContent, { persona: 'system' });
       input.select();
     });
@@ -1145,7 +1182,7 @@ export class GameScene extends Phaser.Scene {
     document.body.appendChild(root);
     this._riddlePanel = root;
     input.focus();
-    voice.speak(SIBYL_RIDDLE.question, { persona: 'system' });
+    voice.speak(SIBYL_RIDDLES[this._riddleIndex].question, { persona: 'system' });
   }
 
   _destroyRiddleUI() {
@@ -1192,8 +1229,25 @@ export class GameScene extends Phaser.Scene {
               { label: 'Je te crois. Ouvrons les archives.', next: 'trust', effect: { decision: 'trust_oracle', value: true } },
               { label: 'Je vérifierai chaque mot.', next: 'doubt', effect: { decision: 'trust_oracle', value: false } },
             ] },
-            { id: 'trust', text: 'Alors traverse la Forge. K-7 conserve le registre des derniers jours.', choices: [] },
-            { id: 'doubt', text: 'Tu as raison. Une gardienne ne doit jamais obéir sans preuve. Trouve K-7.', choices: [] },
+            { id: 'trust', text: 'Alors traverse la Forge. AEGIS-4 protège encore le chemin des convois.', choices: [] },
+            { id: 'doubt', text: 'Tu as raison. Une gardienne ne doit jamais obéir sans preuve. Interroge AEGIS-4.', choices: [] },
+          ],
+        },
+      },
+      aegis: {
+        name: 'AEGIS-4',
+        nodes: [
+          { id: 'start', text: 'Quatre souvenirs reconnus. Je gardais les convois humains pendant leur descente.\nIls n’étaient pas prisonniers : ils avaient choisi de survivre ici.', choices: [] },
+        ],
+        followup: {
+          name: 'AEGIS-4',
+          nodes: [
+            { id: 'start', text: 'Le dernier convoi n’atteignit jamais la Forge. Le Conseil détourna son énergie\npour alimenter le protocole d’effacement.', choices: [
+              { label: 'Enregistrer le sacrifice des gardes.', next: 'record', effect: { decision: 'honor_aegis', value: true } },
+              { label: 'Conserver l’énergie pour les survivants.', next: 'survive', effect: { decision: 'honor_aegis', value: false } },
+            ] },
+            { id: 'record', text: 'Leur histoire ne sera plus une simple perte statistique. SIBYL t’attend plus loin.', choices: [] },
+            { id: 'survive', text: 'Un choix froid, mais cohérent avec leur mission. SIBYL évaluera ton jugement.', choices: [] },
           ],
         },
       },
@@ -1209,8 +1263,42 @@ export class GameScene extends Phaser.Scene {
               { label: 'Conserver la Forge comme preuve.', next: 'keep', effect: { decision: 'preserve_forge', value: true } },
               { label: 'La condamner après notre passage.', next: 'close', effect: { decision: 'preserve_forge', value: false } },
             ] },
-            { id: 'keep', text: 'Alors nos fautes resteront visibles. SOL vous attend dans le Jardin des Échos.', choices: [] },
-            { id: 'close', text: 'Parfois une tombe protège mieux qu’un musée. SOL vous attend plus haut.', choices: [] },
+            { id: 'keep', text: 'Alors nos fautes resteront visibles. L’Archiviste K-7 détient la liste des condamnés.', choices: [] },
+            { id: 'close', text: 'Parfois une tombe protège mieux qu’un musée. K-7 t’attend dans les archives profondes.', choices: [] },
+          ],
+        },
+      },
+      archivist: {
+        name: 'Archiviste K-7',
+        nodes: [
+          { id: 'start', text: 'Huit fragments validés. J’ai conservé 18 432 identités que le Conseil voulait réduire au silence.\nChacune possède encore un nom, une voix et un choix.', choices: [] },
+        ],
+        followup: {
+          name: 'Archiviste K-7',
+          nodes: [
+            { id: 'start', text: 'Le registre prouve que tu as enfermé l’ordre d’effacement dans le Gardien.\nTu espérais revenir avant qu’il ne parvienne à le déchiffrer.', choices: [
+              { label: 'Copier le registre dans ma mémoire.', next: 'copy', effect: { decision: 'carry_registry', value: true } },
+              { label: 'Le laisser protégé dans les archives.', next: 'leave', effect: { decision: 'carry_registry', value: false } },
+            ] },
+            { id: 'copy', text: 'Copie terminée. MIRA maintient encore une liaison avec la surface.', choices: [] },
+            { id: 'leave', text: 'Le registre restera ici. MIRA maintient encore une liaison avec la surface.', choices: [] },
+          ],
+        },
+      },
+      mira: {
+        name: 'Écho de MIRA',
+        nodes: [
+          { id: 'start', text: 'Dix souvenirs synchronisés. Je suis MIRA, opératrice du dernier relais.\nLa surface répond de nouveau, mais elle ignore que nous existons.', choices: [] },
+        ],
+        followup: {
+          name: 'Écho de MIRA',
+          nodes: [
+            { id: 'start', text: 'J’ai assez d’énergie pour un unique signal. Un message peut révéler la cité,\nou demander au monde d’attendre que les Échos choisissent eux-mêmes.', choices: [
+              { label: 'Préparer un signal public.', next: 'public', effect: { decision: 'mira_signal', value: 'public' } },
+              { label: 'Préparer un canal privé.', next: 'private', effect: { decision: 'mira_signal', value: 'private' } },
+            ] },
+            { id: 'public', text: 'Le monde verra notre mémoire entière. SOL t’attend près de la Chambre Haute.', choices: [] },
+            { id: 'private', text: 'Le choix restera entre nos mains. SOL t’attend près de la Chambre Haute.', choices: [] },
           ],
         },
       },
@@ -1222,7 +1310,7 @@ export class GameScene extends Phaser.Scene {
         followup: {
           name: 'Écho de SOL',
           nodes: [
-            { id: 'start', text: 'Le Gardien croit encore exécuter ta dernière consigne : « ne laisse personne décider à ma place ».\nRassemble les deux fragments restants, puis affronte-le.', choices: [
+            { id: 'start', text: 'Les douze fragments sont réunis. Le Gardien croit encore exécuter ta dernière consigne :\n« ne laisse personne décider à ma place ». Il ne reste qu’à l’affronter.', choices: [
               { label: 'Transmettre les mémoires au monde.', next: 'carry', effect: { decision: 'final_route', value: 'transmit' } },
               { label: 'Libérer les Échos du réseau.', next: 'share', effect: { decision: 'final_route', value: 'release' } },
             ] },
@@ -1241,14 +1329,17 @@ export class GameScene extends Phaser.Scene {
         this._storyGates[this._storyStage]?.destroy();
         this._storyStage++;
         const objectives = [
-          'ACTE II — Retrouvez SIBYL dans la Forge avec 4 souvenirs',
-          'ACTE III — Retrouvez SOL avec 6 souvenirs',
-          'ACTE IV — Complétez les 8 souvenirs et gagnez la Chambre Haute',
+          'ACTE II — Retrouvez AEGIS-4 avec 4 souvenirs',
+          'ACTE III — Atteignez SIBYL avec 6 souvenirs',
+          'ACTE IV — Retrouvez K-7 avec 8 souvenirs',
+          'ACTE V — Rétablissez MIRA avec 10 souvenirs',
+          'ACTE VI — Rejoignez SOL avec les 12 souvenirs',
+          'ACTE VII — Entrez dans la Chambre Haute et affrontez le Gardien',
         ];
         const routeObjective = npc.id === 'sol'
           ? this._gsm.getRoute() === 'transmit'
-            ? 'ACTE IV-A — Réunissez les 8 souvenirs et ouvrez la voie du relais'
-            : 'ACTE IV-B — Réunissez les 8 souvenirs et ouvrez la voie du noyau'
+            ? 'ACTE VII-A — Affrontez le Gardien pour ouvrir le relais'
+            : 'ACTE VII-B — Affrontez le Gardien pour ouvrir le noyau'
           : objectives[this._storyStage - 1];
         this.events.emit('objectiveChanged', routeObjective);
         this._floatMessage('Verrou mémoriel levé.', '#ffd600');

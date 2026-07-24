@@ -1,11 +1,44 @@
 const ACCEPTED_CONCEPTS = Object.freeze(['memoire', 'souvenir', 'archive']);
-const RELATED_CONCEPTS = new Set(['histoire', 'recit', 'passe', 'experience', 'conscience', 'temoignage']);
+const RELATED_CONCEPTS = Object.freeze(['histoire', 'recit', 'passe', 'experience', 'conscience', 'temoignage']);
 const IGNORED_WORDS = new Set(['un', 'une', 'le', 'la', 'les', 'des', 'du', 'de', 'd', 'l', 'cest', 'ce']);
 
-export const SIBYL_RIDDLE = Object.freeze({
-  question: 'Je conserve les voix sans avoir de bouche.\nJe traverse les siècles sans vieillir.\nQue suis-je ?',
-  acceptedConcepts: ACCEPTED_CONCEPTS,
-});
+export const SIBYL_RIDDLES = Object.freeze([
+  Object.freeze({
+    question: 'Je conserve les voix sans avoir de bouche.\nJe traverse les siècles sans vieillir.\nQue suis-je ?',
+    acceptedConcepts: ACCEPTED_CONCEPTS,
+    relatedConcepts: RELATED_CONCEPTS,
+    hints: [
+      'INDICE 1 — On ne peut pas me toucher, mais je peux être perdu.',
+      'INDICE 2 — Je conserve ce qui a été vécu et raconté.',
+      'INDICE 3 — Ma réponse peut commencer par M, S ou A.',
+      'INDICE FINAL — Pense à la mémoire, aux souvenirs et aux archives.',
+    ],
+  }),
+  Object.freeze({
+    question: 'Je répète chaque voix sans jamais la comprendre.\nJe nais après le son et meurs dans le silence.\nQue suis-je ?',
+    acceptedConcepts: Object.freeze(['echo', 'resonance']),
+    relatedConcepts: Object.freeze(['reflet', 'repetition', 'son', 'voix']),
+    hints: [
+      'INDICE 1 — Il faut d’abord produire un son pour me faire naître.',
+      'INDICE 2 — Je reviens souvent depuis une paroi lointaine.',
+      'INDICE 3 — Mon nom est aussi celui du réseau de la cité.',
+      'INDICE FINAL — La réponse est un écho.',
+    ],
+  }),
+  Object.freeze({
+    question: 'Plus on me partage, moins je peux disparaître.\nLe pouvoir me craint lorsqu’il tente de me cacher.\nQue suis-je ?',
+    acceptedConcepts: Object.freeze(['verite', 'savoir', 'connaissance']),
+    relatedConcepts: Object.freeze(['information', 'preuve', 'secret', 'histoire']),
+    hints: [
+      'INDICE 1 — Je grandis lorsque plusieurs personnes me connaissent.',
+      'INDICE 2 — Une archive et un témoignage peuvent me révéler.',
+      'INDICE 3 — Je suis le contraire du mensonge.',
+      'INDICE FINAL — La réponse principale est la vérité.',
+    ],
+  }),
+]);
+
+export const SIBYL_RIDDLE = SIBYL_RIDDLES[0];
 
 export function normalizeAnswer(value) {
   return String(value || '')
@@ -43,13 +76,13 @@ function similarity(a, b) {
   return 1 - levenshtein(a, b) / Math.max(a.length, b.length);
 }
 
-export function evaluateRiddleAnswer(answer) {
+export function evaluateRiddleAnswer(answer, riddle = SIBYL_RIDDLE) {
   const normalized = normalizeAnswer(answer);
   const words = normalized.split(' ').filter(Boolean);
   let confidence = 0;
   let matchedConcept = null;
 
-  for (const concept of ACCEPTED_CONCEPTS) {
+  for (const concept of riddle.acceptedConcepts) {
     for (const word of words) {
       const score = similarity(word, concept);
       if (score > confidence) {
@@ -59,7 +92,7 @@ export function evaluateRiddleAnswer(answer) {
     }
   }
 
-  if (words.some(word => RELATED_CONCEPTS.has(word)) && confidence < 0.6) {
+  if (words.some(word => riddle.relatedConcepts.includes(word)) && confidence < 0.6) {
     confidence = 0.6;
     matchedConcept = 'concept-proche';
   }
@@ -68,12 +101,6 @@ export function evaluateRiddleAnswer(answer) {
   return { status, confidence, matchedConcept, normalized };
 }
 
-export function getRiddleHint(attempt) {
-  const hints = [
-    'INDICE 1 — On ne peut pas me toucher, mais je peux être perdu.',
-    'INDICE 2 — Je conserve ce qui a été vécu et raconté.',
-    'INDICE 3 — Ma réponse peut commencer par M, S ou A.',
-    'INDICE FINAL — Pense à la mémoire, aux souvenirs et aux archives.',
-  ];
-  return hints[Math.min(Math.max(0, attempt - 1), hints.length - 1)];
+export function getRiddleHint(attempt, riddle = SIBYL_RIDDLE) {
+  return riddle.hints[Math.min(Math.max(0, attempt - 1), riddle.hints.length - 1)];
 }

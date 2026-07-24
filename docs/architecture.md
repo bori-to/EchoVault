@@ -17,7 +17,7 @@ EchoVault est une application web monopage développée avec **Phaser 3** et **J
 1. des **scènes Phaser**, responsables des écrans, de l'affichage et du cycle de jeu ;
 2. des **systèmes spécialisés**, responsables des règles de gameplay, des états persistants, des ennemis, du boss, des dialogues, du son et des paramètres.
 
-Le jeu utilise une scène principale continue de 6 400 pixels de largeur. `GameScene` orchestre les cinq actes, les huit souvenirs, les trois PNJ narratifs, les pouvoirs, les ennemis, les checkpoints, le combat de boss et deux parcours finaux exclusifs.
+Le jeu utilise une scène principale continue de 6 400 pixels de largeur. `GameScene` orchestre huit actes pour une durée cible d'environ une heure : douze souvenirs, six témoins, trente-quatre vagues de défense, trois énigmes SIBYL, les pouvoirs, les ennemis, les checkpoints, le combat de boss et deux parcours finaux exclusifs.
 
 ```text
 main.js
@@ -112,6 +112,7 @@ EchoVault/
 |           |-- AudioManager.js
 |           |-- BossManager.js
 |           |-- BossStateMachine.js
+|           |-- CampaignDirector.js
 |           |-- CharacterManager.js
 |           |-- DialogueManager.js
 |           |-- EnemyManager.js
@@ -125,6 +126,7 @@ EchoVault/
 |-- tests/
 |   |-- AchievementManager.test.js
 |   |-- BossStateMachine.test.js
+|   |-- CampaignDirector.test.js
 |   |-- CharacterManager.test.js
 |   |-- GameStateManager.test.js
 |   |-- PowerManager.test.js
@@ -199,6 +201,7 @@ EndingScene
 |---|---|---|
 | `AchievementManager` | Définit 15 succès, enregistre les succès et les fins découvertes dans `localStorage`. | `unlock()`, `recordEnding()`, `isUnlocked()` |
 | `BossStateMachine` | Machine à états du boss : reset, attente, phases 1 à 3, transitions et défaite. | `reset()`, `start()`, `damage()`, `completeTransition()` |
+| `CampaignDirector` | Centralise les six témoins, leurs prérequis, les 34 vagues et l'estimation de durée cible. | `getCampaignPacing()`, `estimateCampaignMinutes()` |
 | `CharacterManager` | Déclare les quatre personnages, leurs statistiques et leurs armes. | `getCharacters()`, `selectCharacter()`, `getSelectedCharacter()` |
 | `GameStateManager` | Enregistre les décisions morales, le parcours choisi et détermine la fin narrative. | `recordDecision()`, `getDecision()`, `getRoute()`, `getEnding()`, `reset()` |
 | `PowerManager` | Stocke les pouvoirs débloqués et les persiste localement. | `unlock()`, `hasUnlocked()`, `getAll()`, `reset()` |
@@ -250,19 +253,21 @@ Le déroulement principal est :
 ```text
 Cinématique d'introduction
   -> Acte I : souvenirs et Oracle
-  -> Acte II : énigme adaptative de SIBYL
-  -> Acte III : Écho de SOL et choix irréversible du parcours
+  -> Acte II : convois et témoignage d'AEGIS-4
+  -> Acte III : trois énigmes adaptatives de SIBYL
+  -> Acte IV : registre de l'Archiviste K-7
+  -> Acte V : dernier relais de MIRA
+  -> Acte VI : Écho de SOL et choix irréversible du parcours
+  -> Acte VII : combat contre le Gardien
        |-- Transmission
-       |     -> Acte IV-A : arène du Gardien
-       |     -> Acte V-A : ascension par les plateformes du relais
+       |     -> Acte VIII-A : ascension par les plateformes du relais
        |     `-> Fin Gardienne
        `-- Libération
-             -> Acte IV-B : arène du Gardien
-             -> Acte V-B : couloir inférieur et trois verrous ennemis
+             -> Acte VIII-B : couloir inférieur et trois verrous ennemis
              `-> Fin Réinitialisation
 ```
 
-SIBYL bloque la progression tant que son énigme n'est pas résolue. Le joueur répond librement : les accents, articles et pluriels sont normalisés, les petites fautes sont tolérées, les concepts voisins sont signalés comme proches et les indices deviennent progressivement plus explicites. Le choix chez SOL enregistre ensuite `final_route` avant le combat. Le boss n'apparaît que lorsque les huit souvenirs sont collectés et que les trois PNJ sont validés. Après sa défaite, `GameScene` ne construit et n'active que le parcours choisi : une voie verticale vers le relais de transmission, ou une voie basse dont la sortie reste verrouillée jusqu'à la destruction de trois ennemis. L'autre fin est inaccessible pendant cette partie. Le portail de test du boss sélectionne la route de libération pour permettre la recette rapide et reste désactivé par défaut dans `SettingsManager`.
+Chaque témoin exige les souvenirs de son secteur et une défense de cinq ou six vagues. SIBYL bloque ensuite la progression tant que ses trois énigmes ne sont pas résolues. Le joueur répond librement : les accents, articles et pluriels sont normalisés, les petites fautes sont tolérées, les concepts voisins sont signalés comme proches et les indices deviennent progressivement plus explicites. Le choix chez SOL enregistre `final_route` avant le combat. Le boss n'apparaît que lorsque les douze souvenirs sont collectés et que les six témoins sont validés. Après sa défaite, `GameScene` ne construit et n'active que le parcours choisi : une voie verticale vers le relais de transmission, ou une voie basse dont la sortie reste verrouillée jusqu'à la destruction de trois ennemis. L'autre fin est inaccessible pendant cette partie. Le portail de test du boss sélectionne la route de libération pour permettre la recette rapide et reste désactivé par défaut dans `SettingsManager`.
 
 ### Format de dialogue
 
@@ -314,6 +319,7 @@ GameScene
   |-- PlayerController
   |-- EnemyManager
   |-- BossManager -> BossStateMachine
+  |-- CampaignDirector
   |-- DialogueManager -> GameStateManager
   |-- RiddleAI
   |-- PowerManager
@@ -347,16 +353,17 @@ La sélection du personnage reste en mémoire JavaScript pour la partie courante
 
 ## 10. Tests automatisés
 
-Le projet utilise **Vitest 1.6.1** avec l'environnement Node. Six suites couvrent 38 tests :
+Le projet utilise **Vitest 1.6.1** avec l'environnement Node. Sept suites couvrent 43 tests :
 
 | Suite | Domaine couvert |
 |---|---|
 | `AchievementManager.test.js` | Déblocage, doublons et persistance des succès. |
 | `BossStateMachine.test.js` | Phases, transitions uniques, défaite et reset. |
+| `CampaignDirector.test.js` | Actes, témoins, prérequis, nombre de vagues et estimation de durée. |
 | `CharacterManager.test.js` | Profils, sélection et armes. |
 | `GameStateManager.test.js` | Décisions, priorité du parcours final, fins et réinitialisation. |
 | `PowerManager.test.js` | Déblocage, lecture, persistance et reset des pouvoirs. |
-| `RiddleAI.test.js` | Normalisation, synonymes, fautes, proximité sémantique, refus et indices progressifs. |
+| `RiddleAI.test.js` | Normalisation, synonymes, fautes, trois énigmes, proximité sémantique, refus et indices progressifs. |
 
 Commandes reproductibles :
 
@@ -401,7 +408,7 @@ Le job de déploiement dispose uniquement des permissions nécessaires : lecture
 
 ## 12. Limites connues et évolutions
 
-- Les scripts des trois PNJ pourraient être déplacés dans des fichiers JSON séparés pour réduire la taille de `GameScene`.
+- Les scripts des six témoins pourraient être déplacés dans des fichiers JSON séparés pour réduire la taille de `GameScene`.
 - `GameScene` centralise encore la construction du monde et plusieurs règles narratives ; un découpage en données de niveau faciliterait l'ajout de contenu.
 - `DialogueManager`, `EnemyManager`, `PlayerController`, `SettingsManager`, `AudioManager` et `VoiceManager` ne disposent pas encore de tests unitaires dédiés.
 - Le bundle Phaser principal dépasse 500 Ko après minification ; un découpage dynamique pourrait améliorer le chargement initial.

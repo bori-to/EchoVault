@@ -56,7 +56,7 @@ Le statut « corrigé » signifie que la cause a été traitée dans le code et 
 - aucune automatisation navigateur ne vérifie encore les transitions de scènes et les collisions réelles Phaser ;
 - la disponibilité et le timbre des voix peuvent varier selon le navigateur et le système ;
 - une session longue est encore nécessaire pour exclure une accumulation lente de timers ou de projectiles ;
-- la durée cible de 15 minutes doit être mesurée sans utiliser le portail de test.
+- la durée cible d'environ 60 minutes doit être mesurée sans utiliser le portail de test.
 
 ## 5. Critères de clôture définitive
 
@@ -66,4 +66,4 @@ Le registre pourra être clôturé après :
 2. réussite des deux parcours de fin suivis d'une nouvelle partie ;
 3. cinq défaites successives contre le boss sans état résiduel ;
 4. contrôle visuel sur trois résolutions et deux navigateurs ;
-5. conservation des 29 tests unitaires et du build au vert.
+5. conservation des 43 tests unitaires et du build au vert.

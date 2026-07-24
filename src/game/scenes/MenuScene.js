@@ -43,7 +43,7 @@ export class MenuScene extends Phaser.Scene {
       audio.play('ui'); this.scene.start('AchievementsScene');
     });
 
-    this.add.text(44, 438, 'CAMPAGNE NARRATIVE · ≈ 15 MIN', { fontFamily: 'monospace', fontSize: '9px', color: '#455a64' });
+    this.add.text(44, 438, 'CAMPAGNE NARRATIVE · ≈ 1 HEURE', { fontFamily: 'monospace', fontSize: '9px', color: '#455a64' });
     this.add.text(44, 457, 'ESPACE / ENTRÉE POUR COMMENCER', { fontFamily: 'monospace', fontSize: '9px', color: '#00b8d4' });
     this.add.text(W - 18, H - 18, 'ARCHIVE 09.847', { fontFamily: 'monospace', fontSize: '9px', color: '#263238' }).setOrigin(1);
 

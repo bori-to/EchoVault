@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { evaluateRiddleAnswer, getRiddleHint, normalizeAnswer } from '../src/game/systems/RiddleAI.js';
+import { evaluateRiddleAnswer, getRiddleHint, normalizeAnswer, SIBYL_RIDDLES } from '../src/game/systems/RiddleAI.js';
 
 describe('RiddleAI', () => {
   it('normalise les accents, articles et pluriels', () => {
@@ -26,5 +26,12 @@ describe('RiddleAI', () => {
   it('rend les indices progressivement plus explicites', () => {
     expect(getRiddleHint(1)).not.toBe(getRiddleHint(2));
     expect(getRiddleHint(99)).toContain('INDICE FINAL');
+  });
+
+  it('évalue indépendamment les trois énigmes de SIBYL', () => {
+    expect(SIBYL_RIDDLES).toHaveLength(3);
+    expect(evaluateRiddleAnswer('un écho', SIBYL_RIDDLES[1]).status).toBe('correct');
+    expect(evaluateRiddleAnswer('la vérité', SIBYL_RIDDLES[2]).status).toBe('correct');
+    expect(evaluateRiddleAnswer('mémoire', SIBYL_RIDDLES[2]).status).toBe('wrong');
   });
 });

@@ -47,7 +47,7 @@ Les playtests ont exercé les zones suivantes :
 - accès à l'arène, projectiles, bouclier et équilibrage des trois phases du boss ;
 - sélection des quatre personnages et affichage de leurs statistiques et armes.
 
-La logique pure complète ces observations avec **29 tests unitaires réussis**, détaillés dans le [rapport de tests](test_report.md).
+La logique pure complète ces observations avec **43 tests unitaires réussis**, détaillés dans le [rapport de tests](test_report.md).
 
 ## 4. Recette finale à exécuter avant soutenance
 
@@ -59,7 +59,7 @@ La logique pure complète ces observations avec **29 tests unitaires réussis**,
 | Critique | Choisir « Libération » chez SOL puis terminer | Seul le couloir bas apparaît ; le noyau s'ouvre après exactement trois verrous et le relais reste inaccessible | À exécuter manuellement |
 | Critique | Terminer chaque parcours puis cliquer sur Nouvelle partie | Une partie propre démarre à chaque fois et permet de choisir l'autre branche | À exécuter manuellement |
 | Haute | Jouer un parcours complet avec chacun des quatre personnages | Arme, statistiques, dégâts et animations correspondent au choix | À exécuter manuellement |
-| Haute | Parcourir les cinq actes sans portail de test | Progression impossible à contourner, durée cible proche de 15 minutes | À chronométrer |
+| Haute | Parcourir les huit actes sans portail de test | Progression impossible à contourner, durée cible proche de 60 minutes | À chronométrer |
 | Haute | Tester en 1366×768, 1920×1080 et fenêtre redimensionnée | Aucun texte flou, élément coupé ou interface décentrée | À exécuter manuellement |
 | Moyenne | Faire une session continue de 20 minutes | Pas de micro-saccade croissante ni d'accumulation de projectiles/timers | À mesurer |
 | Moyenne | Tester Chrome et Firefox | Contrôles, audio et voix fonctionnent ou se dégradent proprement | À exécuter manuellement |

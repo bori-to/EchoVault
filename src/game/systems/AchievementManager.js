@@ -2,7 +2,7 @@ export const ACHIEVEMENTS = Object.freeze([
   { id: 'awakening', title: 'RÉVEIL', description: 'Commencer une partie.', parent: null, column: 1.5, row: 0 },
   { id: 'memory_one', title: 'PREMIER ÉCHO', description: 'Trouver un souvenir.', parent: 'awakening', column: 0, row: 1 },
   { id: 'memory_four', title: 'EXPLORATEUR', description: 'Trouver 4 souvenirs.', parent: 'memory_one', column: 0, row: 2 },
-  { id: 'archivist', title: 'ARCHIVISTE', description: 'Réunir les 8 souvenirs.', parent: 'memory_four', column: 0, row: 3 },
+  { id: 'archivist', title: 'ARCHIVISTE', description: 'Réunir les 12 souvenirs.', parent: 'memory_four', column: 0, row: 3 },
   { id: 'first_blood', title: 'RIPOSTE', description: 'Vaincre un ennemi.', parent: 'awakening', column: 1, row: 1 },
   { id: 'hunter', title: 'CHASSEUR', description: 'Vaincre 10 ennemis.', parent: 'first_blood', column: 1, row: 2 },
   { id: 'phase_two', title: 'SURCHARGE', description: 'Atteindre la phase 2 du Gardien.', parent: 'hunter', column: 1, row: 3 },
@@ -12,7 +12,7 @@ export const ACHIEVEMENTS = Object.freeze([
   { id: 'shield_block', title: 'INTACT', description: 'Bloquer un coup avec le bouclier.', parent: 'full_arsenal', column: 2, row: 3 },
   { id: 'wayfinder', title: 'RÉSEAU STABLE', description: 'Activer 3 checkpoints.', parent: 'shield_block', column: 2, row: 4 },
   { id: 'first_ending', title: 'CHOIX FINAL', description: 'Terminer EchoVault.', parent: 'awakening', column: 3, row: 1 },
-  { id: 'speedrun', title: 'ÉCHO FULGURANT', description: 'Terminer en moins de 15 minutes.', parent: 'first_ending', column: 3, row: 2 },
+  { id: 'speedrun', title: 'ÉCHO FULGURANT', description: 'Terminer en moins de 45 minutes.', parent: 'first_ending', column: 3, row: 2 },
   { id: 'two_endings', title: 'DEUX VÉRITÉS', description: 'Découvrir les deux fins.', parent: 'first_ending', column: 3, row: 3 },
 ]);
 

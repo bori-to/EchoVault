@@ -392,7 +392,10 @@ export class PlayerController {
     const p = this.player;
     const hammer = this.weapon.id === 'hammer';
     const range = this.weapon.range || 54;
-    const hit = this.scene.add.zone(p.x + this._facing * range * 0.5, p.y, range, hammer ? 58 : 46);
+    // La direction est verrouillée au départ du coup, mais son origine doit
+    // continuer à suivre le joueur s'il court ou tombe pendant l'animation.
+    const attackFacing = this._facing;
+    const hit = this.scene.add.zone(p.x + attackFacing * range * 0.5, p.y, range, hammer ? 58 : 46);
     this.scene.physics.add.existing(hit);
     hit.body.setAllowGravity(false);
     hit.damage = this._damage;
@@ -403,7 +406,7 @@ export class PlayerController {
       hammer ? 'weapon-hammer' : 'weapon-sword').setOrigin(0.5, 1);
     if (item.postFX) item.postFX.addGlow(this._accent, hammer ? 5 : 3, 0);
     const swing = this.scene.add.container(p.x, p.y, [item])
-      .setDepth(16).setScale(this._facing, 1).setRotation(-1.25);
+      .setDepth(16).setScale(attackFacing, 1).setRotation(-1.25);
     const arc = this.scene.add.circle(p.x, p.y, hammer ? 38 : 31, this._accent, 0)
       .setStrokeStyle(hammer ? 5 : 3, this._accent, 0.65).setDepth(14);
     arc.setScale(1, 0.72);
@@ -411,9 +414,19 @@ export class PlayerController {
     this._shootAnimTimer = hammer ? 260 : 170;
     p.play('aria-shoot', true);
     audio.play(hammer ? 'boss' : 'dash');
+    const followPlayer = () => {
+      if (!p.active || !swing.active) return;
+      swing.setPosition(p.x, p.y);
+      if (arc.active) arc.setPosition(p.x, p.y);
+      if (hit.active) {
+        const hitX = p.x + attackFacing * range * 0.5;
+        hit.setPosition(hitX, p.y);
+        hit.body?.reset(hitX, p.y);
+      }
+    };
     this.scene.tweens.add({
       targets: swing, rotation: hammer ? 1.05 : 1.25, duration: hammer ? 250 : 145,
-      ease: 'Quad.out', onComplete: () => swing.destroy(),
+      ease: 'Quad.out', onUpdate: followPlayer, onComplete: () => swing.destroy(),
     });
     this.scene.tweens.add({ targets: arc, alpha: 0, scaleX: 1.35, duration: hammer ? 280 : 170,
       onComplete: () => arc.destroy() });

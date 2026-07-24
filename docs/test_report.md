@@ -2,7 +2,7 @@
 
 | Élément | Valeur |
 |---|---|
-| Projet | EchoVault 0.2.0 |
+| Projet | EchoVault 0.3.0 |
 | Date d'exécution | 24 juillet 2026 |
 | Environnement local | Windows, Node.js 23.10.0, npm 10.9.2 |
 | Moteur et outils | Phaser 3.90.0, Vite 5.4.21, Vitest 1.6.1 |
@@ -10,7 +10,7 @@
 
 ## 1. Résultat global
 
-**Verdict des contrôles automatisés : réussi.** Les six fichiers de tests passent, soit **38 tests réussis sur 38**, sans test ignoré ni échec. Le build de production est également généré avec succès.
+**Verdict des contrôles automatisés : réussi.** Les sept fichiers de tests passent, soit **43 tests réussis sur 43**, sans test ignoré ni échec. Le build de production est également généré avec succès.
 
 Ce verdict porte sur le périmètre automatisé décrit ci-dessous. Il ne remplace pas les vérifications visuelles et les parcours de jeu du [rapport de playtests](playtest_report.md).
 
@@ -28,8 +28,8 @@ L'exécution locale fraîche du 24 juillet 2026 a donné :
 
 | Commande | Résultat | Détail |
 |---|---|---|
-| `npm test` | Réussi | 6 fichiers, 38 tests, durée totale 1,01 s |
-| `npm run build` | Réussi | 33 modules transformés en 7,72 s |
+| `npm test` | Réussi | 7 fichiers, 43 tests, durée totale 968 ms |
+| `npm run build` | Réussi | 34 modules transformés en 7,81 s |
 
 ## 3. Résultats unitaires détaillés
 
@@ -37,10 +37,11 @@ L'exécution locale fraîche du 24 juillet 2026 a donné :
 |---|---:|---:|---|
 | `AchievementManager.test.js` | 4/4 | 7 ms | Déblocage unique, refus d'un identifiant inconnu, persistance des fins, validité de la hiérarchie parent-enfant. |
 | `BossStateMachine.test.js` | 5/5 | 8 ms | Passage unique dans les trois phases, reset depuis chaque phase, restauration des 20 PV, effacement des transitions, cinq morts successives sans accumulation. |
+| `CampaignDirector.test.js` | 4/4 | 10 ms | Huit actes, six témoins, prérequis jusqu'à 12 souvenirs, 34 vagues et estimation proche d'une heure. |
 | `CharacterManager.test.js` | 4/4 | 9 ms | Présence des quatre personnages, statistiques différentes, arme propre à chaque personnage, sélection valide et refus d'un identifiant invalide. |
 | `GameStateManager.test.js` | 9/9 | 9 ms | Décisions narratives, priorité du parcours choisi avant le boss, deux fins, valeurs par défaut, écrasement et remise à zéro. |
 | `PowerManager.test.js` | 7/7 | 11 ms | État initial, déblocage, liste, absence de doublons, refus des pouvoirs inconnus et reset. |
-| `RiddleAI.test.js` | 9/9 | 22 ms | Accents, articles, pluriels, synonymes acceptés, faute de frappe, proximité sémantique, refus et indices progressifs. |
+| `RiddleAI.test.js` | 10/10 | 19 ms | Accents, articles, pluriels, synonymes acceptés, trois énigmes, faute de frappe, proximité sémantique, refus et indices progressifs. |
 
 ## 4. Vérification du build
 
@@ -50,7 +51,7 @@ Vite a produit le dossier `build/` sans erreur. Les principaux artefacts sont :
 |---|---:|---:|
 | `index.html` | 0,56 kB | 0,36 kB |
 | Cinématique MP4 originale — 4 séquences | 10 384,17 kB | — |
-| Bundle JavaScript principal | 1 614,40 kB | 379,29 kB |
+| Bundle JavaScript principal | 1 619,91 kB | 381,22 kB |
 
 Un avertissement non bloquant signale que le bundle JavaScript dépasse 500 kB après minification. Le jeu reste constructible et déployable, mais un découpage dynamique constitue une optimisation future.
 
