@@ -1,0 +1,43 @@
+# Dependencies
+node_modules/
+
+# Generated production bundles
+build/
+dist/
+
+# Vite, Vitest and coverage caches
+.vite/
+coverage/
+*.tsbuildinfo
+
+# Environment variables and local overrides
+.env
+.env.*
+!.env.example
+*.local
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Editors and IDEs
+.idea/
+.vscode/
+*.suo
+*.user
+*.code-workspace
+
+# Operating-system files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.swp
+*.bak
