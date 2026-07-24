@@ -10,7 +10,7 @@
 
 ## 1. Résultat global
 
-**Verdict des contrôles automatisés : réussi.** Les cinq fichiers de tests passent, soit **29 tests réussis sur 29**, sans test ignoré ni échec. Le build de production est également généré avec succès.
+**Verdict des contrôles automatisés : réussi.** Les six fichiers de tests passent, soit **38 tests réussis sur 38**, sans test ignoré ni échec. Le build de production est également généré avec succès.
 
 Ce verdict porte sur le périmètre automatisé décrit ci-dessous. Il ne remplace pas les vérifications visuelles et les parcours de jeu du [rapport de playtests](playtest_report.md).
 
@@ -28,8 +28,8 @@ L'exécution locale fraîche du 24 juillet 2026 a donné :
 
 | Commande | Résultat | Détail |
 |---|---|---|
-| `npm test` | Réussi | 5 fichiers, 29 tests, durée totale 1,16 s |
-| `npm run build` | Réussi | 32 modules transformés en 7,68 s |
+| `npm test` | Réussi | 6 fichiers, 38 tests, durée totale 1,01 s |
+| `npm run build` | Réussi | 33 modules transformés en 7,72 s |
 
 ## 3. Résultats unitaires détaillés
 
@@ -40,6 +40,7 @@ L'exécution locale fraîche du 24 juillet 2026 a donné :
 | `CharacterManager.test.js` | 4/4 | 9 ms | Présence des quatre personnages, statistiques différentes, arme propre à chaque personnage, sélection valide et refus d'un identifiant invalide. |
 | `GameStateManager.test.js` | 9/9 | 9 ms | Décisions narratives, priorité du parcours choisi avant le boss, deux fins, valeurs par défaut, écrasement et remise à zéro. |
 | `PowerManager.test.js` | 7/7 | 11 ms | État initial, déblocage, liste, absence de doublons, refus des pouvoirs inconnus et reset. |
+| `RiddleAI.test.js` | 9/9 | 22 ms | Accents, articles, pluriels, synonymes acceptés, faute de frappe, proximité sémantique, refus et indices progressifs. |
 
 ## 4. Vérification du build
 
@@ -49,7 +50,7 @@ Vite a produit le dossier `build/` sans erreur. Les principaux artefacts sont :
 |---|---:|---:|
 | `index.html` | 0,56 kB | 0,36 kB |
 | Cinématique MP4 originale — 4 séquences | 10 384,17 kB | — |
-| Bundle JavaScript principal | 1 608,27 kB | 377,08 kB |
+| Bundle JavaScript principal | 1 614,40 kB | 379,29 kB |
 
 Un avertissement non bloquant signale que le bundle JavaScript dépasse 500 kB après minification. Le jeu reste constructible et déployable, mais un découpage dynamique constitue une optimisation future.
 

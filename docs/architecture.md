@@ -118,6 +118,7 @@ EchoVault/
 |           |-- GameStateManager.js
 |           |-- PlayerController.js
 |           |-- PowerManager.js
+|           |-- RiddleAI.js
 |           |-- SettingsManager.js
 |           `-- VoiceManager.js
 |
@@ -126,7 +127,8 @@ EchoVault/
 |   |-- BossStateMachine.test.js
 |   |-- CharacterManager.test.js
 |   |-- GameStateManager.test.js
-|   `-- PowerManager.test.js
+|   |-- PowerManager.test.js
+|   `-- RiddleAI.test.js
 |
 |-- build/
 |   |-- assets/
@@ -200,6 +202,7 @@ EndingScene
 | `CharacterManager` | Déclare les quatre personnages, leurs statistiques et leurs armes. | `getCharacters()`, `selectCharacter()`, `getSelectedCharacter()` |
 | `GameStateManager` | Enregistre les décisions morales, le parcours choisi et détermine la fin narrative. | `recordDecision()`, `getDecision()`, `getRoute()`, `getEnding()`, `reset()` |
 | `PowerManager` | Stocke les pouvoirs débloqués et les persiste localement. | `unlock()`, `hasUnlocked()`, `getAll()`, `reset()` |
+| `RiddleAI` | Normalise les réponses libres de SIBYL, calcule leur proximité lexicale et sémantique, puis sélectionne un indice progressif. | `normalizeAnswer()`, `evaluateRiddleAnswer()`, `getRiddleHint()` |
 | `SettingsManager` | Stocke les options et migre les anciennes sauvegardes de paramètres. | `get()`, `set()`, `reset()` |
 
 Ces modules contiennent peu ou pas de dépendances Phaser et constituent le cœur testable de l'application.
@@ -247,7 +250,7 @@ Le déroulement principal est :
 ```text
 Cinématique d'introduction
   -> Acte I : souvenirs et Oracle
-  -> Acte II : Archiviste K-7
+  -> Acte II : énigme adaptative de SIBYL
   -> Acte III : Écho de SOL et choix irréversible du parcours
        |-- Transmission
        |     -> Acte IV-A : arène du Gardien
@@ -259,7 +262,7 @@ Cinématique d'introduction
              `-> Fin Réinitialisation
 ```
 
-Le choix chez SOL enregistre `final_route` avant le combat. Le boss n'apparaît que lorsque les huit souvenirs sont collectés et que les trois PNJ sont validés. Après sa défaite, `GameScene` ne construit et n'active que le parcours choisi : une voie verticale vers le relais de transmission, ou une voie basse dont la sortie reste verrouillée jusqu'à la destruction de trois ennemis. L'autre fin est inaccessible pendant cette partie. Le portail de test du boss sélectionne la route de libération pour permettre la recette rapide et reste désactivé par défaut dans `SettingsManager`.
+SIBYL bloque la progression tant que son énigme n'est pas résolue. Le joueur répond librement : les accents, articles et pluriels sont normalisés, les petites fautes sont tolérées, les concepts voisins sont signalés comme proches et les indices deviennent progressivement plus explicites. Le choix chez SOL enregistre ensuite `final_route` avant le combat. Le boss n'apparaît que lorsque les huit souvenirs sont collectés et que les trois PNJ sont validés. Après sa défaite, `GameScene` ne construit et n'active que le parcours choisi : une voie verticale vers le relais de transmission, ou une voie basse dont la sortie reste verrouillée jusqu'à la destruction de trois ennemis. L'autre fin est inaccessible pendant cette partie. Le portail de test du boss sélectionne la route de libération pour permettre la recette rapide et reste désactivé par défaut dans `SettingsManager`.
 
 ### Format de dialogue
 
@@ -312,6 +315,7 @@ GameScene
   |-- EnemyManager
   |-- BossManager -> BossStateMachine
   |-- DialogueManager -> GameStateManager
+  |-- RiddleAI
   |-- PowerManager
   |-- SettingsManager
   |-- CharacterManager
@@ -343,7 +347,7 @@ La sélection du personnage reste en mémoire JavaScript pour la partie courante
 
 ## 10. Tests automatisés
 
-Le projet utilise **Vitest 1.6.1** avec l'environnement Node. Cinq suites couvrent 29 tests :
+Le projet utilise **Vitest 1.6.1** avec l'environnement Node. Six suites couvrent 38 tests :
 
 | Suite | Domaine couvert |
 |---|---|
@@ -352,6 +356,7 @@ Le projet utilise **Vitest 1.6.1** avec l'environnement Node. Cinq suites couvre
 | `CharacterManager.test.js` | Profils, sélection et armes. |
 | `GameStateManager.test.js` | Décisions, priorité du parcours final, fins et réinitialisation. |
 | `PowerManager.test.js` | Déblocage, lecture, persistance et reset des pouvoirs. |
+| `RiddleAI.test.js` | Normalisation, synonymes, fautes, proximité sémantique, refus et indices progressifs. |
 
 Commandes reproductibles :
 

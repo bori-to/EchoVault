@@ -11,6 +11,7 @@
  *   - Tir laser touche X
  *   - 3 HP joueur, clignotement + invincibilité 1.2s après dégâts
  *   - Oracle (NPC, Biome 0) -> décision narrative
+ *   - SIBYL (bot d'énigme) -> analyse locale des réponses libres
  *   - Deux parcours de fin exclusifs : relais supérieur ou noyau inférieur
  */
 import Phaser from 'phaser';
@@ -25,6 +26,7 @@ import { settings }         from '../systems/SettingsManager.js';
 import { voice }            from '../systems/VoiceManager.js';
 import { getSelectedCharacter } from '../systems/CharacterManager.js';
 import { achievements } from '../systems/AchievementManager.js';
+import { evaluateRiddleAnswer, getRiddleHint, SIBYL_RIDDLE } from '../systems/RiddleAI.js';
 
 const PLATFORMS = [
   [160,  440, 2.0, 'platform'],
@@ -138,6 +140,9 @@ export class GameScene extends Phaser.Scene {
     this._endingRoute = null;
     this._endingRouteReady = false;
     this._endingRouteEnemies = [];
+    this._riddleActive = false;
+    this._riddleAttempts = 0;
+    this._riddlePanel = null;
   }
 
   create() {
@@ -200,6 +205,7 @@ export class GameScene extends Phaser.Scene {
     this.time.delayedCall(500, () => this._unlockAchievement('awakening'));
 
     this.time.delayedCall(700, () => this._startPrologue());
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this._destroyRiddleUI());
   }
 
   _buildBackground(W, H) {
@@ -562,7 +568,7 @@ export class GameScene extends Phaser.Scene {
   _buildStoryGates() {
     this._storyNpcs = [
       this._makeStoryNpc(700, 338, "L'Oracle", 2, 'oracle'),
-      this._makeStoryNpc(2740, 368, 'Archiviste K-7', 4, 'archivist'),
+      this._makeStoryNpc(2740, 368, 'SIBYL', 4, 'sibyl'),
       this._makeStoryNpc(4440, 288, 'Écho de SOL', 6, 'sol'),
     ];
     // Barrières visibles : elles matérialisent les actes et disparaissent après le dialogue.
@@ -941,7 +947,7 @@ export class GameScene extends Phaser.Scene {
       this._floatMessage('LE GARDIEN DE L\'\xC9CHO !', '#ff1744');
     }
 
-    this._ctrl.setEnabled(!this._dlgMgr.isActive);
+    this._ctrl.setEnabled(!this._dlgMgr.isActive && !this._riddleActive);
     this._ctrl.update(delta);
     this._dlgMgr.update();
     this._em.update(this._player, delta);
@@ -958,11 +964,11 @@ export class GameScene extends Phaser.Scene {
     const nearbyNpc = this._storyNpcs
       .filter(n => !n.done)
       .find(n => Phaser.Math.Distance.Between(this._player.x, this._player.y, n.sprite.x, n.sprite.y) < 95);
-    const canInteract = nearbyNpc && !this._dlgMgr.isActive;
+    const canInteract = nearbyNpc && !this._dlgMgr.isActive && !this._riddleActive;
     const portalEnabled = settings.get('bossTestTeleporter') && !this._testTeleportUsed;
     this._bossTestPortal.setVisible(portalEnabled);
     this._bossTestLabel.setVisible(portalEnabled);
-    const nearTestPortal = portalEnabled && !this._dlgMgr.isActive &&
+    const nearTestPortal = portalEnabled && !this._dlgMgr.isActive && !this._riddleActive &&
       Phaser.Math.Distance.Between(this._player.x, this._player.y,
         this._bossTestPortal.x, this._bossTestPortal.y) < 95;
     this._indicator.setVisible(Boolean(nearTestPortal || canInteract));
@@ -992,6 +998,170 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
+  _startSibylRiddle(npc) {
+    if (this._riddleActive) return;
+    this._riddleActive = true;
+    this._riddleAttempts = 0;
+    this._ctrl.setEnabled(false);
+    this._player.setVelocity(0, 0);
+    this.physics.world.pause();
+
+    const root = document.createElement('div');
+    Object.assign(root.style, {
+      position: 'fixed', zIndex: '1200', display: 'flex', alignItems: 'center',
+      justifyContent: 'center', boxSizing: 'border-box', padding: '24px',
+      background: 'rgba(1, 4, 11, .78)', backdropFilter: 'blur(5px)',
+      fontFamily: 'monospace', color: '#e7faff',
+    });
+
+    const card = document.createElement('form');
+    Object.assign(card.style, {
+      width: 'min(660px, 92%)', padding: '26px 30px', boxSizing: 'border-box',
+      border: '2px solid #00e5ff', borderRadius: '4px',
+      background: 'linear-gradient(145deg, rgba(4,14,26,.98), rgba(9,4,24,.98))',
+      boxShadow: '0 0 30px rgba(0,229,255,.24)', textAlign: 'center',
+    });
+    root.appendChild(card);
+
+    const heading = document.createElement('div');
+    heading.textContent = 'SIBYL // ANALYSE SÉMANTIQUE';
+    Object.assign(heading.style, {
+      color: '#80deea', letterSpacing: '4px', fontSize: '13px', marginBottom: '22px',
+    });
+    card.appendChild(heading);
+
+    const question = document.createElement('div');
+    question.textContent = SIBYL_RIDDLE.question;
+    Object.assign(question.style, {
+      whiteSpace: 'pre-line', fontSize: 'clamp(16px, 2vw, 23px)', lineHeight: '1.6',
+      fontWeight: '700', textShadow: '0 0 10px rgba(128,222,234,.35)',
+      marginBottom: '22px',
+    });
+    card.appendChild(question);
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.placeholder = 'Écrivez votre réponse…';
+    input.autocomplete = 'off';
+    input.maxLength = 80;
+    Object.assign(input.style, {
+      width: '100%', boxSizing: 'border-box', padding: '13px 15px',
+      border: '1px solid #546e7a', borderRadius: '3px', outline: 'none',
+      background: '#020811', color: '#fff', font: '16px monospace',
+      textAlign: 'center',
+    });
+    card.appendChild(input);
+
+    const feedback = document.createElement('div');
+    Object.assign(feedback.style, {
+      minHeight: '22px', marginTop: '15px', fontSize: '14px', color: '#90a4ae',
+    });
+    feedback.textContent = 'SIBYL attend une réponse libre.';
+    card.appendChild(feedback);
+
+    const hint = document.createElement('div');
+    Object.assign(hint.style, {
+      minHeight: '20px', marginTop: '7px', color: '#ffcc80', fontSize: '12px',
+    });
+    card.appendChild(hint);
+
+    const actions = document.createElement('div');
+    Object.assign(actions.style, {
+      display: 'flex', gap: '12px', justifyContent: 'center', marginTop: '20px',
+    });
+    card.appendChild(actions);
+
+    const makeButton = (label, primary) => {
+      const button = document.createElement('button');
+      button.type = primary ? 'submit' : 'button';
+      button.textContent = label;
+      Object.assign(button.style, {
+        padding: '11px 20px', border: `1px solid ${primary ? '#00e5ff' : '#455a64'}`,
+        borderRadius: '3px', background: primary ? '#00b8d4' : '#101923',
+        color: primary ? '#001015' : '#b0bec5', font: 'bold 13px monospace',
+        cursor: 'pointer',
+      });
+      actions.appendChild(button);
+      return button;
+    };
+    const validateButton = makeButton('ANALYSER', true);
+    const closeButton = makeButton('REVENIR PLUS TARD', false);
+
+    const syncBounds = () => {
+      const bounds = this.game.canvas.getBoundingClientRect();
+      Object.assign(root.style, {
+        left: `${bounds.left}px`, top: `${bounds.top}px`,
+        width: `${bounds.width}px`, height: `${bounds.height}px`,
+      });
+    };
+    this._riddleResizeHandler = syncBounds;
+    window.addEventListener('resize', syncBounds);
+    syncBounds();
+
+    card.addEventListener('submit', event => {
+      event.preventDefault();
+      const result = evaluateRiddleAnswer(input.value);
+      if (!result.normalized) {
+        feedback.textContent = 'Aucune donnée exploitable. Écris une réponse.';
+        feedback.style.color = '#ff8a80';
+        return;
+      }
+
+      this._riddleAttempts++;
+      if (result.status === 'correct') {
+        npc.riddleSolved = true;
+        this._gsm.recordDecision('sibyl_riddle_solved', true);
+        feedback.textContent = `RÉPONSE ACCEPTÉE — confiance ${Math.round(result.confidence * 100)} %`;
+        feedback.style.color = '#76ff03';
+        hint.textContent = 'Le verrou cognitif est levé.';
+        input.disabled = true;
+        validateButton.disabled = true;
+        voice.speak('Réponse acceptée. Le verrou cognitif est levé.', { persona: 'system' });
+        this.time.delayedCall(950, () => {
+          this._destroyRiddleUI();
+          this._startStoryDialogue(npc);
+        });
+        return;
+      }
+
+      feedback.textContent = result.status === 'close'
+        ? `ANALYSE — réponse proche (${Math.round(result.confidence * 100)} %).`
+        : `RÉPONSE REFUSÉE — correspondance ${Math.round(result.confidence * 100)} %.`;
+      feedback.style.color = result.status === 'close' ? '#ffd54f' : '#ff8a80';
+      hint.textContent = getRiddleHint(this._riddleAttempts);
+      voice.speak(result.status === 'close' ? 'Tu approches. Affine ta réponse.' : hint.textContent, { persona: 'system' });
+      input.select();
+    });
+
+    closeButton.addEventListener('click', () => {
+      this._destroyRiddleUI();
+      this._floatMessage('SIBYL conservera le verrou jusqu’à votre retour.', '#ffcc80');
+    });
+    root.addEventListener('keydown', event => {
+      event.stopPropagation();
+      if (event.key === 'Escape') closeButton.click();
+    });
+
+    document.body.appendChild(root);
+    this._riddlePanel = root;
+    input.focus();
+    voice.speak(SIBYL_RIDDLE.question, { persona: 'system' });
+  }
+
+  _destroyRiddleUI() {
+    if (this._riddleResizeHandler) {
+      window.removeEventListener('resize', this._riddleResizeHandler);
+      this._riddleResizeHandler = null;
+    }
+    this._riddlePanel?.remove();
+    this._riddlePanel = null;
+    if (this._riddleActive) {
+      this.physics.world.resume();
+      this._riddleActive = false;
+    }
+    voice.stop();
+  }
+
   _startStoryDialogue(npc) {
     if (this._fragmentCount < npc.requires) {
       const missing = npc.requires - this._fragmentCount;
@@ -1001,6 +1171,11 @@ export class GameScene extends Phaser.Scene {
 
     if (!npc.defenseCleared) {
       this._beginMemoryEncounter(npc);
+      return;
+    }
+
+    if (npc.id === 'sibyl' && !npc.riddleSolved) {
+      this._startSibylRiddle(npc);
       return;
     }
 
@@ -1022,13 +1197,13 @@ export class GameScene extends Phaser.Scene {
           ],
         },
       },
-      archivist: {
-        name: 'Archiviste K-7',
+      sibyl: {
+        name: 'SIBYL',
         nodes: [
-          { id: 'start', text: 'Quatre fragments authentifiés. Voici la vérité : les machines de la Forge\nrecevaient les consciences humaines pour les sauver du Cataclysme.', choices: [] },
+          { id: 'start', text: 'Réponse authentifiée. Ton raisonnement est compatible avec les archives.\nLes machines de la Forge recevaient les consciences humaines pour les sauver du Cataclysme.', choices: [] },
         ],
         followup: {
-          name: 'Archiviste K-7',
+          name: 'SIBYL',
           nodes: [
             { id: 'start', text: `Quand les ressources ont manqué, le Conseil a choisi le silence.\nToi, ${this._character.name}, tu as enfermé l’ordre d’effacement dans le Gardien.`, choices: [
               { label: 'Conserver la Forge comme preuve.', next: 'keep', effect: { decision: 'preserve_forge', value: true } },
@@ -1066,7 +1241,7 @@ export class GameScene extends Phaser.Scene {
         this._storyGates[this._storyStage]?.destroy();
         this._storyStage++;
         const objectives = [
-          'ACTE II — Traversez la Forge et rassemblez 4 souvenirs',
+          'ACTE II — Retrouvez SIBYL dans la Forge avec 4 souvenirs',
           'ACTE III — Retrouvez SOL avec 6 souvenirs',
           'ACTE IV — Complétez les 8 souvenirs et gagnez la Chambre Haute',
         ];
