@@ -1,6 +1,6 @@
 # Crédits, provenance et licences — EchoVault
 
-État vérifié le **23 juillet 2026**. Ce document décrit les éléments réellement présents dans le dépôt et distingue les services utilisés des outils seulement étudiés. Les CGU citées sont des contrats de service, pas des licences open source. Elles peuvent évoluer ; les liens officiels font foi.
+État vérifié le **24 juillet 2026**. Ce document décrit les éléments réellement présents dans le dépôt et distingue les services utilisés des outils seulement étudiés. Les CGU citées sont des contrats de service, pas des licences open source. Elles peuvent évoluer ; les liens officiels font foi.
 
 ## 1. Licence du projet
 
@@ -10,23 +10,18 @@ Copyright © 2026 Adrien et Elie — équipe EchoVault.
 
 ## 2. Inventaire exact des assets livrés
 
-### Image de la cinématique
+### Vidéos de la cinématique
 
-| Champ | Valeur |
-|---|---|
-| Fichier | `src/assets/cinematics/echo-vault-opening.jpg` |
-| Usage | Arrière-plan de l'introduction dans `CinematicScene` |
-| Dimensions | 1672 × 941 pixels |
-| Taille | 265 063 octets |
-| SHA-256 | `F4A9E5F67A10A1F1484641F64C58AF7A626BEE5710B3D9F42492D62A623AF22C` |
-| Date du fichier | 22 juillet 2026 |
-| Provenance | Génération d'image OpenAI demandée depuis Codex pour le prompt utilisateur nº 031 |
-| Prompt source | « ok ajoute une cinematique en 3D de fou au debut du jeu pour expliquer l'histoire/introduire » |
-| Modèle | Outil de génération d'images OpenAI exposé dans Codex ; l'identifiant exact du modèle d'image n'a pas été enregistré dans les traces |
-| Retouches manuelles | Aucune déclarée |
-| Conditions applicables | [Conditions d'utilisation OpenAI — section Contenu](https://openai.com/policies/row-terms-of-use/) |
+Les quatre fichiers ont été fournis par l'équipe le 24 juillet 2026. Ils sont intégrés sans réencodage, en MP4 avec une piste vidéo H.264 1280 × 720 à 24 images par seconde et une piste audio AAC. `CinematicScene` les affiche directement avec le lecteur vidéo HTML du navigateur et les enchaîne pour une introduction d'environ 40 secondes.
 
-Selon ces conditions, dans la relation entre l'utilisateur et OpenAI et dans la mesure permise par la loi, l'utilisateur conserve ses droits sur les entrées et possède les sorties. OpenAI avertit également que les sorties peuvent ne pas être uniques. Cette attribution contractuelle ne constitue pas une garantie qu'un droit d'auteur existe sur chaque image générée.
+| Ordre | Fichier | Durée | Taille | SHA-256 |
+|---:|---|---:|---:|---|
+| 1 | `src/assets/cinematics/intro-underground-city.mp4` | 10,005 s | 2 452 510 octets | `637F2FB6746D2A914D9E6D24C8BFDA617CE3225CDEA21B1DA0CC2816672EAEB6` |
+| 2 | `src/assets/cinematics/intro-memory-capsules.mp4` | 10,005 s | 2 580 507 octets | `EAACFBD817C6672958BB9923487CEAB0D023531497345C5BEE439AEAC3EE8732` |
+| 3 | `src/assets/cinematics/intro-guardian.mp4` | 10,005 s | 2 596 169 octets | `3233B04C7037A02134747EB928DF4722EC4FA1AEA17318FEE89D4801D4D7E42F` |
+| 4 | `src/assets/cinematics/intro-aria-awakens.mp4` | 10,005 s | 2 754 979 octets | `FA86EC2E1BD644EC70BEB18726A59E518D63D7FC7DF49982BB7A00B5CCB03B0F` |
+
+Les métadonnées intégrées aux MP4 ne mentionnent ni le service de génération, ni le modèle, ni la licence ou les CGU applicables. Ces informations n'ont pas été fournies avec les fichiers : l'équipe doit conserver la preuve d'origine et confirmer ses droits d'utilisation avant une diffusion hors du cadre du projet. Aucune retouche manuelle des vidéos n'a été déclarée ; seuls leur nom et leur intégration dans le jeu ont été modifiés.
 
 ### Graphismes du jeu
 
@@ -50,7 +45,7 @@ Les voix disponibles et leur nom exact dépendent du navigateur et du système d
 |---|---|---|---|
 | GitHub Copilot avec Claude Sonnet 4.6 High | Génération de code et réponses pour les prompts nº 001 à 022 | Aucune | [GitHub Terms of Service, section J — AI Features](https://docs.github.com/en/site-policy/github-terms/github-terms-of-service#j-ai-features-training-and-your-data) et [GitHub Terms for Additional Products](https://docs.github.com/en/site-policy/github-terms/github-terms-for-additional-products-and-features#github-copilot) |
 | OpenAI Codex 5.6 Sol Medium | Génération de code, documentation et corrections à partir du prompt nº 023 | Aucune | [OpenAI Terms of Use](https://openai.com/policies/row-terms-of-use/) et [OpenAI Service Terms](https://openai.com/policies/service-terms/) |
-| Génération d'images OpenAI via Codex | Création de l'unique JPEG de cinématique pour le prompt nº 031 | Aucune | [OpenAI Terms of Use](https://openai.com/policies/row-terms-of-use/) |
+| Génération d'images OpenAI via Codex | Création de l'ancien JPEG de cinématique pour le prompt nº 031, désormais retiré du projet | Aucune | [OpenAI Terms of Use](https://openai.com/policies/row-terms-of-use/) |
 
 Les décisions d'acceptation ou de rejet, modèles déclarés et numéros de prompts sont détaillés dans `prompts_logs/02_tracabilite_integrations_ia.md`. L'avatar associé au prompt nº 019 a été rejeté et n'est pas présent dans le build.
 
@@ -83,5 +78,5 @@ Le fichier `public/THIRD_PARTY_NOTICES.txt` est copié automatiquement par Vite 
 - Tous les prompts disponibles sont conservés dans `prompts_logs/`.
 - Aucune modification manuelle des outputs ou du code généré n'a été déclarée par l'équipe.
 - Toutes les intégrations ont été acceptées sauf l'avatar du prompt nº 019.
-- Aucun asset externe non identifié n'a été trouvé dans `src/assets/` au 23 juillet 2026.
+- Les quatre vidéos fournies le 24 juillet 2026 sont inventoriées ci-dessus ; leur outil de création et leurs CGU restent à confirmer par l'équipe.
 - Toute introduction future d'une image, police, musique, voix enregistrée ou autre asset devra ajouter ici le fichier, l'auteur, la source, la date d'obtention et la licence exacte avant intégration.

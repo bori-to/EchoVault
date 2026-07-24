@@ -88,7 +88,10 @@ EchoVault/
 |-- src/
 |   |-- assets/
 |   |   |-- cinematics/
-|   |   |   `-- echo-vault-opening.jpg
+|   |   |   |-- intro-underground-city.mp4
+|   |   |   |-- intro-memory-capsules.mp4
+|   |   |   |-- intro-guardian.mp4
+|   |   |   `-- intro-aria-awakens.mp4
 |   |   `-- dialogues/
 |   |       `-- npc_oracle.json
 |   |
@@ -172,12 +175,12 @@ EndingScene
 
 | Scène | Responsabilité réelle | Entrées / sorties principales |
 |---|---|---|
-| `BootScene` | Charge l'image de cinématique, génère les textures procédurales et enregistre les animations. | Démarre `MenuScene`. |
+| `BootScene` | Génère les textures procédurales et enregistre les animations. | Démarre `MenuScene`. |
 | `MenuScene` | Affiche le menu principal et réinitialise son état lorsqu'une scène est réutilisée. | Ouvre la sélection, les succès ou les paramètres. |
 | `CharacterSelectScene` | Présente ARIA, NYX, ATLAS et VOLT avec leurs statistiques et armes. | Enregistre le personnage puis ouvre `CinematicScene`. |
 | `AchievementsScene` | Affiche l'arbre de 15 succès et son état persistant. | Retourne au menu ou aux paramètres en jeu. |
 | `SettingsScene` | Gère volume, son, voix, guidage, secousses et portail de test du boss. | Reprend la partie, ouvre les succès ou retourne au menu. |
-| `CinematicScene` | Joue l'introduction avec profondeur simulée, mouvements, narration et effets de glitch. | Démarre `GameScene`. |
+| `CinematicScene` | Enchaîne quatre MP4 originaux dans des éléments vidéo HTML superposés au canvas, avec `object-fit: contain`, sous-titres et possibilité de passer l'introduction. | Démarre `GameScene`. |
 | `GameScene` | Construit et orchestre le niveau, le joueur, les ennemis, les PNJ, les pouvoirs, le boss et deux parcours finaux exclusifs. | Lance `HUDScene`, puis `EndingScene`. |
 | `HUDScene` | Affiche vie, pouvoirs, souvenirs, objectif, boss et notifications de succès. | Écoute les événements de `GameScene`. |
 | `EndingScene` | Affiche la fin Gardienne ou Réinitialisation ainsi que les statistiques finales. | Permet une nouvelle partie ou un retour au menu. |

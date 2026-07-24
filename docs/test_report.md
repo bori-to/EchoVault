@@ -3,7 +3,7 @@
 | Élément | Valeur |
 |---|---|
 | Projet | EchoVault 0.2.0 |
-| Date d'exécution | 23 juillet 2026 |
+| Date d'exécution | 24 juillet 2026 |
 | Environnement local | Windows, Node.js 23.10.0, npm 10.9.2 |
 | Moteur et outils | Phaser 3.90.0, Vite 5.4.21, Vitest 1.6.1 |
 | Copie testée | État local courant du projet |
@@ -24,12 +24,12 @@ npm test
 npm run build
 ```
 
-L'exécution locale fraîche du 23 juillet 2026 a donné :
+L'exécution locale fraîche du 24 juillet 2026 a donné :
 
 | Commande | Résultat | Détail |
 |---|---|---|
-| `npm test` | Réussi | 5 fichiers, 29 tests, durée totale 624 ms |
-| `npm run build` | Réussi | 29 modules transformés en 5,23 s |
+| `npm test` | Réussi | 5 fichiers, 29 tests, durée totale 1,16 s |
+| `npm run build` | Réussi | 32 modules transformés en 7,68 s |
 
 ## 3. Résultats unitaires détaillés
 
@@ -48,8 +48,8 @@ Vite a produit le dossier `build/` sans erreur. Les principaux artefacts sont :
 | Artefact | Taille produite | Taille gzip |
 |---|---:|---:|
 | `index.html` | 0,56 kB | 0,36 kB |
-| Cinématique JPEG | 265,06 kB | — |
-| Bundle JavaScript principal | 1 608,23 kB | 376,77 kB |
+| Cinématique MP4 originale — 4 séquences | 10 384,17 kB | — |
+| Bundle JavaScript principal | 1 608,27 kB | 377,08 kB |
 
 Un avertissement non bloquant signale que le bundle JavaScript dépasse 500 kB après minification. Le jeu reste constructible et déployable, mais un découpage dynamique constitue une optimisation future.
 

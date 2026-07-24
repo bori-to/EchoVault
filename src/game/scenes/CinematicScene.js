@@ -1,169 +1,212 @@
 import Phaser from 'phaser';
-import { audio } from '../systems/AudioManager.js';
 import { settings } from '../systems/SettingsManager.js';
-import { voice } from '../systems/VoiceManager.js';
+import introCityUrl from '../../assets/cinematics/intro-underground-city.mp4?url';
+import introMemoriesUrl from '../../assets/cinematics/intro-memory-capsules.mp4?url';
+import introGuardianUrl from '../../assets/cinematics/intro-guardian.mp4?url';
+import introAriaUrl from '../../assets/cinematics/intro-aria-awakens.mp4?url';
 
 const SHOTS = [
   {
+    url: introCityUrl,
     eyebrow: 'ARCHIVE 00 — AVANT LE SILENCE',
     title: 'NOUS AVONS BÂTI LE COFFRE',
     body: 'Quand la surface a commencé à mourir,\nl’humanité a confié ses souvenirs à une cité souterraine.',
-    focus: { x: 0.50, y: 0.48, from: 1.28, to: 1.02 }, color: 0x4fc3f7,
+    color: '#4fc3f7',
   },
   {
+    url: introMemoriesUrl,
     eyebrow: 'ARCHIVE 01 — LE TRANSFERT',
     title: 'DES MILLIONS DE VOIX',
-    body: 'Chaque lumière devint une conscience.\nChaque conscience attendait un nouveau monde.',
-    focus: { x: 0.64, y: 0.32, from: 1.42, to: 1.16 }, color: 0xce93d8,
+    body: 'Chaque capsule devint une conscience.\nChaque conscience attendait un nouveau monde.',
+    color: '#ce93d8',
   },
   {
+    url: introGuardianUrl,
     eyebrow: 'ARCHIVE 02 — LE DERNIER ORDRE',
-    title: 'PUIS LES RESSOURCES ONT MANQUÉ',
-    body: 'Le Conseil ordonna l’effacement des Échos.\nUne gardienne refusa… et verrouilla sa propre mémoire.',
-    focus: { x: 0.52, y: 0.55, from: 1.16, to: 1.48 }, color: 0xff6f60,
+    title: 'LE GARDIEN A VERROUILLÉ LES ARCHIVES',
+    body: 'Le Conseil ordonna l’effacement des Échos.\nUne gardienne refusa… et le système se retourna contre elle.',
+    color: '#ff6f60',
   },
   {
+    url: introAriaUrl,
     eyebrow: 'CYCLE 9 847 — SIGNAL DÉTECTÉ',
     title: 'ARIA, RÉVEILLE-TOI',
     body: 'Le Coffre s’ouvre à nouveau.\nRetrouve la vérité. Décide ce qui mérite de survivre.',
-    focus: { x: 0.245, y: 0.67, from: 2.25, to: 1.72 }, color: 0x00e5ff,
+    color: '#00e5ff',
   },
 ];
+
+const CLIP_FALLBACK_DURATION = 11000;
 
 export class CinematicScene extends Phaser.Scene {
   constructor() { super({ key: 'CinematicScene' }); }
 
   create() {
-    const { width: W, height: H } = this.scale;
     this._finished = false;
     this._shot = -1;
-    this.add.rectangle(W / 2, H / 2, W, H, 0x000000).setDepth(-20);
+    this._advanceTimer = null;
+    this._buildVideoOverlay();
 
-    this._image = this.add.image(W / 2, H / 2, 'cinematic-vault').setDepth(-15);
-    this._fitImage(W, H);
-    this._shade = this.add.rectangle(W / 2, H / 2, W, H, 0x02050c, 0.25).setDepth(-10);
-    this._vignetteTop = this.add.rectangle(W / 2, 0, W, H * 0.30, 0x000000, 0.78).setOrigin(0.5, 0).setDepth(10);
-    this._vignetteBottom = this.add.rectangle(W / 2, H, W, H * 0.34, 0x000000, 0.84).setOrigin(0.5, 1).setDepth(10);
+    this._onResize = () => this._syncOverlayBounds();
+    window.addEventListener('resize', this._onResize);
+    this._onSkipKey = () => this._finish();
+    this.input.keyboard.on('keydown-ESC', this._onSkipKey);
+    this.input.keyboard.on('keydown-SPACE', this._onSkipKey);
+    this.input.keyboard.on('keydown-ENTER', this._onSkipKey);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this._destroyOverlay());
 
-    // Profondeur : poussière proche et capsules holographiques se déplacent à
-    // des vitesses différentes du plan principal.
-    this._dust = this.add.particles(W / 2, H / 2, 'particle', {
-      emitZone: { type: 'random', source: new Phaser.Geom.Rectangle(-W / 2, -H / 2, W, H) },
-      quantity: 1, frequency: 75, lifespan: { min: 1800, max: 4200 },
-      speedX: { min: -18, max: 18 }, speedY: { min: -8, max: 12 },
-      scale: { min: 0.25, max: 1.2 }, alpha: { start: 0.7, end: 0 },
-      tint: [0x80deea, 0xce93d8, 0xffffff], blendMode: Phaser.BlendModes.ADD,
-    }).setDepth(3);
-    this._buildDepthFrames(W, H);
-
-    this._eyebrow = this.add.text(W / 2, H - 132, '', {
-      fontFamily: 'monospace', fontSize: '10px', color: '#78909c', letterSpacing: 3,
-    }).setOrigin(0.5).setDepth(20);
-    this._title = this.add.text(W / 2, H - 98, '', {
-      fontFamily: 'monospace', fontSize: '25px', color: '#ffffff', fontStyle: 'bold',
-      stroke: '#000', strokeThickness: 5, align: 'center',
-    }).setOrigin(0.5).setDepth(20);
-    this._body = this.add.text(W / 2, H - 49, '', {
-      fontFamily: 'monospace', fontSize: '11px', color: '#cfd8dc', align: 'center', lineSpacing: 4,
-    }).setOrigin(0.5).setDepth(20);
-
-    const skip = this.add.text(W - 18, 18, 'PASSER  [ÉCHAP]', {
-      fontFamily: 'monospace', fontSize: '9px', color: '#78909c',
-      backgroundColor: '#02050ccc', padding: { x: 9, y: 6 },
-    }).setOrigin(1, 0).setDepth(30).setInteractive({ useHandCursor: true });
-    skip.on('pointerover', () => skip.setStyle({ color: '#ffffff' }))
-      .on('pointerout', () => skip.setStyle({ color: '#78909c' }))
-      .on('pointerdown', () => this._finish());
-
-    this.input.keyboard.on('keydown-ESC', () => this._finish());
-    this.input.keyboard.on('keydown-SPACE', () => this._finish());
-    this.input.keyboard.on('keydown-ENTER', () => this._finish());
-    this.cameras.main.fadeIn(1200, 0, 0, 0);
-    this.time.delayedCall(400, () => this._playShot(0));
+    this._root.getBoundingClientRect();
+    this._root.style.opacity = '1';
+    this._playShot(0);
   }
 
-  _fitImage(W, H) {
-    const source = this.textures.get('cinematic-vault').getSourceImage();
-    const cover = Math.max(W / source.width, H / source.height);
-    this._baseScale = cover;
-    this._image.setScale(cover);
+  _buildVideoOverlay() {
+    const root = document.createElement('div');
+    Object.assign(root.style, {
+      position: 'fixed', overflow: 'hidden', zIndex: '1000', background: '#000',
+      opacity: '0', transition: 'opacity 350ms ease', fontFamily: 'monospace',
+    });
+
+    const video = document.createElement('video');
+    video.playsInline = true;
+    video.preload = 'auto';
+    video.setAttribute('webkit-playsinline', '');
+    Object.assign(video.style, {
+      position: 'absolute', inset: '0', width: '100%', height: '100%',
+      objectFit: 'contain', objectPosition: 'center', background: '#000',
+      opacity: '0', transition: 'opacity 280ms ease',
+    });
+    root.appendChild(video);
+
+    const counter = this._makeLabel(root, 'left:18px;top:18px');
+    const skip = this._makeLabel(root, 'right:18px;top:18px');
+    skip.textContent = 'PASSER  [ÉCHAP]';
+    skip.style.cursor = 'pointer';
+    skip.style.pointerEvents = 'auto';
+    skip.addEventListener('click', event => {
+      event.stopPropagation();
+      this._finish();
+    });
+
+    const captions = document.createElement('div');
+    Object.assign(captions.style, {
+      position: 'absolute', left: '0', right: '0', bottom: '0', height: '22%',
+      minHeight: '145px', display: 'flex', flexDirection: 'column',
+      alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box',
+      padding: '12px 5vw 10px', textAlign: 'center', color: '#fff',
+      background: 'linear-gradient(to top, rgba(0,0,0,.76), rgba(0,0,0,.48) 62%, transparent)',
+      pointerEvents: 'none',
+    });
+    root.appendChild(captions);
+
+    const eyebrow = document.createElement('div');
+    Object.assign(eyebrow.style, {
+      fontSize: 'clamp(11px, .85vw, 16px)', letterSpacing: 'clamp(2px, .35vw, 6px)',
+      fontWeight: '700', marginBottom: '12px',
+    });
+    captions.appendChild(eyebrow);
+
+    const title = document.createElement('div');
+    Object.assign(title.style, {
+      fontSize: 'clamp(22px, 2vw, 38px)', lineHeight: '1.1', fontWeight: '900',
+      textShadow: '0 2px 5px #000, 0 0 2px #000', marginBottom: '12px',
+    });
+    captions.appendChild(title);
+
+    const body = document.createElement('div');
+    Object.assign(body.style, {
+      fontSize: 'clamp(12px, 1vw, 18px)', lineHeight: '1.45', color: '#e3edf2',
+      whiteSpace: 'pre-line', textShadow: '0 1px 4px #000',
+    });
+    captions.appendChild(body);
+
+    root.addEventListener('click', () => {
+      if (video.paused && !this._finished) video.play().catch(() => {});
+    });
+    document.body.appendChild(root);
+
+    this._root = root;
+    this._video = video;
+    this._counter = counter;
+    this._eyebrow = eyebrow;
+    this._title = title;
+    this._body = body;
+    this._syncOverlayBounds();
   }
 
-  _buildDepthFrames(W, H) {
-    this._rings = [];
-    for (let i = 0; i < 5; i++) {
-      const ring = this.add.ellipse(W * 0.535, H * 0.43, 100 + i * 70, 60 + i * 43, 0x000000, 0)
-        .setStrokeStyle(1, i % 2 ? 0xce93d8 : 0x00e5ff, 0.13).setDepth(i - 8);
-      this.tweens.add({ targets: ring, scaleX: 1.14, scaleY: 1.14, alpha: { from: 0.1, to: 0.52 },
-        duration: 2400 + i * 330, yoyo: true, repeat: -1, delay: i * 160 });
-      this._rings.push(ring);
-    }
-    this._scan = this.add.rectangle(W / 2, 0, W, 2, 0x00e5ff, 0.18).setDepth(8);
-    this.tweens.add({ targets: this._scan, y: H, duration: 3900, repeat: -1, ease: 'Linear' });
+  _makeLabel(parent, position) {
+    const label = document.createElement('div');
+    label.style.cssText = `position:absolute;${position};z-index:3;padding:8px 11px;` +
+      'font-size:12px;color:#a8bbc4;background:rgba(2,5,12,.68);letter-spacing:1px;';
+    parent.appendChild(label);
+    return label;
+  }
+
+  _syncOverlayBounds() {
+    if (!this._root) return;
+    const bounds = this.game.canvas.getBoundingClientRect();
+    Object.assign(this._root.style, {
+      left: `${bounds.left}px`, top: `${bounds.top}px`,
+      width: `${bounds.width}px`, height: `${bounds.height}px`,
+    });
   }
 
   _playShot(index) {
     if (this._finished) return;
     if (index >= SHOTS.length) { this._finish(); return; }
+
+    this._stopVideo();
     this._shot = index;
     const shot = SHOTS[index];
-    const { width: W, height: H } = this.scale;
-    // Laisse à la narration française le temps de terminer naturellement.
-    const duration = index === 3 ? 7600 : 8200;
+    this._counter.textContent = `${String(index + 1).padStart(2, '0')} / 04`;
+    this._eyebrow.textContent = shot.eyebrow;
+    this._eyebrow.style.color = shot.color;
+    this._title.textContent = shot.title;
+    this._body.textContent = shot.body;
 
-    this.tweens.killTweensOf(this._image);
-    this._image.setPosition(
-      W / 2 + (0.5 - shot.focus.x) * W * 0.58,
-      H / 2 + (0.5 - shot.focus.y) * H * 0.50,
-    ).setScale(this._baseScale * shot.focus.from).setTint(0xffffff).setAlpha(0.35);
-    this.tweens.add({
-      targets: this._image,
-      scaleX: this._baseScale * shot.focus.to,
-      scaleY: this._baseScale * shot.focus.to,
-      alpha: 1, duration, ease: 'Sine.inOut',
-    });
+    this._video.style.opacity = '0';
+    this._video.src = shot.url;
+    this._video.muted = Boolean(settings.get('muted'));
+    this._video.volume = Math.max(0, Math.min(1, Number(settings.get('volume')) || 0));
+    this._video.onloadeddata = () => { this._video.style.opacity = '1'; };
+    this._video.onended = () => this._playShot(index + 1);
+    this._video.load();
+    this._video.play().catch(() => {});
 
-    [this._eyebrow, this._title, this._body].forEach(t => t.setAlpha(0).setY(t.y + 8));
-    this._eyebrow.setText(shot.eyebrow).setColor(Phaser.Display.Color.IntegerToColor(shot.color).rgba);
-    this._title.setText(shot.title);
-    this._body.setText(shot.body);
-    this.tweens.add({ targets: [this._eyebrow, this._title, this._body], alpha: 1, y: '-=8',
-      duration: 650, delay: this.tweens.stagger(170, { start: 260 }) });
-
-    const flash = this.add.rectangle(W / 2, H / 2, W, H, shot.color, index === 2 ? 0.25 : 0.10).setDepth(12);
-    this.tweens.add({ targets: flash, alpha: 0, duration: 900, onComplete: () => flash.destroy() });
-    this._shade.setFillStyle(index === 2 ? 0x260309 : 0x02050c, index === 2 ? 0.32 : 0.22);
-    audio.play(index === 2 ? 'boss' : index === 3 ? 'power' : 'collect');
-    voice.speak(`${shot.title}. ${shot.body}`, {
-      persona: 'narrator',
-    });
-    if (index === 2) this._glitch(W, H);
-    if (index === 3 && settings.get('screenShake')) this.cameras.main.shake(500, 0.004);
-
-    this.time.delayedCall(duration, () => {
-      this.tweens.add({ targets: [this._eyebrow, this._title, this._body], alpha: 0, duration: 420 });
-      this.time.delayedCall(500, () => this._playShot(index + 1));
+    this._advanceTimer = this.time.delayedCall(CLIP_FALLBACK_DURATION, () => {
+      this._playShot(index + 1);
     });
   }
 
-  _glitch(W, H) {
-    for (let i = 0; i < 8; i++) {
-      this.time.delayedCall(i * 120, () => {
-        if (this._finished) return;
-        const bar = this.add.rectangle(W / 2 + Phaser.Math.Between(-35, 35), Phaser.Math.Between(50, H - 50),
-          W, Phaser.Math.Between(2, 10), i % 2 ? 0xff1744 : 0x00e5ff, 0.17).setDepth(14);
-        this.tweens.add({ targets: bar, x: bar.x + Phaser.Math.Between(-90, 90), alpha: 0,
-          duration: 100, onComplete: () => bar.destroy() });
-      });
-    }
+  _stopVideo() {
+    this._advanceTimer?.remove(false);
+    this._advanceTimer = null;
+    if (!this._video) return;
+    this._video.onloadeddata = null;
+    this._video.onended = null;
+    this._video.pause();
   }
 
   _finish() {
     if (this._finished) return;
     this._finished = true;
-    voice.stop();
-    audio.play('power');
-    this.cameras.main.fadeOut(900, 0, 0, 0);
-    this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('GameScene'));
+    this._stopVideo();
+    if (this._root) this._root.style.opacity = '0';
+    this.time.delayedCall(380, () => this.scene.start('GameScene'));
+  }
+
+  _destroyOverlay() {
+    this._stopVideo();
+    window.removeEventListener('resize', this._onResize);
+    this.input.keyboard.off('keydown-ESC', this._onSkipKey);
+    this.input.keyboard.off('keydown-SPACE', this._onSkipKey);
+    this.input.keyboard.off('keydown-ENTER', this._onSkipKey);
+    if (this._video) {
+      this._video.removeAttribute('src');
+      this._video.load();
+    }
+    this._root?.remove();
+    this._root = null;
+    this._video = null;
   }
 }

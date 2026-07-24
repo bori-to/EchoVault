@@ -56,7 +56,7 @@ EchoVault/
 - **Bundler :** Vite
 - **Tests :** Vitest
 - **CI/CD :** GitHub Actions → GitHub Pages (`master`)
-- **Graphismes :** textures procédurales Canvas/Phaser et une image de cinématique générée avec l'outil d'image OpenAI via Codex
+- **Graphismes :** textures procédurales Canvas/Phaser et quatre séquences vidéo MP4 fournies par l'équipe pour la cinématique d'introduction
 - **Audio :** effets synthétisés avec Web Audio API ; aucun fichier musical tiers
 - **Voix :** synthèse vocale française fournie à l'exécution par Web Speech API et les voix du navigateur/système
 
