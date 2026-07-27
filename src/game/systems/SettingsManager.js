@@ -4,9 +4,10 @@ const DEFAULTS = Object.freeze({
   voiceEnabled: true,
   guidanceVoiceEnabled: true,
   bossTestTeleporter: false,
+  sibylTestTeleporter: false,
   screenShake: true,
 });
-const SETTINGS_VERSION = 2;
+const SETTINGS_VERSION = 3;
 const STORAGE_KEY = 'echovault.settings.v1';
 
 class SettingsManager {
@@ -23,7 +24,8 @@ class SettingsManager {
       // migration le masque aussi pour les sauvegardes deja presentes, puis
       // laisse le joueur le reactiver normalement depuis les parametres.
       if (saved.settingsVersion !== SETTINGS_VERSION) {
-        this.values.bossTestTeleporter = false;
+        if (saved.settingsVersion !== 2) this.values.bossTestTeleporter = false;
+        this.values.sibylTestTeleporter = false;
         this.values.settingsVersion = SETTINGS_VERSION;
         this.save();
       }

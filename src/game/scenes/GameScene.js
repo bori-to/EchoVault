@@ -197,6 +197,7 @@ export class GameScene extends Phaser.Scene {
     this._eKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E);
     this._indicator = this.add.image(0, 0, 'indicator').setVisible(false).setDepth(15);
     this._buildBossTestPortal();
+    this._buildSibylTestPortal();
 
     this.scene.launch('HUDScene', {
       pm: this._pm, gsm: this._gsm, getHp: () => this._hp,
@@ -552,6 +553,63 @@ export class GameScene extends Phaser.Scene {
     }).setOrigin(0.5).setDepth(10);
     this.tweens.add({ targets: this._bossTestPortal, alpha: { from: 0.45, to: 1 },
       scaleX: { from: 0.9, to: 1.08 }, duration: 720, yoyo: true, repeat: -1 });
+  }
+
+  _buildSibylTestPortal() {
+    this._sibylTestTeleportUsed = false;
+    this._sibylTestPortal = this.add.image(340, 468, 'exit-a').setTint(0xff8f00).setDepth(9);
+    this._sibylTestLabel = this.add.text(340, 420, 'PORTAIL TEST\nSIBYL  [E]', {
+      fontFamily: 'monospace', fontSize: '10px', color: '#ffb74d', align: 'center',
+      stroke: '#000', strokeThickness: 3,
+    }).setOrigin(0.5).setDepth(10);
+    this.tweens.add({ targets: this._sibylTestPortal, alpha: { from: 0.45, to: 1 },
+      scaleX: { from: 0.9, to: 1.08 }, duration: 820, yoyo: true, repeat: -1 });
+  }
+
+  _useSibylTestPortal() {
+    if (this._sibylTestTeleportUsed || !settings.get('sibylTestTeleporter')) return;
+    this._sibylTestTeleportUsed = true;
+
+    const sibylIndex = this._storyNpcs.findIndex(npc => npc.id === 'sibyl');
+    const sibyl = this._storyNpcs[sibylIndex];
+    this._fragmentCount = Math.max(this._fragmentCount, sibyl.requires);
+    this._fragments.getChildren().forEach(fragment => {
+      if (fragment.x < sibyl.sprite.x && fragment.active) fragment.destroy();
+    });
+    this.events.emit('fragmentCollected', this._fragmentCount);
+
+    this._storyNpcs.slice(0, sibylIndex).forEach(npc => {
+      npc.done = true;
+      npc.defenseCleared = true;
+    });
+    this._storyGates.slice(0, sibylIndex).forEach(gate => {
+      if (gate?.active) gate.destroy();
+    });
+    this._storyStage = Math.max(this._storyStage, sibylIndex);
+    this._npcDone = true;
+    sibyl.defenseCleared = true;
+    sibyl.riddleSolved = false;
+    sibyl.riddleProgress = 0;
+    this._activeEncounter = null;
+
+    if (!this._pm.hasUnlocked('doubleJump')) this._pm.unlock('doubleJump');
+    if (!this._pm.hasUnlocked('dash')) this._pm.unlock('dash');
+    this._ctrl.enableDoubleJump();
+    this._ctrl.enableDash();
+    [this._crystal, this._dashPowerup].forEach(item => {
+      if (item?.active) item.destroy();
+    });
+    ['doubleJump', 'dash'].forEach(power => this.events.emit('powerUnlocked', power));
+
+    this._spawnX = 2660;
+    this._spawnY = 400;
+    this._player.setPosition(this._spawnX, this._spawnY).setVelocity(0, 0);
+    this._sibylTestPortal.setVisible(false);
+    this._sibylTestLabel.setVisible(false);
+    this.events.emit('objectiveChanged', 'TEST IA — Parlez à SIBYL et résolvez ses 3 énigmes');
+    audio.play('power');
+    voice.speak('Mode test. Intelligence SIBYL prête.', { persona: 'system' });
+    this.cameras.main.flash(450, 255, 143, 0);
   }
 
   _useBossTestPortal() {
@@ -989,14 +1047,22 @@ export class GameScene extends Phaser.Scene {
     const portalEnabled = settings.get('bossTestTeleporter') && !this._testTeleportUsed;
     this._bossTestPortal.setVisible(portalEnabled);
     this._bossTestLabel.setVisible(portalEnabled);
+    const sibylPortalEnabled = settings.get('sibylTestTeleporter') && !this._sibylTestTeleportUsed;
+    this._sibylTestPortal.setVisible(sibylPortalEnabled);
+    this._sibylTestLabel.setVisible(sibylPortalEnabled);
     const nearTestPortal = portalEnabled && !this._dlgMgr.isActive && !this._riddleActive &&
       Phaser.Math.Distance.Between(this._player.x, this._player.y,
         this._bossTestPortal.x, this._bossTestPortal.y) < 95;
-    this._indicator.setVisible(Boolean(nearTestPortal || canInteract));
+    const nearSibylTestPortal = sibylPortalEnabled && !this._dlgMgr.isActive && !this._riddleActive &&
+      Phaser.Math.Distance.Between(this._player.x, this._player.y,
+        this._sibylTestPortal.x, this._sibylTestPortal.y) < 95;
+    this._indicator.setVisible(Boolean(nearTestPortal || nearSibylTestPortal || canInteract));
     if (nearTestPortal) this._indicator.setPosition(this._bossTestPortal.x, this._bossTestPortal.y - 68);
+    else if (nearSibylTestPortal) this._indicator.setPosition(this._sibylTestPortal.x, this._sibylTestPortal.y - 68);
     else if (canInteract) this._indicator.setPosition(nearbyNpc.sprite.x, nearbyNpc.sprite.y - 68);
     if (Phaser.Input.Keyboard.JustDown(this._eKey)) {
       if (nearTestPortal) this._useBossTestPortal();
+      else if (nearSibylTestPortal) this._useSibylTestPortal();
       else if (canInteract) this._startStoryDialogue(nearbyNpc);
     }
 

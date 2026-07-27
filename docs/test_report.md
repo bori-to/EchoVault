@@ -28,8 +28,8 @@ L'exécution locale fraîche du 24 juillet 2026 a donné :
 
 | Commande | Résultat | Détail |
 |---|---|---|
-| `npm test` | Réussi | 7 fichiers, 43 tests, durée totale 968 ms |
-| `npm run build` | Réussi | 34 modules transformés en 7,81 s |
+| `npm test` | Réussi | 7 fichiers, 43 tests, durée totale 1,09 s |
+| `npm run build` | Réussi | 34 modules transformés en 7,51 s |
 
 ## 3. Résultats unitaires détaillés
 
@@ -51,7 +51,7 @@ Vite a produit le dossier `build/` sans erreur. Les principaux artefacts sont :
 |---|---:|---:|
 | `index.html` | 0,56 kB | 0,36 kB |
 | Cinématique MP4 originale — 4 séquences | 10 384,17 kB | — |
-| Bundle JavaScript principal | 1 619,91 kB | 381,22 kB |
+| Bundle JavaScript principal | 1 622,92 kB | 381,88 kB |
 
 Un avertissement non bloquant signale que le bundle JavaScript dépasse 500 kB après minification. Le jeu reste constructible et déployable, mais un découpage dynamique constitue une optimisation future.
 

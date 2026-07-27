@@ -1,6 +1,9 @@
 import Phaser from 'phaser';
 import { audio } from '../systems/AudioManager.js';
 import { voice } from '../systems/VoiceManager.js';
+import { getCampaignPacing } from '../systems/CampaignDirector.js';
+
+const TOTAL_MEMORIES = getCampaignPacing().requiredFragments;
 
 const CONTENT = {
   guardian: {
@@ -49,7 +52,7 @@ export class EndingScene extends Phaser.Scene {
     const minutes = Math.floor((this._stats.seconds || 0) / 60);
     const seconds = Math.floor((this._stats.seconds || 0) % 60).toString().padStart(2, '0');
     this.add.rectangle(W / 2, 354, 380, 42, 0x020608, 0.7).setStrokeStyle(1, cfg.color, 0.4);
-    this.add.text(W / 2, 354, `SOUVENIRS  ${this._stats.fragments || 8}/8     ÉCHOS APAISÉS  ${this._stats.kills || 0}     TEMPS  ${minutes}:${seconds}`,
+    this.add.text(W / 2, 354, `SOUVENIRS  ${this._stats.fragments ?? TOTAL_MEMORIES}/${TOTAL_MEMORIES}     ÉCHOS APAISÉS  ${this._stats.kills || 0}     TEMPS  ${minutes}:${seconds}`,
       { fontFamily: 'monospace', fontSize: '10px', color: '#78909c' }).setOrigin(0.5);
 
     this._button(300, 420, 'REJOUER', () => { audio.play('power'); this.scene.start('CharacterSelectScene'); }, cfg);

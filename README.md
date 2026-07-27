@@ -36,6 +36,7 @@ npm run test       # Tests unitaires (Vitest)
 | Interaction / Dialogue | `E` |
 | Paramètres / Pause | `P` |
 | Portail de test du boss | `E` devant le portail jaune au départ *(désactivable dans Paramètres)* |
+| Portail de test SIBYL | `E` devant le portail orange au départ *(désactivé par défaut dans Paramètres)* |
 
 ## Structure du projet
 

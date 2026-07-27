@@ -183,7 +183,7 @@ EndingScene
 | `MenuScene` | Affiche le menu principal et réinitialise son état lorsqu'une scène est réutilisée. | Ouvre la sélection, les succès ou les paramètres. |
 | `CharacterSelectScene` | Présente ARIA, NYX, ATLAS et VOLT avec leurs statistiques et armes. | Enregistre le personnage puis ouvre `CinematicScene`. |
 | `AchievementsScene` | Affiche l'arbre de 15 succès et son état persistant. | Retourne au menu ou aux paramètres en jeu. |
-| `SettingsScene` | Gère volume, son, voix, guidage, secousses et portail de test du boss. | Reprend la partie, ouvre les succès ou retourne au menu. |
+| `SettingsScene` | Gère volume, son, voix, guidage, secousses et portails de test du boss et de SIBYL. | Reprend la partie, ouvre les succès ou retourne au menu. |
 | `CinematicScene` | Enchaîne quatre MP4 originaux dans des éléments vidéo HTML superposés au canvas, avec `object-fit: contain`, sous-titres et possibilité de passer l'introduction. | Démarre `GameScene`. |
 | `GameScene` | Construit et orchestre le niveau, le joueur, les ennemis, les PNJ, les pouvoirs, le boss et deux parcours finaux exclusifs. | Lance `HUDScene`, puis `EndingScene`. |
 | `HUDScene` | Affiche vie, pouvoirs, souvenirs, objectif, boss et notifications de succès. | Écoute les événements de `GameScene`. |
@@ -343,7 +343,7 @@ Le jeu ne possède aucun serveur ni base de données. Les données persistantes 
 
 | Clé | Contenu |
 |---|---|
-| `echovault.settings.v1` | Volume, son, voix, guidage, secousses et portail de test. |
+| `echovault.settings.v1` | Volume, son, voix, guidage, secousses et portails de test du boss et de SIBYL. |
 | `echovault.achievements.v1` | Succès débloqués et fins découvertes. |
 | `echovault_powers` | Pouvoirs débloqués ; réinitialisés au lancement d'une nouvelle partie. |
 

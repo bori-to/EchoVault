@@ -14,49 +14,53 @@ export class SettingsScene extends Phaser.Scene {
     this.add.rectangle(W / 2, H / 2, W, H, 0x03050b);
     this.add.tileSprite(W / 2, H / 2, W, H, 'bg-brick').setAlpha(0.35);
     this.add.rectangle(W / 2, H / 2, 540, 490, 0x060b16, 0.96).setStrokeStyle(2, 0x00b8d4, 0.7);
-    this.add.text(W / 2, 40, 'PARAMÈTRES', {
+    this.add.text(W / 2, 32, 'PARAMÈTRES', {
       fontFamily: 'monospace', fontSize: '30px', color: '#80deea', stroke: '#00151b', strokeThickness: 5,
     }).setOrigin(0.5);
-    this.add.text(W / 2, 74, 'CONFIGURATION DU SYSTÈME ARIA', {
+    this.add.text(W / 2, 62, 'CONFIGURATION DU SYSTÈME ARIA', {
       fontFamily: 'monospace', fontSize: '10px', color: '#546e7a', letterSpacing: 2,
     }).setOrigin(0.5);
 
-    this._volumeText = this._row(110, 'VOLUME DES EFFETS', () => this._volumeLabel());
-    this._smallButton(cx + 155, 110, '−', () => this._changeVolume(-0.1));
-    this._smallButton(cx + 205, 110, '+', () => this._changeVolume(0.1));
-    this._muteText = this._row(154, 'SON', () => settings.get('muted') ? 'MUET' : 'ACTIF', () => {
+    this._volumeText = this._row(94, 'VOLUME DES EFFETS', () => this._volumeLabel());
+    this._smallButton(cx + 155, 94, '−', () => this._changeVolume(-0.1));
+    this._smallButton(cx + 205, 94, '+', () => this._changeVolume(0.1));
+    this._muteText = this._row(131, 'SON', () => settings.get('muted') ? 'MUET' : 'ACTIF', () => {
       settings.set('muted', !settings.get('muted')); this._refresh(); audio.play('ui');
     });
-    this._voiceText = this._row(198, 'VOIX FRANÇAISES', () => settings.get('voiceEnabled') ? 'ACTIVES' : 'DÉSACTIVÉES', () => {
+    this._voiceText = this._row(168, 'VOIX FRANÇAISES', () => settings.get('voiceEnabled') ? 'ACTIVES' : 'DÉSACTIVÉES', () => {
       const enabled = !settings.get('voiceEnabled');
       settings.set('voiceEnabled', enabled); this._refresh();
       if (enabled) voice.speak('Voix françaises activées.', { persona: 'system' });
       else voice.stop();
       audio.play('ui');
     });
-    this._guidanceText = this._row(242, 'VOIX DES OBJECTIFS', () => settings.get('guidanceVoiceEnabled') ? 'ACTIVE' : 'DÉSACTIVÉE', () => {
+    this._guidanceText = this._row(205, 'VOIX DES OBJECTIFS', () => settings.get('guidanceVoiceEnabled') ? 'ACTIVE' : 'DÉSACTIVÉE', () => {
       const enabled = !settings.get('guidanceVoiceEnabled');
       settings.set('guidanceVoiceEnabled', enabled); this._refresh();
       if (enabled) voice.speak('Guidage vocal activé.', { persona: 'system', category: 'guidance' });
       else voice.stop();
       audio.play('ui');
     });
-    this._shakeText = this._row(286, 'SECOUSSES ÉCRAN', () => settings.get('screenShake') ? 'ACTIVES' : 'DÉSACTIVÉES', () => {
+    this._shakeText = this._row(242, 'SECOUSSES ÉCRAN', () => settings.get('screenShake') ? 'ACTIVES' : 'DÉSACTIVÉES', () => {
       settings.set('screenShake', !settings.get('screenShake')); this._refresh(); audio.play('ui');
     });
-    this._bossTestText = this._row(330, 'PORTAIL TEST DU BOSS', () => settings.get('bossTestTeleporter') ? 'VISIBLE' : 'MASQUÉ', () => {
+    this._bossTestText = this._row(279, 'PORTAIL TEST DU BOSS', () => settings.get('bossTestTeleporter') ? 'VISIBLE' : 'MASQUÉ', () => {
       settings.set('bossTestTeleporter', !settings.get('bossTestTeleporter'));
       this._refresh(); audio.play('ui');
     });
+    this._sibylTestText = this._row(316, 'PORTAIL TEST DE SIBYL', () => settings.get('sibylTestTeleporter') ? 'VISIBLE' : 'MASQUÉ', () => {
+      settings.set('sibylTestTeleporter', !settings.get('sibylTestTeleporter'));
+      this._refresh(); audio.play('ui');
+    });
 
-    this._button(W / 2, 372, 'RÉTABLIR PAR DÉFAUT', () => { settings.reset(); this._refresh(); audio.play('power'); }, false, true);
+    this._button(W / 2, 354, 'RÉTABLIR PAR DÉFAUT', () => { settings.reset(); this._refresh(); audio.play('power'); }, false, true);
     if (this._fromGame) {
-      this._button(W / 2 - 170, 408, 'VOIR LES SUCCÈS', () => this._openAchievements(), false, true);
-      this._button(W / 2 + 145, 408, 'MENU PRINCIPAL', () => this._goToMenu(), false, true);
+      this._button(W / 2 - 170, 391, 'VOIR LES SUCCÈS', () => this._openAchievements(), false, true);
+      this._button(W / 2 + 145, 391, 'MENU PRINCIPAL', () => this._goToMenu(), false, true);
     }
-    this._button(W / 2, this._fromGame ? 449 : 425,
+    this._button(W / 2, this._fromGame ? 430 : 402,
       this._fromGame ? 'REPRENDRE LA PARTIE' : 'RETOUR AU MENU', () => this._back(), true);
-    this.add.text(W / 2, this._fromGame ? 484 : 468, '[ÉCHAP] Retour', {
+    this.add.text(W / 2, this._fromGame ? 468 : 452, '[ÉCHAP] Retour', {
       fontFamily: 'monospace', fontSize: '10px', color: '#37474f',
     }).setOrigin(0.5);
     this.input.keyboard.on('keydown-ESC', () => this._back());
@@ -120,7 +124,7 @@ export class SettingsScene extends Phaser.Scene {
 
   _refresh() {
     [this._volumeText, this._muteText, this._voiceText, this._guidanceText,
-      this._shakeText, this._bossTestText]
+      this._shakeText, this._bossTestText, this._sibylTestText]
       .forEach(t => t.setText(t._value()));
   }
 
